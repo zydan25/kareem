@@ -1,14 +1,15 @@
+{% from 'components/account_picker.html' import picker %}
 {% extends 'base.html' %}
 {% block title %}إدارة المصروفات - {{app_name}}{% endblock %}
 {% block content %}
 <div class="page-head"><div><span class="eyebrow">المالية</span><h1>إدارة المصروفات</h1><p>صرف المصروف من حساب نقدي إلى حساب مصروف تفصيلي مع قيد تلقائي.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
-<div class="stat-grid mb-4"><div class="stat-card primary"><span>عدد المصروفات</span><strong>{{rows|length}}</strong><small>آخر المصروفات</small></div><div class="stat-card"><span>حساب افتراضي</span><strong>{{default_expense.code}}</strong><small>{{default_expense.name}}</small></div><div class="stat-card"><span>النقدية</span><strong>{{default_cash.code}}</strong><small>{{default_cash.name}}</small></div><div class="stat-card"><span>الوصف</span><strong>قيد مزدوج</strong><small>مدين مصروف / دائن نقدية</small></div></div>
+<div class="stat-grid mb-4"><div class="stat-card primary"><span>عدد المصروفات</span><strong>{{rows|length}}</strong><small>آخر المصروفات</small></div><div class="stat-card"><span>حساب افتراضي</span><strong>{{default_expense.name}}</strong><small>{{default_expense.name}}</small></div><div class="stat-card"><span>النقدية</span><strong>{{default_cash.name}}</strong><small>{{default_cash.name}}</small></div><div class="stat-card"><span>الوصف</span><strong>قيد مزدوج</strong><small>مدين مصروف / دائن نقدية</small></div></div>
 <div class="card-soft add-panel mb-4"><form method="post" class="row g-3">
 <div class="col-12"><div class="form-section-title">إضافة مصروف</div></div>
 <div class="col-6 col-lg-2"><label class="form-label">التاريخ</label><input type="date" name="expense_date" class="form-control"></div>
 <div class="col-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
-<div class="col-12 col-lg-4"><label class="form-label">حساب المصروف</label><select name="expense_account_id" class="form-select">{% for a in expense_accounts %}<option value="{{a.id}}" {% if a.id==default_expense.id %}selected{% endif %}>{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
-<div class="col-12 col-lg-4"><label class="form-label">الحساب النقدي</label><select name="cash_account_id" class="form-select">{% for a in cash_accounts %}<option value="{{a.id}}" {% if a.id==default_cash.id %}selected{% endif %}>{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
+<div class="col-12 col-lg-4"><label class="form-label">حساب المصروف</label>{{picker('expense_account_id','حساب المصروف',account_options,expense_accounts|map(attribute='id')|list,default_expense.id,'حساب المصروف الافتراضي')}}</div>
+<div class="col-12 col-lg-4"><label class="form-label">الحساب النقدي</label>{{picker('cash_account_id','الحساب النقدي',account_options,cash_accounts|map(attribute='id')|list,default_cash.id,'الحساب النقدي')}}</div>
 <div class="col-12 col-lg-4"><label class="form-label">المستفيد</label><input name="beneficiary" class="form-control"></div>
 <div class="col-12 col-lg-8"><label class="form-label">البيان</label><input name="description" class="form-control" placeholder="مثال: كهرباء / نقل / صيانة" required></div>
 <div class="col-12"><button class="btn btn-primary btn-lg">ترحيل المصروف</button></div>
