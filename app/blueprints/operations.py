@@ -217,6 +217,7 @@ def payroll_detail(run_id):
     lines=PayrollLine.query.filter_by(payroll_run_id=run.id).order_by(PayrollLine.id).all()
     if request.method=="POST":
         try:
+            if not can("payroll.manage"): raise ValueError("ليست لديك صلاحية تعديل مسير الرواتب")
             if run.status!="draft": raise ValueError("لا يمكن تعديل مسير مرحل")
             for line in lines:
                 gross=D(request.form.get(f"gross_{line.id}",line.gross_amount))
