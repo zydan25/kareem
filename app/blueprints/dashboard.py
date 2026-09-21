@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, render_template
+from flask import Blueprint, redirect, render_template, url_for
 from sqlalchemy import func
+from flask_login import current_user
 
 from ..extensions import db
 from ..models import Agent, Employee, GateTransaction, Vehicle
@@ -16,6 +17,9 @@ UTC_TZ=ZoneInfo("UTC")
 @bp.route("/dashboard")
 @permission_required("dashboard.view")
 def index():
+    if current_user.role == "collector":
+        return redirect(url_for("collector.index"))
+
     today=datetime.now(LOCAL_TZ).date()
     local_start=datetime.combine(today,datetime.min.time(),tzinfo=LOCAL_TZ)
     local_end=local_start+timedelta(days=1)
