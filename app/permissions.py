@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import abort
+from flask import abort, g
 from flask_login import current_user, login_required
 from sqlalchemy import select
 from .extensions import db
@@ -22,7 +22,6 @@ PERMISSIONS=[
 ("reports.view","عرض التقارير","التقارير"),("reports.export","طباعة وتصدير التقارير","التقارير"),
 ("settings.view","عرض الإعدادات","الإعدادات"),("settings.manage","إدارة الإعدادات","الإعدادات"),
 ("audit.view","عرض سجل التدقيق","الرقابة")]
-
 ROLE_DEFAULTS={
 "admin":{"*"},
 "manager":{p[0] for p in PERMISSIONS},
@@ -30,12 +29,31 @@ ROLE_DEFAULTS={
 "collector":{"dashboard.view","collector.view","collector.post","collector.settle","clients.view","vehicles.view"},
 "auditor":{"dashboard.view","accounting.view","reports.view","reports.export","audit.view"}}
 
-def can(permission):
-    if not current_user.is_authenticated or not current_user.active: return False
+def _permission_cache():
+    cached=getattr(g,"_permission_cache",None)
+    if cached is not None:
+        return cached
     defaults=ROLE_DEFAULTS.get(current_user.role,set())
-    if "*" in defaults: return True
-    row=db.session.execute(select(UserPermission.granted).join(Permission,Permission.id==UserPermission.permission_id).where(UserPermission.user_id==current_user.id,Permission.key==permission,Permission.active.is_(True))).scalar_one_or_none()
-    return permission in defaults if row is None else bool(row)
+    if "*" in defaults:
+        cached={"*"}
+    else:
+        cached=set(defaults)
+        rows=db.session.execute(
+            select(Permission.key,UserPermission.granted)
+            .join(UserPermission,UserPermission.permission_id==Permission.id)
+            .where(UserPermission.user_id==current_user.id,Permission.active.is_(True))
+        ).all()
+        for key,granted in rows:
+            if granted: cached.add(key)
+            else: cached.discard(key)
+    g._permission_cache=cached
+    return cached
+
+def can(permission):
+    if not current_user.is_authenticated or not current_user.active:
+        return False
+    cached=_permission_cache()
+    return "*" in cached or permission in cached
 
 def permission_required(permission):
     def deco(view):
