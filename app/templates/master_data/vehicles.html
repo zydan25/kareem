@@ -14,6 +14,21 @@
 <div class="col-12"><textarea name="notes" class="form-control" placeholder="وصف أو ملاحظات المركبة"></textarea></div>
 <div class="col-12"><button class="btn btn-primary">حفظ المركبة</button></div>
 </form></div>{% endif %}
+{% if can_manage %}
+<div class="card-soft mb-3 vehicle-types-panel">
+  <div class="section-title"><div><h3>أنواع المركبات</h3><small class="text-muted">يمكنك إضافة أي نوع تحتاجه، مثل خصوصي، نقل، قلاب، صهريج، معدات وغيرها.</small></div></div>
+  <form method="post" action="{{url_for('master_data.add_vehicle_type')}}" class="row g-2 align-items-end mb-3">
+    <div class="col-12 col-md-8"><label class="form-label">نوع مركبة جديد</label><input name="name" class="form-control" required placeholder="مثال: باص صغير"></div>
+    <div class="col-12 col-md-4"><button class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> إضافة النوع</button></div>
+  </form>
+  <div class="vehicle-type-chips">
+    {% for t in vehicle_types %}
+      <div class="vehicle-type-chip {{'inactive' if not t.active else ''}}"><span>{{t.name}}</span>{% if t.active %}<form method="post" action="{{url_for('master_data.toggle_vehicle_type',type_id=t.id)}}" onsubmit="return confirm('سيتم إخفاء هذا النوع من الاختيار الجديد مع إبقاء المركبات المسجلة عليه. متابعة؟')"><button title="تعطيل"><i class="bi bi-eye-slash"></i></button></form>{% else %}<form method="post" action="{{url_for('master_data.toggle_vehicle_type',type_id=t.id)}}"><button title="تفعيل"><i class="bi bi-eye"></i></button></form>{% endif %}</div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <div class="card-soft"><div class="section-title"><div><h3>قائمة المركبات</h3><small class="text-muted">{{vehicles|length}} مركبة</small></div></div><div class="entity-list">
 {% for v in vehicles %}<div class="entity-row"><div class="entity-main"><div class="entity-icon vehicle"><i class="bi bi-truck-front"></i></div><div><strong>{{v.plate_number or 'بدون رقم جمركي'}}</strong><div class="entity-meta"><span>{{v.vehicle_type.name}}</span><span>{{v.client.name if v.client else 'بدون عميل'}}</span><span>{{'بدون جمارك' if v.registration_status=='without_customs' else 'جمركية'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if v.active else 'off'}}"></span>{{'نشطة' if v.active else 'موقوفة'}}</div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('master_data.vehicle_detail',vehicle_id=v.id)}}"><i class="bi bi-eye"></i> تفاصيل</a><a href="{{url_for('reports.vehicle_report',vehicle_id=v.id)}}"><i class="bi bi-bar-chart"></i> تقرير الدخول</a>{% if can_manage %}<a href="{{url_for('master_data.edit_vehicle',vehicle_id=v.id)}}"><i class="bi bi-pencil"></i> تعديل</a><form method="post" action="{{url_for('master_data.delete_vehicle',vehicle_id=v.id)}}" onsubmit="return confirm('سيتم إيقاف المركبة وحفظ تاريخها. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}</div></details></div></div>
 {% else %}<div class="empty-state"><i class="bi bi-truck"></i><strong>لا توجد مركبات</strong><span>أضف أول مركبة.</span></div>{% endfor %}
