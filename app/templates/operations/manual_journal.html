@@ -12,12 +12,12 @@
     <div class="from-to-journal">
       <div class="journal-side">
         <span class="journal-side-label">من حساب <small>دائن</small></span>
-        {{picker('from_account_id','من حساب',account_options,accounts|map(attribute='id')|list,None,'اختر الحساب الدائن')}}
+        {{picker('from_account_id','من حساب',account_options,None,'اختر الحساب الدائن')}}
       </div>
       <div class="journal-transfer-arrow"><i class="bi bi-arrow-left-right"></i><span>إلى</span></div>
       <div class="journal-side">
         <span class="journal-side-label">إلى حساب <small>مدين</small></span>
-        {{picker('to_account_id','إلى حساب',account_options,accounts|map(attribute='id')|list,None,'اختر الحساب المدين')}}
+        {{picker('to_account_id','إلى حساب',account_options,None,'اختر الحساب المدين')}}
       </div>
     </div>
   </div>
