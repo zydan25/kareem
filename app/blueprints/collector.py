@@ -154,7 +154,7 @@ def index():
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
         recent=day_rows[:20],current_shift=current_shift(),
         daily_total=daily_total,daily_count=daily_count,daily_entries=daily_entries,
-        daily_exits=daily_exits,custody_balance=custody_balance)
+        daily_exits=daily_exits,custody_balance=custody_balance,today=today)
 
 @bp.get("/transactions/<int:transaction_id>")
 @permission_required("collector.view")
