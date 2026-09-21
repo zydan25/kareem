@@ -1,1 +1,46 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>شجرة الحسابات</h1><p>الحسابات الرئيسية تجميعية، والفروع هي التي يمكن اختيارها في القيود.</p></div>{% if can_manage %}<a class="btn btn-primary" href="{{url_for('accounting.account_new')}}">إضافة حساب فرعي</a>{% endif %}</div><div class="card-soft mb-3"><input id="account-filter" class="form-control" placeholder="بحث في الكود أو اسم الحساب..."></div><div class="card-soft table-wrap"><table class="table align-middle" id="accounts-table"><thead><tr><th>الكود</th><th>الحساب</th><th>النوع</th><th>المستوى</th><th>القيد</th><th>كشف</th></tr></thead><tbody>{% for a in accounts %}<tr><td>{{a.code}}</td><td class="fw-bold">{{'📁' if a.is_group else '•'}} {{a.name}}</td><td>{{{'asset':'أصول','liability':'خصوم','equity':'حقوق ملكية','revenue':'إيرادات','expense':'مصروفات','memo':'مذكرة'}.get(a.account_type,a.account_type)}}</td><td>{{'رئيسي/مجموعة' if a.is_group else 'فرعي'}}</td><td>{{'غير قابل للقيد' if a.is_group else 'قابل للقيد' if a.allow_manual_posting else 'نظامي'}}</td><td>{% if not a.is_group %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}{% block scripts %}<script>const f=document.getElementById('account-filter');f&&f.addEventListener('input',()=>{const q=f.value.toLowerCase();document.querySelectorAll('#accounts-table tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')});</script>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}شجرة الحسابات - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">المحاسبة</span><h1>شجرة الحسابات</h1><p>عرض هرمي للحسابات مع الرصيد الحالي، نوع الحساب، وإمكانية الإدارة للحسابات غير النظامية.</p></div>
+  {% if can_manage %}<a class="btn btn-primary" href="{{url_for('accounting.account_new')}}"><i class="bi bi-folder-plus"></i> إضافة حساب فرعي</a>{% endif %}
+</div>
+<div class="card-soft mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col-12 col-lg-7"><input id="account-filter" class="form-control form-control-lg" placeholder="ابحث بالكود أو اسم الحساب"></div>
+    <div class="col-12 col-lg-5 d-flex gap-2 flex-wrap">
+      <span class="badge-soft">الحسابات الرئيسية للتجميع</span>
+      <span class="badge-soft">الحسابات الفرعية للقيود</span>
+      <a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.accounts_report')}}">ملخص الأرصدة</a>
+    </div>
+  </div>
+</div>
+<div class="card-soft table-wrap">
+<table class="table align-middle" id="accounts-table">
+<thead><tr><th>الكود</th><th>الحساب</th><th>النوع</th><th>الطبيعة</th><th>الرصيد</th><th>القيد</th><th>إدارة</th></tr></thead>
+<tbody>
+{% for row in rows %}
+{% set a=row.account %}
+<tr data-search="{{a.code}} {{a.name}}">
+  <td><code>{{a.code}}</code></td>
+  <td style="padding-right:{{12 + row.depth*22}}px" class="{% if a.is_group %}fw-bold{% endif %}">{% if a.is_group %}<i class="bi bi-folder2-open text-warning"></i>{% else %}<i class="bi bi-dot text-success"></i>{% endif %} {{a.name}}</td>
+  <td>{{account_type_labels.get(a.account_type,a.account_type)}}</td>
+  <td>{{'مدين' if a.account_type in ['asset','expense'] else 'دائن'}}</td>
+  <td>{% if row.balance is not none %}<strong>{{'{:,.2f}'.format(row.balance)}} {{currency}}</strong>{% else %}<span class="text-muted">تجميعي</span>{% endif %}</td>
+  <td>{{'غير قابل للقيد' if a.is_group else ('قابل للقيد' if a.allow_manual_posting else 'نظامي')}}</td>
+  <td class="text-nowrap">
+    {% if not a.is_group %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a>{% endif %}
+    {% if can_manage and not a.system_key %}<a class="btn btn-sm btn-light" href="{{url_for('accounting.account_edit',account_id=a.id)}}">تعديل</a>{% endif %}
+  </td>
+</tr>
+{% else %}<tr><td colspan="7" class="text-center py-5 text-muted">لا توجد حسابات.</td></tr>{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const f=document.getElementById('account-filter');
+f&&f.addEventListener('input',()=>{const q=f.value.trim().toLowerCase();document.querySelectorAll('#accounts-table tbody tr').forEach(r=>r.style.display=(r.dataset.search||r.innerText).toLowerCase().includes(q)?'':'none')});
+</script>
+{% endblock %}
