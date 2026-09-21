@@ -14,7 +14,8 @@ def test_seed_and_dashboard(client):
 
 def test_migration_seeded_system_accounts(app):
     with app.app_context():
-        assert db.session.query(Account).filter(Account.is_group.is_(True)).count()==5
+        assert db.session.query(Account).filter(Account.code.in_(["1","2","3","4","5"])).count()==5
+        assert db.session.query(Account).filter(Account.is_group.is_(True)).count()>=10
         assert db.session.query(VehicleType).count()>=7
 
 def test_balanced_entry_and_reject_unbalanced(app):
