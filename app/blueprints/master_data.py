@@ -57,11 +57,13 @@ def _save_party_identity(obj, prefix):
     obj.identity_image=f"party_ids/{filename}"
 
 def _save_employee_login(emp):
-    username=request.form.get("login_username","").strip() or (emp.phone or "").strip()
+    # Employee is the source of truth for login accounts. Username is always
+    # the employee phone; there is no separate "add user" workflow.
+    username=(emp.phone or "").strip()
     password=request.form.get("login_password","")
     role=request.form.get("login_role") or Role.COLLECTOR.value
     if not username:
-        return None
+        raise ValueError("رقم الهاتف مطلوب لإنشاء حساب الموظف تلقائيًا")
     if not emp.phone:
         raise ValueError("أدخل رقم هاتف الموظف قبل إنشاء حساب الدخول")
     if not password and not emp.user:
