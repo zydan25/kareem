@@ -1,20 +1,30 @@
 {% extends 'base.html' %}
-{% block title %}صلاحيات المستخدم - {{app_name}}{% endblock %}
+{% block title %}صلاحيات {{user.full_name}} - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الأمن والصلاحيات</span><h1>صلاحيات {{user.full_name}}</h1><p>الدور الأساسي: <strong>{{role_labels.get(user.role,user.role)}}</strong>. الخيارات هنا تضيف أو تلغي استثناءات على مستوى المستخدم.</p></div><a class="btn btn-light" href="{{url_for('admin.users')}}">المستخدمون</a></div>
-<form method="post">
-  <div class="card-soft">
-    <div class="permission-toolbar"><span>حدد ما يحتاجه هذا المستخدم فقط.</span><button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('input[name=permission_ids]').forEach(x=>x.checked=true)">تحديد الكل</button><button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('input[name=permission_ids]').forEach(x=>x.checked=false)">إلغاء الكل</button></div>
-    <div class="row g-3">
-    {% for group in permissions|groupby('group_name') %}
-      <div class="col-12 col-md-6 col-xl-4"><div class="permission-group"><h3>{{group.grouper}}</h3>
-      {% for p in group.list %}
-        <label class="permission-row"><input type="checkbox" name="permission_ids" value="{{p.id}}" {% if grants.get(p.id) %}checked{% endif %}><span>{{p.name}}</span><small>{{p.key}}</small></label>
-      {% endfor %}
-      </div></div>
-    {% endfor %}
-    </div>
-    <div class="mt-4 d-flex gap-2 flex-wrap"><button class="btn btn-primary"><i class="bi bi-shield-check"></i> حفظ الصلاحيات</button><a class="btn btn-light" href="{{url_for('admin.users')}}">إلغاء</a></div>
+<div class="page-head"><div><span class="eyebrow">الأمن والصلاحيات</span><h1>صلاحيات {{user.full_name}}</h1><p>الدور: <strong>{{role_labels.get(user.role,user.role)}}</strong> · الصلاحيات الأساسية تأتي من نوع الموظف، ويمكن إضافة استثناءات للحسابات التي تسمح بذلك.</p></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light" href="{{url_for('master_data.employee_detail',employee_id=user.employee.id)}}" {% if not user.employee %}style="display:none"{% endif %}>ملف الموظف</a><a class="btn btn-light" href="{{url_for('admin.users')}}">المستخدمون</a></div></div>
+
+<div class="card-soft">
+  <div class="role-permission-summary">
+    <div><span>نوع الحساب</span><strong>{{role_labels.get(user.role,user.role)}}</strong></div>
+    <div><span>الصلاحيات الأساسية</span><strong>{% if user.role in ['admin','manager'] %}كاملة{% else %}مرتبطة بالدور{% endif %}</strong></div>
+    <div><span>التعديل الفردي</span><strong>{% if role_locked %}مقفل لهذا الدور{% else %}متاح{% endif %}</strong></div>
   </div>
+</div>
+
+<form method="post">
+<div class="permission-toolbar"><span>{% if role_locked %}المدير ومدير النظام يحصلان على جميع الصلاحيات تلقائيًا.{% else %}الحالة المعروضة هي الصلاحيات الفعلية للحساب، ويمكن تخصيصها هنا.{% endif %}</span>{% if not role_locked %}<button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('input[name=permission_ids]').forEach(x=>{if(!x.disabled)x.checked=true})">تحديد الكل</button><button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('input[name=permission_ids]').forEach(x=>{if(!x.disabled)x.checked=false})">إلغاء الكل</button>{% endif %}</div>
+<div class="row g-3">
+{% for group in permissions|groupby('group_name') %}
+<div class="col-12 col-md-6 col-xl-4"><div class="permission-group"><h3>{{group.grouper}}</h3>
+{% for p in group.list %}
+<label class="permission-row {% if p.key in role_defaults %}role-default{% endif %}">
+<input type="checkbox" name="permission_ids" value="{{p.id}}" {% if effective.get(p.key) %}checked{% endif %} {% if role_locked %}disabled{% endif %}>
+<span>{{p.name}}</span><small>{% if p.key in role_defaults %}افتراضية للدور{% else %}تخصيص{% endif %}</small>
+</label>
+{% endfor %}
+</div></div>
+{% endfor %}
+</div>
+{% if not role_locked %}<div class="mt-4 d-flex gap-2 flex-wrap"><button class="btn btn-primary"><i class="bi bi-shield-check"></i> حفظ الصلاحيات</button><a class="btn btn-light" href="{{url_for('admin.users')}}">إلغاء</a></div>{% endif %}
 </form>
 {% endblock %}
