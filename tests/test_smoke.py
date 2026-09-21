@@ -1,5 +1,8 @@
-from app.models import Account,VehicleType
+from decimal import Decimal
+import pytest
+from app.models import Account, VehicleType, JournalEntry, JournalLine
 from app.extensions import db
+from app.services.accounting import create_posted_entry
 
 def login(client):
     return client.post("/login",data={"username":"admin","password":"admin"},follow_redirects=True)
@@ -9,10 +12,23 @@ def test_seed_and_dashboard(client):
     assert response.status_code==200
     assert "سوق الجملة" in response.get_data(as_text=True)
 
-def test_system_account_tree(app):
+def test_migration_seeded_system_accounts(app):
     with app.app_context():
         assert db.session.query(Account).filter(Account.is_group.is_(True)).count()==5
         assert db.session.query(VehicleType).count()>=7
+
+def test_balanced_entry_and_reject_unbalanced(app):
+    with app.app_context():
+        user=db.session.query(__import__("app.models",fromlist=["User"]).User).filter_by(username="admin").one()
+        debit=db.session.query(Account).filter_by(system_key="main_cash").one()
+        credit=db.session.query(Account).filter_by(system_key="entry_revenue").one()
+        entry=create_posted_entry(description="اختبار",entry_date=__import__("datetime").date.today(),created_by_id=user.id,
+            lines=[{"account":debit,"debit":Decimal("100")},{"account":credit,"credit":Decimal("100")}],prefix="TST")
+        assert entry.totals()==(Decimal("100"),Decimal("100"))
+        db.session.commit()
+        with pytest.raises(ValueError):
+            create_posted_entry(description="غير متزن",entry_date=__import__("datetime").date.today(),created_by_id=user.id,
+                lines=[{"account":debit,"debit":Decimal("100")},{"account":credit,"credit":Decimal("90")}],prefix="BAD")
 
 def test_login_bad_password(client):
     response=client.post("/login",data={"username":"admin","password":"wrong"},follow_redirects=True)
