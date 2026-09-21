@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{voucher.number}} - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">سند مالي</span><h1>{{voucher.number}}</h1><p>{{{'receipt':'سند قبض','payment':'سند صرف','transfer':'سند تحويل','adjustment':'تسوية'}.get(voucher.voucher_type,voucher.voucher_type)}} — {{voucher.voucher_date}}</p></div><button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة السند</button></div>
+<div class="card-soft print-paper">
+  <div class="document-heading"><div><strong>{{app_name}}</strong><small>سوق الجملة</small></div><div><span>{{{'receipt':'سند قبض','payment':'سند صرف','transfer':'سند تحويل','adjustment':'تسوية'}.get(voucher.voucher_type,voucher.voucher_type)}}</span><b>{{voucher.number}}</b></div></div>
+  <div class="document-fields">
+    <div><span>التاريخ</span><strong>{{voucher.voucher_date}}</strong></div>
+    <div><span>المستفيد / الطرف</span><strong>{{voucher.beneficiary or '—'}}</strong></div>
+    <div><span>المبلغ</span><strong>{{'{:,.2f}'.format(voucher.amount)}} {{currency}}</strong></div>
+  </div>
+  <div class="statement-box"><span>البيان</span><strong>{{voucher.description}}</strong></div>
+  <div class="table-wrap mt-3"><table class="table"><thead><tr><th>من حساب</th><th>إلى حساب</th><th>القيد المرتبط</th></tr></thead><tbody><tr><td>{{voucher.from_account.code}} — {{voucher.from_account.name}}</td><td>{{voucher.to_account.code}} — {{voucher.to_account.name}}</td><td>{{entry.number if entry else '—'}}</td></tr></tbody></table></div>
+  <div class="signature-grid"><div>المستلم / المستفيد<br><br>________________</div><div>المحاسب<br><br>________________</div><div>اعتماد الإدارة<br><br>________________</div></div>
+</div>
+{% endblock %}
