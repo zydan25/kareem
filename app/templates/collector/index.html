@@ -179,7 +179,8 @@ function chooseCustomer(x){
   else showNewVehicle();
 }
 function chooseVehicleResult(x){
-  client.value=x.name||'';
+  // A vehicle without a customer must not submit a fake customer name.
+  client.value=x.id ? (x.name||'') : '';
   clientId.value=x.id||'';
   clientPhone.value=x.phone||'';
   clientAddress.value=x.address||'';
