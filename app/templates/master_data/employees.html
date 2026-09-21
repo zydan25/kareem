@@ -4,7 +4,7 @@
 <div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>شؤون الموظفين</h1><p>ملفات الموظفين والحسابات والرواتب والجداول والصلاحيات.</p></div>{% if can_manage %}<button class="btn btn-primary" data-toggle-panel="add-employee"><i class="bi bi-plus-lg"></i> إضافة موظف</button>{% endif %}</div>
 <div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الوظيفة"></div><button class="btn btn-outline-primary">بحث</button></form></div>
 {% if can_manage %}<div id="add-employee" class="card-soft add-panel"><form method="post" enctype="multipart/form-data" class="row g-3">
-<div class="col-12"><div class="form-section-title">بيانات الموظف <span>المعرف والصورة اختياريان</span></div></div>
+<div class="col-12"><div class="form-section-title">بيانات الموظف <span>المعرف والصورة اختياريان · الكود ينشأ تلقائيًا</span></div></div>
 <div class="col-12 col-lg-4"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control form-control-lg" required></div>
 <div class="col-6 col-lg-2"><label class="form-label">رقم الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
 <div class="col-6 col-lg-2"><label class="form-label">رقم البطاقة</label><input name="identity_number" class="form-control"></div>
