@@ -23,7 +23,7 @@
       <span class="account-type-icon">{{'📁' if a.is_group else '•'}}</span>
       <div><strong>{{a.name}}</strong><small>{{a.code}} · {{account_type_labels.get(a.account_type,a.account_type)}}</small></div>
     </div>
-    <div class="account-node-balance">{% if not a.is_group %}<strong>{{'{:,.2f}'.format(balance_func(a.id))}}</strong><small>{{currency}}</small>{% else %}<span>تجميعي</span>{% endif %}</div>
+    <div class="account-node-balance">{% if not a.is_group %}<strong>{{'{:,.2f}'.format(row.balance)}}</strong><small>{{currency}}</small>{% else %}<span>تجميعي</span>{% endif %}</div>
     <div class="account-node-actions">
       {% if not a.is_group %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a>{% endif %}
       <a class="btn btn-sm btn-light" href="{{url_for('accounting.account_edit',account_id=a.id)}}">تعديل</a>
