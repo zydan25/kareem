@@ -15,12 +15,30 @@ from ..services.operations import (
     post_payroll, post_voucher, create_settlement, post_expense,
 )
 
+
 bp=Blueprint("operations",__name__,url_prefix="/operations")
+
+def _account_picker():
+    all_accounts=Account.query.filter_by(active=True).order_by(Account.code).all()
+    children={}
+    for a in all_accounts:
+        children.setdefault(a.parent_id,[]).append(a)
+    for values in children.values():
+        values.sort(key=lambda a:a.code)
+    result=[]
+    def walk(parent_id,depth=0):
+        for a in children.get(parent_id,[]):
+            result.append((a,depth))
+            walk(a.id,depth+1)
+    walk(None)
+    return result
+
 
 @bp.route("/vouchers",methods=["GET","POST"])
 @permission_required("vouchers.post")
 def vouchers():
-    accounts=Account.query.filter_by(is_group=False,active=True,allow_manual_posting=True).order_by(Account.code).all()
+    account_options=_account_picker()
+    accounts=[a for a,_ in account_options if not a.is_group and a.allow_manual_posting]
     rows=Voucher.query.order_by(Voucher.id.desc()).limit(200).all()
     if request.method=="POST":
         try:
@@ -40,7 +58,7 @@ def vouchers():
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     selected_type=request.args.get("type","receipt")
-    return render_template("operations/vouchers.html",accounts=accounts,vouchers=rows,selected_type=selected_type,types=[
+    return render_template("operations/vouchers.html",accounts=accounts,account_options=account_options,vouchers=rows,types=[
         (VoucherType.RECEIPT.value,"سند قبض"),(VoucherType.PAYMENT.value,"سند صرف"),
         (VoucherType.TRANSFER.value,"سند تحويل")])
 
@@ -111,7 +129,7 @@ def manual_journal():
             return redirect(url_for("accounting.journal"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/manual_journal.html",accounts=accounts,rows=range(1,9),today=date.today())
+    return render_template("operations/manual_journal.html",accounts=accounts,account_options=account_options,rows=range(1,9),today=date.today())
 
 @bp.route("/settlements",methods=["GET","POST"])
 @permission_required("collector.settle")
