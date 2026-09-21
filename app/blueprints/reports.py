@@ -44,8 +44,9 @@ def gate():
     rows=q.order_by(GateTransaction.transaction_date.desc()).all()
     total=sum((D(x.amount) for x in rows),D(0))
     entry_total=sum((D(x.amount) for x in rows if x.direction=="entry"),D(0))
+    exit_total=sum((D(x.amount) for x in rows if x.direction=="exit"),D(0))
     exit_count=sum((1 for x in rows if x.direction=="exit"),0)
-    return render_template("reports/gate.html",rows=rows,start=start,end=end,total=total,entry_total=entry_total,exit_count=exit_count,
+    return render_template("reports/gate.html",rows=rows,start=start,end=end,total=total,entry_total=entry_total,exit_total=exit_total,exit_count=exit_count,
         collectors=User.query.filter_by(active=True).order_by(User.full_name).all(),
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
         shifts=Shift.query.order_by(Shift.opened_at.desc()).limit(150).all())
