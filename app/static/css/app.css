@@ -129,3 +129,24 @@
   --primary-border-soft:color-mix(in srgb,var(--primary) 14%,#fff);
   --neutral-soft:#f7f8f8;
 }
+
+/* Customer vehicles: multiple vehicles and clear selection */
+.vehicle-builder{display:flex;flex-direction:column;gap:8px}
+.client-vehicle-row{display:grid;grid-template-columns:1.1fr 1.1fr 1.3fr 1.4fr auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--border);border-radius:13px;background:var(--neutral-soft)}
+.client-vehicle-row .form-label{margin-bottom:4px}
+.vehicle-remove{width:36px;height:38px;display:grid;place-items:center}
+.customer-vehicles-panel{background:var(--primary-faint);border:1px solid var(--primary-border);border-radius:14px;padding:10px}
+.customer-vehicles-panel[hidden]{display:none!important}
+.customer-vehicles-head{margin-bottom:7px}
+.customer-vehicles-head strong{display:block;font-size:13px;color:var(--primary)}
+.customer-vehicles-head small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.customer-vehicle-option{display:flex;align-items:center;gap:9px;width:100%;border:1px solid var(--border);background:#fff;border-radius:11px;padding:9px;text-align:right;font-family:inherit;color:var(--ink);margin-bottom:6px}
+.customer-vehicle-option:last-child{margin-bottom:0}
+.customer-vehicle-option:hover{background:var(--primary-faint);border-color:var(--primary-border)}
+.customer-vehicle-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;background:var(--primary-soft);color:var(--primary)}
+.customer-vehicle-option>span:nth-child(2){min-width:0;flex:1}
+.customer-vehicle-option strong,.customer-vehicle-option small{display:block}
+.customer-vehicle-option strong{font-size:12px}
+.customer-vehicle-option small{font-size:9px;color:var(--muted);margin-top:2px}
+@media(max-width:900px){.client-vehicle-row{grid-template-columns:1fr 1fr}.client-vehicle-row>div:nth-child(3),.client-vehicle-row>div:nth-child(4){grid-column:1/-1}}
+@media(max-width:500px){.client-vehicle-row{grid-template-columns:1fr}.client-vehicle-row>div{grid-column:1!important}.vehicle-remove{width:100%}}
