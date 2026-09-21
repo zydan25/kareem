@@ -1,42 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}إدارة العملاء - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head">
-  <div><span class="eyebrow">البيانات الأساسية</span><h1>إدارة العملاء</h1><p>ملف العميل، مركباته، وكلاؤه، كشف حسابه وحركة البوابة.</p></div>
-  {% if can_manage %}<button class="btn btn-primary" type="button" data-toggle-panel="add-client"><i class="bi bi-plus-lg"></i> إضافة عميل</button>{% endif %}
-</div>
-<div class="toolbar-card">
-  <form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الكود"></div><button class="btn btn-outline-primary">بحث</button>{% if q %}<a class="btn btn-light" href="{{url_for('master_data.clients')}}">مسح</a>{% endif %}</form>
-</div>
-{% if can_manage %}
-<div id="add-client" class="card-soft add-panel">
-<form method="post" class="row g-3">
-<div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب يُنشأ تلقائيًا</span></div></div>
-<div class="col-6 col-lg-2"><label class="form-label">الكود</label><input name="code" class="form-control" placeholder="تلقائي"></div>
-<div class="col-12 col-lg-4"><label class="form-label">الاسم</label><input name="name" class="form-control" required autofocus></div>
-<div class="col-6 col-lg-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
-<div class="col-12 col-lg-3"><label class="form-label">العنوان</label><input name="address" class="form-control"></div>
-<div class="col-12"><label class="form-label">الوكلاء المرتبطون</label><select name="agent_ids" class="form-select" multiple size="4">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
-<div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات"></textarea></div>
-<div class="col-12 d-flex gap-2"><button class="btn btn-primary">حفظ العميل</button><button class="btn btn-light" type="button" data-toggle-panel="add-client">إغلاق</button></div>
-</form>
-</div>
-{% endif %}
-<div class="card-soft">
-<div class="section-title"><div><h3>قائمة العملاء</h3><small class="text-muted">{{clients|length}} نتيجة</small></div></div>
-<div class="entity-list">
-{% for c in clients %}
-<div class="entity-row">
-<div class="entity-main"><div class="entity-icon"><i class="bi bi-person-vcard"></i></div><div class="min-w-0"><strong>{{c.name}}</strong><div class="entity-meta"><span>{{c.code}}</span><span>{{c.phone or 'بدون هاتف'}}</span><span>{{c.account.name if c.account else 'حساب تلقائي'}}</span></div></div></div>
-<div class="entity-balance"><span class="status-dot {{'on' if c.active else 'off'}}"></span>{{'نشط' if c.active else 'موقوف'}}</div>
-<div class="more-menu"><details><summary title="مزيد"><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop">
-<a href="{{url_for('master_data.client_detail',client_id=c.id)}}"><i class="bi bi-eye"></i> تفاصيل</a>
-<a href="{{url_for('master_data.edit_client',client_id=c.id)}}"><i class="bi bi-pencil"></i> تعديل</a>
-{% if c.account %}<a href="{{url_for('reports.account_statement',account_id=c.account.id)}}"><i class="bi bi-file-earmark-text"></i> كشف حساب</a>{% endif %}
-<a href="{{url_for('reports.gate',start='',end='',agent_id='')}}" onclick="event.preventDefault();location.href='{{url_for("reports.gate")}}?start={{today if today is defined else ""}}&end={{today if today is defined else ""}}&client_id={{c.id}}'"><i class="bi bi-bar-chart"></i> تقرير</a>
-{% if can_manage %}<form method="post" action="{{url_for('master_data.delete_client',client_id=c.id)}}" onsubmit="return confirm('سيتم إيقاف العميل وحفظ تاريخه. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}
-</div></details></div>
-</div>
-{% else %}<div class="empty-state"><i class="bi bi-people"></i><strong>لا توجد نتائج</strong><span>أضف أول عميل أو غيّر البحث.</span></div>{% endfor %}
+<div class="page-head"><div><span class="eyebrow">البيانات الأساسية</span><h1>إدارة العملاء</h1><p>ملف العميل، مركباته، وكلاؤه، كشف حسابه وحركة البوابة.</p></div>{% if can_manage %}<button class="btn btn-primary" type="button" data-toggle-panel="add-client"><i class="bi bi-plus-lg"></i> إضافة عميل</button>{% endif %}</div>
+<div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الكود"></div><button class="btn btn-outline-primary">بحث</button>{% if q %}<a class="btn btn-light" href="{{url_for('master_data.clients')}}">مسح</a>{% endif %}</form></div>
+{% if can_manage %}<div id="add-client" class="card-soft add-panel"><form method="post" class="row g-3"><div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب يُنشأ تلقائيًا</span></div></div><div class="col-6 col-lg-2"><label class="form-label">الكود</label><input name="code" class="form-control" placeholder="تلقائي"></div><div class="col-12 col-lg-4"><label class="form-label">الاسم</label><input name="name" class="form-control" required></div><div class="col-6 col-lg-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div><div class="col-12 col-lg-3"><label class="form-label">العنوان</label><input name="address" class="form-control"></div><div class="col-12"><label class="form-label">الوكلاء المرتبطون</label><select name="agent_ids" class="form-select" multiple size="4">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div><div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات"></textarea></div><div class="col-12"><button class="btn btn-primary">حفظ العميل</button></div></form></div>{% endif %}
+<div class="card-soft"><div class="section-title"><div><h3>قائمة العملاء</h3><small class="text-muted">{{clients|length}} نتيجة</small></div></div><div class="entity-list">
+{% for c in clients %}<div class="entity-row"><div class="entity-main"><div class="entity-icon"><i class="bi bi-person-vcard"></i></div><div><strong>{{c.name}}</strong><div class="entity-meta"><span>{{c.code}}</span><span>{{c.phone or 'بدون هاتف'}}</span><span>{{c.account.name if c.account else 'حساب تلقائي'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if c.active else 'off'}}"></span>{{'نشط' if c.active else 'موقوف'}}</div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('master_data.client_detail',client_id=c.id)}}">تفاصيل</a>{% if can_manage %}<a href="{{url_for('master_data.edit_client',client_id=c.id)}}">تعديل</a>{% endif %}{% if c.account %}<a href="{{url_for('reports.account_statement',account_id=c.account.id)}}">كشف الحساب</a>{% endif %}<a href="{{url_for('reports.client_report',client_id=c.id)}}">تقرير العميل</a>{% if can_manage %}<form method="post" action="{{url_for('master_data.delete_client',client_id=c.id)}}" onsubmit="return confirm('سيتم إيقاف العميل مع حفظ تاريخه. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}</div></details></div></div>{% else %}<div class="empty-state"><i class="bi bi-people"></i><strong>لا توجد نتائج</strong><span>أضف أول عميل أو غيّر البحث.</span></div>{% endfor %}
 </div></div>
 {% endblock %}
