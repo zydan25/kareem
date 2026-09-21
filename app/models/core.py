@@ -287,6 +287,7 @@ class PayrollRun(TimestampMixin,db.Model):
     payroll_month=db.Column(db.Date,nullable=False,unique=True)
     status=db.Column(db.String(20),nullable=False,default="draft")
     journal_entry_id=db.Column(db.Integer,db.ForeignKey("journal_entries.id",ondelete="SET NULL"))
+    lines=db.relationship("PayrollLine",back_populates="payroll_run",cascade="all, delete-orphan",order_by="PayrollLine.id")
 
 class PayrollLine(db.Model):
     __tablename__="payroll_lines"
@@ -297,6 +298,7 @@ class PayrollLine(db.Model):
     deductions=db.Column(db.Numeric(18,2),nullable=False,default=0)
     net_amount=db.Column(db.Numeric(18,2),nullable=False)
     employee=db.relationship("Employee",foreign_keys=[employee_id])
+    payroll_run=db.relationship("PayrollRun",back_populates="lines")
 
 class EmployeeSchedule(TimestampMixin,db.Model):
     __tablename__="employee_schedules"
