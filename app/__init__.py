@@ -3,6 +3,14 @@ from config import Config
 from .extensions import db, migrate, login_manager
 from .permissions import can
 
+ROLE_LABELS = {
+    "admin": "مدير النظام",
+    "manager": "مدير",
+    "accountant": "محاسب",
+    "collector": "متحصل",
+    "auditor": "مراجع",
+}
+
 def create_app(config_class=Config):
     app=Flask(__name__)
     app.config.from_object(config_class)
@@ -37,5 +45,6 @@ def create_app(config_class=Config):
             "app_name":app.config["PWA_NAME"],
             "currency":app.config["DEFAULT_CURRENCY"],
             "can":can,
+            "role_labels": ROLE_LABELS,
         }
     return app
