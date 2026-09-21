@@ -1,1 +1,45 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>السندات</h1><p>قبض وصرف وتحويل مع ترحيل محاسبي فوري.</p></div></div><div class="card-soft mb-4"><form method="post" class="row g-3"><div class="col-md-3"><label class="form-label">النوع</label><select name="voucher_type" class="form-select">{% for v,n in types %}<option value="{{v}}">{{n}}</option>{% endfor %}</select></div><div class="col-md-4"><label class="form-label">من حساب</label><select name="from_account_id" class="form-select" required><option value="">اختر</option>{% for a in accounts %}<option value="{{a.id}}">{{a.code}} — {{a.name}}</option>{% endfor %}</select></div><div class="col-md-4"><label class="form-label">إلى حساب</label><select name="to_account_id" class="form-select" required><option value="">اختر</option>{% for a in accounts %}<option value="{{a.id}}">{{a.code}} — {{a.name}}</option>{% endfor %}</select></div><div class="col-md-3"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div><div class="col-md-4"><label class="form-label">المستفيد/الطرف</label><input name="beneficiary" class="form-control"></div><div class="col-md-5"><label class="form-label">البيان</label><input name="description" class="form-control" required></div><div class="col-12"><button class="btn btn-primary btn-lg">ترحيل السند</button></div></form></div><div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>السند</th><th>النوع</th><th>التاريخ</th><th>من</th><th>إلى</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>{% for v in vouchers %}<tr><td><code>{{v.number}}</code></td><td>{{{'receipt':'قبض','payment':'صرف','transfer':'تحويل'}.get(v.voucher_type,v.voucher_type)}}</td><td>{{v.voucher_date}}</td><td>{{v.from_account_id}}</td><td>{{v.to_account_id}}</td><td>{{'{:,.2f}'.format(v.amount)}} {{currency}}</td><td>{{'مرحّل' if v.status=='posted' else 'ملغى'}}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}السندات المالية - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">المحاسبة</span><h1>السندات المالية</h1><p>سند قبض، سند صرف وسند تحويل مع قيد محاسبي تلقائي ورقم مرجعي قابل للطباعة.</p></div>
+  <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة القائمة</button>
+</div>
+<div class="quick-grid mb-4">
+  <a href="?type=receipt"><i class="bi bi-box-arrow-in-down"></i><span>سند قبض</span><small>استلام نقد أو قيمة من طرف</small></a>
+  <a href="?type=payment"><i class="bi bi-box-arrow-up"></i><span>سند صرف</span><small>صرف من الصندوق أو حساب آخر</small></a>
+  <a href="?type=transfer"><i class="bi bi-arrow-left-right"></i><span>سند تحويل</span><small>تحويل بين حسابين</small></a>
+</div>
+<div class="card-soft mb-4">
+  <div class="section-title"><div><h3>إصدار سند</h3><small class="text-muted">العملية تترحل كقيد مزدوج مباشرة.</small></div></div>
+  <form method="post" class="row g-3">
+    <div class="col-12 col-md-3"><label class="form-label">نوع السند</label><select id="voucher_type" name="voucher_type" class="form-select">{% for v,n in types %}<option value="{{v}}" {% if selected_type==v %}selected{% endif %}>{{n}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-md-4"><label class="form-label">من حساب</label><select name="from_account_id" class="form-select" required><option value="">اختر الحساب</option>{% for a in accounts %}<option value="{{a.id}}">{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-md-4"><label class="form-label">إلى حساب</label><select name="to_account_id" class="form-select" required><option value="">اختر الحساب</option>{% for a in accounts %}<option value="{{a.id}}">{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-md-3"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" autocomplete="off" required></div>
+    <div class="col-12 col-md-4"><label class="form-label">المستفيد / الطرف</label><input name="beneficiary" class="form-control"></div>
+    <div class="col-12 col-md-5"><label class="form-label">البيان</label><input name="description" class="form-control" required></div>
+    <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check2-circle"></i> ترحيل السند</button></div>
+  </form>
+</div>
+
+<div class="card-soft">
+  <div class="section-title"><div><h3>سجل السندات</h3><small class="text-muted">{{vouchers|length}} سند معروض</small></div><input id="voucher-filter" class="form-control w-auto" placeholder="بحث برقم السند أو البيان"></div>
+  <div class="table-wrap"><table class="table align-middle" id="vouchers-table">
+    <thead><tr><th>رقم السند</th><th>النوع</th><th>التاريخ</th><th>المستفيد</th><th>المبلغ</th><th>الحالة</th><th>عرض</th></tr></thead>
+    <tbody>{% for v in vouchers %}
+    <tr data-search="{{v.number}} {{v.description}} {{v.beneficiary or ''}}">
+      <td><code>{{v.number}}</code></td>
+      <td>{{{'receipt':'قبض','payment':'صرف','transfer':'تحويل','adjustment':'تسوية'}.get(v.voucher_type,v.voucher_type)}}</td>
+      <td>{{v.voucher_date}}</td><td>{{v.beneficiary or '—'}}</td>
+      <td class="fw-bold">{{'{:,.2f}'.format(v.amount)}} {{currency}}</td>
+      <td><span class="badge-soft">{{'مرحّل' if v.status=='posted' else 'ملغى'}}</span></td>
+      <td><a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.voucher_detail',voucher_id=v.id)}}">عرض وطباعة</a></td>
+    </tr>
+    {% else %}<tr><td colspan="7" class="text-center py-5 text-muted">لا توجد سندات بعد.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const vf=document.getElementById('voucher-filter');vf&&vf.addEventListener('input',()=>{const q=vf.value.trim().toLowerCase();document.querySelectorAll('#vouchers-table tbody tr').forEach(r=>r.style.display=(r.dataset.search||r.innerText).toLowerCase().includes(q)?'':'none')});
+</script>{% endblock %}
