@@ -1,10 +1,9 @@
 from datetime import date
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import current_user
 from sqlalchemy import or_
 
 from ..extensions import db
-from ..models import Agent, Client, ClientAgent, Employee, User, Vehicle, VehicleAgent, VehicleType
+from ..models import Agent, Client, ClientAgent, Employee, Role, User, Vehicle, VehicleAgent, VehicleType
 from ..permissions import can, permission_required
 from ..services.audit import audit
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_payroll_account
@@ -13,6 +12,38 @@ bp=Blueprint("master_data",__name__)
 
 def next_code(prefix, model):
     return f"{prefix}-{db.session.query(model).count()+1:05d}"
+
+def D(value):
+    from decimal import Decimal
+    return Decimal(str(value or 0)).quantize(Decimal("0.01"))
+
+def _save_employee_login(emp):
+    username=request.form.get("login_username","").strip()
+    password=request.form.get("login_password","")
+    role=request.form.get("login_role") or Role.COLLECTOR.value
+    if not username:
+        return None
+    if not password and not emp.user:
+        raise ValueError("عند إنشاء حساب دخول للموظف يجب إدخال كلمة المرور")
+    existing=db.session.query(User).filter_by(username=username).first()
+    if existing and (not emp.user or existing.id!=emp.user.id):
+        raise ValueError("اسم المستخدم مستخدم مسبقًا")
+    user=emp.user
+    if user:
+        user.username=username
+        user.full_name=emp.full_name
+        user.role=role
+        if password:
+            user.set_password(password)
+        audit("update","user",user.id,user.username)
+    else:
+        user=User(username=username,full_name=emp.full_name,role=role,active=True,employee_id=emp.id)
+        if password:
+            user.set_password(password)
+        db.session.add(user)
+        db.session.flush()
+        audit("create","user",user.id,user.username)
+    return user
 
 @bp.route("/agents",methods=["GET","POST"])
 @permission_required("agents.view")
@@ -34,6 +65,7 @@ def agents():
 @permission_required("agents.manage")
 def edit_agent(agent_id):
     agent=db.session.get(Agent,agent_id)
+    if not agent: return ("غير موجود",404)
     if request.method=="POST":
         try:
             agent.code=request.form["code"]; agent.name=request.form["name"].strip()
@@ -47,7 +79,9 @@ def edit_agent(agent_id):
 @bp.post("/agents/<int:agent_id>/toggle")
 @permission_required("agents.manage")
 def toggle_agent(agent_id):
-    agent=db.session.get(Agent,agent_id); agent.active=not agent.active
+    agent=db.session.get(Agent,agent_id)
+    if not agent: return ("غير موجود",404)
+    agent.active=not agent.active
     audit("toggle","agent",agent.id,str(agent.active)); db.session.commit()
     return redirect(url_for("master_data.agents"))
 
@@ -74,7 +108,9 @@ def clients():
 @bp.route("/clients/<int:client_id>/edit",methods=["GET","POST"])
 @permission_required("clients.manage")
 def edit_client(client_id):
-    client=db.session.get(Client,client_id); agents=Agent.query.filter_by(active=True).order_by(Agent.name).all()
+    client=db.session.get(Client,client_id); 
+    if not client: return ("غير موجود",404)
+    agents=Agent.query.filter_by(active=True).order_by(Agent.name).all()
     links=ClientAgent.query.filter_by(client_id=client.id).all(); selected={x.agent_id for x in links}
     if request.method=="POST":
         try:
@@ -82,10 +118,8 @@ def edit_client(client_id):
             client.phone=request.form.get("phone"); client.address=request.form.get("address"); client.notes=request.form.get("notes")
             ensure_client_account(client)
             current={x.agent_id:x for x in links}; target={int(x) for x in request.form.getlist("agent_ids")}
-            for aid,row in current.items():
-                row.active=aid in target
-            for aid in target-current.keys():
-                db.session.add(ClientAgent(client_id=client.id,agent_id=aid,priority=1,active=True))
+            for aid,row in current.items(): row.active=aid in target
+            for aid in target-current.keys(): db.session.add(ClientAgent(client_id=client.id,agent_id=aid,priority=1,active=True))
             audit("update","client",client.id,client.name); db.session.commit(); flash("تم تحديث العميل والوكلاء المرتبطين","success")
             return redirect(url_for("master_data.clients"))
         except Exception as exc:
@@ -95,7 +129,9 @@ def edit_client(client_id):
 @bp.post("/clients/<int:client_id>/toggle")
 @permission_required("clients.manage")
 def toggle_client(client_id):
-    client=db.session.get(Client,client_id); client.active=not client.active
+    client=db.session.get(Client,client_id)
+    if not client: return ("غير موجود",404)
+    client.active=not client.active
     audit("toggle","client",client.id,str(client.active)); db.session.commit()
     return redirect(url_for("master_data.clients"))
 
@@ -123,7 +159,9 @@ def vehicles():
 @bp.route("/vehicles/<int:vehicle_id>/edit",methods=["GET","POST"])
 @permission_required("vehicles.manage")
 def edit_vehicle(vehicle_id):
-    v=db.session.get(Vehicle,vehicle_id); types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
+    v=db.session.get(Vehicle,vehicle_id)
+    if not v: return ("غير موجود",404)
+    types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
     clients=Client.query.filter_by(active=True).order_by(Client.name).all(); agents=Agent.query.filter_by(active=True).order_by(Agent.name).all()
     links=VehicleAgent.query.filter_by(vehicle_id=v.id).all(); selected={x.agent_id for x in links}
     if request.method=="POST":
@@ -143,7 +181,9 @@ def edit_vehicle(vehicle_id):
 @bp.post("/vehicles/<int:vehicle_id>/toggle")
 @permission_required("vehicles.manage")
 def toggle_vehicle(vehicle_id):
-    v=db.session.get(Vehicle,vehicle_id); v.active=not v.active
+    v=db.session.get(Vehicle,vehicle_id)
+    if not v: return ("غير موجود",404)
+    v.active=not v.active
     audit("toggle","vehicle",v.id,v.plate_number); db.session.commit()
     return redirect(url_for("master_data.vehicles"))
 
@@ -157,36 +197,41 @@ def employees():
             emp=Employee(code=request.form.get("code") or next_code("EMP",Employee),full_name=request.form["full_name"].strip(),
                 phone=request.form.get("phone"),job_title=request.form.get("job_title") or "موظف",
                 monthly_salary=D(request.form.get("monthly_salary","0")),hire_date=date.fromisoformat(request.form.get("hire_date") or date.today().isoformat()))
-            db.session.add(emp); db.session.flush(); ensure_employee_account(emp); ensure_employee_payroll_account(emp)
-            audit("create","employee",emp.id,emp.full_name); db.session.commit(); flash("تم إضافة الموظف وحساب العهدة والراتب","success")
+            db.session.add(emp); db.session.flush()
+            ensure_employee_account(emp); ensure_employee_payroll_account(emp)
+            _save_employee_login(emp)
+            audit("create","employee",emp.id,emp.full_name); db.session.commit(); flash("تم إضافة الموظف وحساباته، وحساب الدخول إن تم إدخاله","success")
             return redirect(url_for("master_data.employees"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/employees.html",employees=rows,can_manage=can("employees.manage"))
+    return render_template("master_data/employees.html",employees=rows,can_manage=can("employees.manage"),
+                           roles=[r.value for r in Role],role_labels={"admin":"مدير النظام","manager":"مدير","accountant":"محاسب","collector":"متحصل","auditor":"مراجع"})
 
 @bp.route("/employees/<int:employee_id>/edit",methods=["GET","POST"])
 @permission_required("employees.manage")
 def edit_employee(employee_id):
     emp=db.session.get(Employee,employee_id)
+    if not emp: return ("غير موجود",404)
     if request.method=="POST":
         try:
             emp.code=request.form["code"]; emp.full_name=request.form["full_name"].strip(); emp.phone=request.form.get("phone")
             emp.job_title=request.form.get("job_title") or "موظف"; emp.monthly_salary=D(request.form.get("monthly_salary","0"))
             emp.hire_date=date.fromisoformat(request.form.get("hire_date") or date.today().isoformat())
             ensure_employee_account(emp); ensure_employee_payroll_account(emp)
-            audit("update","employee",emp.id,emp.full_name); db.session.commit(); flash("تم تحديث الموظف","success")
+            _save_employee_login(emp)
+            if emp.user:
+                emp.user.full_name=emp.full_name
+            audit("update","employee",emp.id,emp.full_name); db.session.commit(); flash("تم تحديث الموظف وحساب الدخول إن وجد","success")
             return redirect(url_for("master_data.employees"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/employee_form.html",employee=emp)
+    return render_template("master_data/employee_form.html",employee=emp,roles=[r.value for r in Role],
+                           role_labels={"admin":"مدير النظام","manager":"مدير","accountant":"محاسب","collector":"متحصل","auditor":"مراجع"})
 
 @bp.post("/employees/<int:employee_id>/toggle")
 @permission_required("employees.manage")
 def toggle_employee(employee_id):
-    emp=db.session.get(Employee,employee_id); emp.active=not emp.active
-    audit("toggle","employee",emp.id,str(emp.active)); db.session.commit()
-    return redirect(url_for("master_data.employees"))
-
-def D(value):
-    from decimal import Decimal
-    return Decimal(str(value or 0)).quantize(Decimal("0.01"))
+    emp=db.session.get(Employee,employee_id)
+    if not emp: return ("غير موجود",404)
+    emp.active=not emp.active
+    audit("toggle","employee",emp.id,str(emp.active)); db.session.commit(); return redirect(url_for("master_data.employees"))
