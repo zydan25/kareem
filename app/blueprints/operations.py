@@ -8,7 +8,7 @@ from ..models import (
 )
 from ..permissions import can, permission_required
 from ..services.accounting import D, get_system_account, create_posted_entry
-from ..services.accounts import ensure_agent_account, ensure_employee_payroll_account
+from ..services.accounts import ensure_agent_account, ensure_employee_payroll_account, ensure_user_collector_account
 from ..services.audit import audit
 from ..services.operations import (
     approve_settlement, build_payroll, charge_rent, pay_rent, pay_salary,
@@ -123,12 +123,16 @@ def close_shift(shift_id):
     try:
         if shift.collector_id != current_user.id and not can("collector.approve_settlement"):
             raise ValueError("لا يمكنك إغلاق وردية مستخدم آخر")
-        total=sum((x.amount or 0 for x in shift.__dict__.get("_gate_transactions",[])),D(0))
         txs=__import__("app.models",fromlist=["GateTransaction"]).GateTransaction.query.filter_by(shift_id=shift.id,direction="entry").all()
         total=sum((D(x.amount) for x in txs),D(0))
-        shift.closing_balance=total; shift.status="pending"
+        collector_account=ensure_user_collector_account(current_user)
+        unassigned=sum((D(x.amount) for x in txs if not x.agent_id),D(0))
+        if unassigned>0:
+            settlement=create_settlement(source_account=collector_account,target_account=get_system_account("main_cash"),amount=unassigned,requested_by_id=current_user.id,shift_id=shift.id,description=f"إخلاء عهدة المتحصل للوردية {shift.shift_name}")
+            audit("auto_request_shift_settlement","settlement",settlement.id,settlement.number)
+        shift.closing_balance=D(shift.opening_balance)+total; shift.status="pending"; shift.closed_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc)
         audit("close_shift","shift",shift.id,str(total)); db.session.commit()
-        flash("تمت إحالة الوردية للمراجعة والتسوية","success")
+        flash("تمت إحالة الوردية للمراجعة، وإنشاء إخلاء عهدة المتحصل تلقائيًا","success")
     except Exception as exc:
         db.session.rollback(); flash(str(exc),"danger")
     return redirect(url_for("operations.shifts"))
