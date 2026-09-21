@@ -1,10 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}الرئيسية - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head">
-  <div><span class="eyebrow">لوحة التحكم</span><h1>أهلًا {{ current_user.full_name }}</h1><p>ملخص سوق الجملة لليوم {{ today }} مع وصول مباشر لكل الوحدات التشغيلية والمحاسبية.</p></div>
-  <a class="btn btn-primary" href="{{ url_for('collector.index') }}"><i class="bi bi-plus-lg"></i> تسجيل حركة بوابة</a>
+<div class="page-head dashboard-head">
+  <div><span class="eyebrow">لوحة التحكم</span><h1>أهلًا {{ current_user.full_name }}</h1><p>ملخص تشغيلي ومالي مباشر لليوم مع اختصارات سريعة.</p></div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if current_user.role in ['admin','manager'] %}
+    <a class="btn btn-primary btn-sm" href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt"></i> سند جديد</a>
+    <a class="btn btn-outline-primary btn-sm" href="{{url_for('master_data.employees')}}"><i class="bi bi-person-workspace"></i> الموظفون</a>
+    <a class="btn btn-outline-primary btn-sm" href="{{url_for('collector.index')}}"><i class="bi bi-upc-scan"></i> تحصيل</a>
+    <a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.index')}}"><i class="bi bi-bar-chart"></i> تقرير</a>
+    {% else %}
+    <a class="btn btn-primary" href="{{ url_for('collector.index') }}"><i class="bi bi-plus-lg"></i> تسجيل حركة</a>
+    {% endif %}
+  </div>
 </div>
+
 <div class="stat-grid">
   <div class="stat-card primary"><span>إيرادات اليوم</span><strong>{{ '{:,.2f}'.format(total or 0) }}</strong><small>{{ currency }}</small></div>
   <div class="stat-card"><span>حركات البوابة</span><strong>{{ count }}</strong><small>دخول وخروج اليوم</small></div>
@@ -12,20 +22,43 @@
   <div class="stat-card"><span>البيانات النشطة</span><strong>{{ agents + vehicles + employees }}</strong><small>{{ agents }} وكيل · {{ vehicles }} مركبة · {{ employees }} موظف</small></div>
 </div>
 
-<div class="card-soft mt-4">
-  <div class="section-title"><div><h3>مركز التشغيل</h3><small class="text-muted">كل ما يحتاجه المستخدم من شاشة واحدة.</small></div></div>
-  <div class="quick-grid">
-    <a href="{{url_for('collector.index')}}"><i class="bi bi-upc-scan"></i><span>البوابة والتحصيل</span><small>تسجيل دخول وخروج المركبات</small></a>
-    {% if can("employees.view") %}<a href="{{url_for('master_data.employees')}}"><i class="bi bi-person-workspace"></i><span>شؤون الموظفين</span><small>إضافة وتعديل الموظفين والحسابات</small></a>{% endif %}
-    {% if can("users.manage") %}<a href="{{url_for('admin.users')}}"><i class="bi bi-shield-check"></i><span>المستخدمون والصلاحيات</span><small>أدوار وصلاحيات تفصيلية</small></a>{% endif %}
-    {% if can("agents.view") %}<a href="{{url_for('master_data.agents')}}"><i class="bi bi-people-fill"></i><span>الوكلاء والعملاء</span><small>السجلات والروابط والحسابات</small></a>{% endif %}
-    {% if can("vehicles.view") %}<a href="{{url_for('master_data.vehicles')}}"><i class="bi bi-truck-front"></i><span>المركبات واللوحات</span><small>النوع والعميل والوكلاء</small></a>{% endif %}
-    {% if can("accounting.view") %}<a href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3-fill"></i><span>شجرة الحسابات</span><small>حسابات فرعية وأرصدة وكشوف</small></a>{% endif %}
-    {% if can("vouchers.post") %}<a href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt"></i><span>السندات المالية</span><small>قبض وصرف وتحويل وطباعة</small></a>{% endif %}
-    {% if can("collector.settle") %}<a href="{{url_for('operations.settlements')}}"><i class="bi bi-safe2"></i><span>العهد وإخلاء العهدة</span><small>أرصدة واعتماد وتسويات</small></a>{% endif %}
-    {% if can("payroll.view") %}<a href="{{url_for('operations.payroll')}}"><i class="bi bi-wallet2"></i><span>الرواتب</span><small>مسير واعتماد وصرف</small></a>{% endif %}
-    {% if can("leases.view") %}<a href="{{url_for('operations.leases')}}"><i class="bi bi-building"></i><span>الإيجارات</span><small>عقود واستحقاقات وتحصيل</small></a>{% endif %}
-    {% if can("reports.view") %}<a href="{{url_for('reports.index')}}"><i class="bi bi-bar-chart-line"></i><span>مركز التقارير</span><small>تشغيلية ومالية ومحاسبية</small></a>{% endif %}
+{% if current_user.role in ['admin','manager'] %}
+<div class="dashboard-charts">
+  <div class="card-soft chart-card">
+    <div class="section-title"><div><h3>التحصيل خلال آخر 7 أيام</h3><small class="text-muted">إجمالي الحركة اليومية</small></div></div>
+    <canvas id="revenueChart" height="120"></canvas>
+  </div>
+  <div class="card-soft chart-card">
+    <div class="section-title"><div><h3>دخول وخروج</h3><small class="text-muted">مقارنة الحركة المالية خلال الأسبوع</small></div></div>
+    <canvas id="directionChart" height="120"></canvas>
   </div>
 </div>
+{% endif %}
+
+<div class="card-soft mt-4">
+  <div class="section-title"><div><h3>اختصارات الإدارة</h3><small class="text-muted">الوحدات الأكثر استخدامًا.</small></div></div>
+  <div class="quick-grid">
+    {% if can("collector.post") %}<a href="{{url_for('collector.index')}}"><i class="bi bi-upc-scan"></i><span>البوابة والتحصيل</span><small>دخول وخروج وتحصيل</small></a>{% endif %}
+    {% if can("employees.view") %}<a href="{{url_for('master_data.employees')}}"><i class="bi bi-person-workspace"></i><span>الموظفون</span><small>الملفات والرواتب والصلاحيات</small></a>{% endif %}
+    {% if can("clients.view") %}<a href="{{url_for('master_data.clients')}}"><i class="bi bi-people-fill"></i><span>العملاء</span><small>الملفات والمركبات</small></a>{% endif %}
+    {% if can("agents.view") %}<a href="{{url_for('master_data.agents')}}"><i class="bi bi-person-badge"></i><span>الوكلاء</span><small>الحسابات والإيجارات</small></a>{% endif %}
+    {% if can("vouchers.post") %}<a href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt"></i><span>السندات</span><small>قبض وصرف وتحويل</small></a>{% endif %}
+    {% if can("accounting.view") %}<a href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3"></i><span>شجرة الحسابات</span><small>الأرصدة وكشوف الحساب</small></a>{% endif %}
+    {% if can("reports.view") %}<a href="{{url_for('reports.index')}}"><i class="bi bi-bar-chart-line"></i><span>التقارير</span><small>تشغيلية ومالية ومحاسبية</small></a>{% endif %}
+  </div>
+</div>
+
+{% if current_user.role in ['admin','manager'] %}
+<div class="card-soft mt-4 manager-note"><i class="bi bi-lightning-charge"></i><div><strong>لوحة الإدارة</strong><span>الأرقام أعلاه والرسومات مرتبطة مباشرة بحركات البوابة المسجلة في النظام.</span></div></div>
+{% endif %}
 {% endblock %}
+{% if current_user.role in ['admin','manager'] %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+const labels={{chart_labels|tojson}}, totals={{chart_totals|tojson}}, entries={{chart_entries|tojson}}, exits={{chart_exits|tojson}};
+new Chart(document.getElementById('revenueChart'),{type:'line',data:{labels,datasets:[{label:'الإجمالي',data:totals,tension:.3,fill:false}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+new Chart(document.getElementById('directionChart'),{type:'bar',data:{labels,datasets:[{label:'دخول',data:entries},{label:'خروج',data:exits}]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});
+</script>
+{% endblock %}
+{% endif %}
