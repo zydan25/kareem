@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}إدارة المصروفات - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">المالية</span><h1>إدارة المصروفات</h1><p>صرف المصروف من حساب نقدي إلى حساب مصروف تفصيلي مع قيد تلقائي.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="stat-grid mb-4"><div class="stat-card primary"><span>عدد المصروفات</span><strong>{{rows|length}}</strong><small>آخر المصروفات</small></div><div class="stat-card"><span>حساب افتراضي</span><strong>{{default_expense.code}}</strong><small>{{default_expense.name}}</small></div><div class="stat-card"><span>النقدية</span><strong>{{default_cash.code}}</strong><small>{{default_cash.name}}</small></div><div class="stat-card"><span>الوصف</span><strong>قيد مزدوج</strong><small>مدين مصروف / دائن نقدية</small></div></div>
+<div class="card-soft add-panel mb-4"><form method="post" class="row g-3">
+<div class="col-12"><div class="form-section-title">إضافة مصروف</div></div>
+<div class="col-6 col-lg-2"><label class="form-label">التاريخ</label><input type="date" name="expense_date" class="form-control"></div>
+<div class="col-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
+<div class="col-12 col-lg-4"><label class="form-label">حساب المصروف</label><select name="expense_account_id" class="form-select">{% for a in expense_accounts %}<option value="{{a.id}}" {% if a.id==default_expense.id %}selected{% endif %}>{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
+<div class="col-12 col-lg-4"><label class="form-label">الحساب النقدي</label><select name="cash_account_id" class="form-select">{% for a in cash_accounts %}<option value="{{a.id}}" {% if a.id==default_cash.id %}selected{% endif %}>{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
+<div class="col-12 col-lg-4"><label class="form-label">المستفيد</label><input name="beneficiary" class="form-control"></div>
+<div class="col-12 col-lg-8"><label class="form-label">البيان</label><input name="description" class="form-control" placeholder="مثال: كهرباء / نقل / صيانة" required></div>
+<div class="col-12"><button class="btn btn-primary btn-lg">ترحيل المصروف</button></div>
+</form></div>
+<div class="card-soft"><div class="section-title"><h3>سجل المصروفات</h3></div><div class="entity-list">{% for e in rows %}<div class="entity-row"><div class="entity-main"><div class="entity-icon expense"><i class="bi bi-wallet2"></i></div><div><strong>{{e.description}}</strong><div class="entity-meta"><span>{{e.number}}</span><span>{{e.expense_date}}</span><span>{{e.beneficiary or 'بدون مستفيد'}}</span></div></div></div><div class="entity-balance"><strong>{{'{:,.2f}'.format(e.amount)}} {{currency}}</strong><small>{{e.expense_account.name}}</small></div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('operations.expense_detail',expense_id=e.id)}}">تفاصيل وطباعة</a><a href="{{url_for('reports.expenses_report',start=e.expense_date,end=e.expense_date)}}">تقرير اليوم</a>{% if e.journal_entry_id %}<a href="{{url_for('accounting.journal_detail',entry_id=e.journal_entry_id)}}">القيد</a>{% endif %}</div></details></div></div>{% else %}<div class="empty-state"><i class="bi bi-wallet2"></i><strong>لا توجد مصروفات</strong><span>أضف أول مصروف.</span></div>{% endfor %}</div></div>
+{% endblock %}
