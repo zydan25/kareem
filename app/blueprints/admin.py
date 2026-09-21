@@ -80,7 +80,19 @@ def permissions(user_id):
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     grants={x.permission_id:x.granted for x in UserPermission.query.filter_by(user_id=user.id).all()}
-    return render_template("admin/permissions.html",user=user,permissions=perms,grants=grants,role_labels=ROLE_LABELS)
+    role_defaults=__import__("app.permissions",fromlist=["ROLE_DEFAULTS"]).ROLE_DEFAULTS.get(user.role,set())
+    effective={}
+    for p in perms:
+        if user.role in {"admin","manager"}:
+            effective[p.key]=True
+        elif p.key in grants:
+            effective[p.key]=bool(grants[p.id])
+        else:
+            effective[p.key]=p.key in role_defaults
+    role_locked=user.role in {"admin","manager"}
+    return render_template("admin/permissions.html",user=user,permissions=perms,grants=grants,
+                           effective=effective,role_defaults=role_defaults,role_locked=role_locked,
+                           role_labels=ROLE_LABELS)
 
 @bp.get("/audit")
 @permission_required("audit.view")
