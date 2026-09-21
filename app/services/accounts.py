@@ -14,3 +14,10 @@ def ensure_child_account(*, parent_key, code, name, system_key=None, account_typ
         is_group=False,allow_manual_posting=True,system_key=system_key)
     db.session.add(account); db.session.flush()
     return account
+
+
+def ensure_user_collector_account(user):
+    if user.employee_id and user.employee:
+        return ensure_employee_account(user.employee)
+    db.session.flush()
+    return ensure_child_account(parent_key="collector_root", code=f"102U{user.id:06d}", name=f"عهدة متحصل: {user.full_name}", account_type="asset")
