@@ -19,13 +19,14 @@ PERMISSIONS=[
 ("accounting.view","عرض المحاسبة","المحاسبة"),("accounting.post","ترحيل قيود يدوية","المحاسبة"),("vouchers.post","إصدار السندات","المحاسبة"),
 ("leases.view","عرض الإيجارات","الإيجارات"),("leases.manage","إدارة الإيجارات","الإيجارات"),("leases.pay","تحصيل الإيجارات","الإيجارات"),
 ("payroll.view","عرض الرواتب","الرواتب"),("payroll.manage","إعداد وترحيل الرواتب","الرواتب"),("payroll.pay","صرف الرواتب","الرواتب"),
+("expenses.view","عرض المصروفات","المصروفات"),("expenses.manage","إدارة المصروفات","المصروفات"),
 ("reports.view","عرض التقارير","التقارير"),("reports.export","طباعة وتصدير التقارير","التقارير"),
 ("settings.view","عرض الإعدادات","الإعدادات"),("settings.manage","إدارة الإعدادات","الإعدادات"),
 ("audit.view","عرض سجل التدقيق","الرقابة")]
 ROLE_DEFAULTS={
 "admin":{"*"},
 "manager":{p[0] for p in PERMISSIONS},
-"accountant":{"dashboard.view","accounting.view","accounting.post","vouchers.post","leases.view","leases.manage","leases.pay","payroll.view","payroll.manage","payroll.pay","reports.view","reports.export","audit.view"},
+"accountant":{"dashboard.view","accounting.view","accounting.post","vouchers.post","leases.view","leases.manage","leases.pay","payroll.view","payroll.manage","payroll.pay","expenses.view","expenses.manage","reports.view","reports.export","audit.view"},
 "collector":{"dashboard.view","collector.view","collector.post","collector.settle","clients.view","vehicles.view"},
 "auditor":{"dashboard.view","accounting.view","reports.view","reports.export","audit.view"}}
 
