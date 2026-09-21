@@ -44,6 +44,7 @@ def index():
         client_phone=request.form.get("client_phone","").strip()
         client_address=request.form.get("client_address","").strip()
         client_notes=request.form.get("client_notes","").strip()
+        gate_notes=request.form.get("gate_notes","").strip()
         direction=request.form.get("direction","entry")
         agent_id=request.form.get("agent_id",type=int)
         type_id=request.form.get("vehicle_type_id",type=int)
@@ -111,7 +112,7 @@ def index():
                 transaction_date=now,direction=direction,vehicle_id=vehicle.id,
                 client_id=client.id if client else vehicle.client_id,agent_id=agent.id if agent else None,
                 collector_id=current_user.id,shift_id=shift.id,amount=amount,payment_method="cash",
-                journal_entry_id=entry.id,counted_for_work=True)
+                notes=gate_notes or None,journal_entry_id=entry.id,counted_for_work=True)
             db.session.add(tx)
             db.session.flush()
             entry.source_id=tx.id
@@ -143,6 +144,15 @@ def index():
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
         recent=day_rows[:20],current_shift=current_shift(),
         daily_total=daily_total,daily_count=daily_count)
+
+@bp.get("/transactions/<int:transaction_id>")
+@permission_required("collector.view")
+def transaction_detail(transaction_id):
+    tx=db.session.get(GateTransaction,transaction_id)
+    if not tx: return ("الحركة غير موجودة",404)
+    if tx.collector_id != current_user.id and current_user.role=="collector":
+        return ("Forbidden",403)
+    return render_template("collector/transaction_detail.html",tx=tx)
 
 @bp.get("/search")
 @permission_required("collector.view")
