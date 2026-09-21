@@ -8,6 +8,8 @@ class TestConfig:
     TESTING=True
     SECRET_KEY="test-secret"
     SQLALCHEMY_TRACK_MODIFICATIONS=False
+    PWA_NAME="سوق الجملة"
+    DEFAULT_CURRENCY="ريال يمني"
 
 @pytest.fixture()
 def app(tmp_path):
