@@ -39,6 +39,23 @@ def _save_identity_image(emp):
     image.save(folder/filename)
     emp.identity_image=f"employee_ids/{filename}"
 
+def _save_party_identity(obj, prefix):
+    image=request.files.get("identity_image")
+    identity_type=request.form.get("identity_type") or None
+    identity_number=request.form.get("identity_number") or None
+    obj.identity_type=identity_type
+    obj.identity_number=identity_number
+    if not image or not image.filename:
+        return
+    suffix=Path(Path(image.filename).name).suffix.lower()
+    if suffix not in {".jpg",".jpeg",".png",".webp"}:
+        raise ValueError("صورة الهوية يجب أن تكون JPG أو PNG أو WEBP")
+    folder=Path(current_app.config["UPLOAD_FOLDER"]) / "party_ids"
+    folder.mkdir(parents=True,exist_ok=True)
+    filename=f"{prefix}-{obj.id}{suffix}"
+    image.save(folder/filename)
+    obj.identity_image=f"party_ids/{filename}"
+
 def _save_employee_login(emp):
     username=request.form.get("login_username","").strip() or (emp.phone or "").strip()
     password=request.form.get("login_password","")
@@ -88,8 +105,9 @@ def agents():
         if not can("agents.manage"): return ("Forbidden",403)
         try:
             agent=Agent(code=next_code("AG",Agent),name=request.form["name"].strip(),
-                phone=request.form.get("phone"),notes=request.form.get("notes"),active=True)
-            db.session.add(agent); db.session.flush(); ensure_agent_account(agent)
+                phone=request.form.get("phone"),identity_type=request.form.get("identity_type") or None,
+                identity_number=request.form.get("identity_number") or None,notes=request.form.get("notes"),active=True)
+            db.session.add(agent); db.session.flush(); _save_party_identity(agent,"agent"); ensure_agent_account(agent)
             audit("create","agent",agent.id,agent.name); db.session.commit(); flash("تم إضافة الوكيل وإنشاء حسابه","success")
             return redirect(url_for("master_data.agents"))
         except Exception as exc:
@@ -116,8 +134,9 @@ def edit_agent(agent_id):
     if request.method=="POST":
         try:
             agent.name=request.form["name"].strip()
-            agent.phone=request.form.get("phone"); agent.notes=request.form.get("notes")
-            ensure_agent_account(agent); audit("update","agent",agent.id,agent.name); db.session.commit()
+            agent.phone=request.form.get("phone"); agent.identity_type=request.form.get("identity_type") or None
+            agent.identity_number=request.form.get("identity_number") or None; agent.notes=request.form.get("notes")
+            _save_party_identity(agent,"agent"); ensure_agent_account(agent); audit("update","agent",agent.id,agent.name); db.session.commit()
             flash("تم تحديث الوكيل","success"); return redirect(url_for("master_data.agent_detail",agent_id=agent.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
@@ -155,8 +174,9 @@ def clients():
         if not can("clients.manage"): return ("Forbidden",403)
         try:
             client=Client(code=next_code("CL",Client),name=request.form["name"].strip(),
-                phone=request.form.get("phone"),address=request.form.get("address"),notes=request.form.get("notes"),active=True)
-            db.session.add(client); db.session.flush(); ensure_client_account(client)
+                phone=request.form.get("phone"),identity_type=request.form.get("identity_type") or None,
+                identity_number=request.form.get("identity_number") or None,address=request.form.get("address"),notes=request.form.get("notes"),active=True)
+            db.session.add(client); db.session.flush(); _save_party_identity(client,"client"); ensure_client_account(client)
 
             # Every newly created customer must have at least one vehicle.
             plates=request.form.getlist("vehicle_plate_number")
@@ -220,8 +240,10 @@ def edit_client(client_id):
     if request.method=="POST":
         try:
             client.name=request.form["name"].strip()
-            client.phone=request.form.get("phone"); client.address=request.form.get("address"); client.notes=request.form.get("notes")
-            ensure_client_account(client)
+            client.phone=request.form.get("phone"); client.identity_type=request.form.get("identity_type") or None
+            client.identity_number=request.form.get("identity_number") or None
+            client.address=request.form.get("address"); client.notes=request.form.get("notes")
+            _save_party_identity(client,"client"); ensure_client_account(client)
             current={x.agent_id:x for x in links}; target={int(x) for x in request.form.getlist("agent_ids")}
             for aid,row in current.items(): row.active=aid in target
             for aid in target-current.keys(): db.session.add(ClientAgent(client_id=client.id,agent_id=aid,priority=1,active=True))
@@ -488,4 +510,25 @@ def employee_identity(employee_id):
     rel=Path(emp.identity_image)
     if rel.parts[:1] != ("employee_ids",): return ("الملف غير موجود",404)
     folder=Path(current_app.config["UPLOAD_FOLDER"]) / "employee_ids"
+    return send_from_directory(folder,rel.name,as_attachment=False)
+
+
+@bp.get("/agents/<int:agent_id>/identity")
+@permission_required("agents.view")
+def agent_identity(agent_id):
+    agent=db.session.get(Agent,agent_id)
+    if not agent or not agent.identity_image: return ("الملف غير موجود",404)
+    rel=Path(agent.identity_image)
+    if rel.parts[:1] != ("party_ids",): return ("الملف غير موجود",404)
+    folder=Path(current_app.config["UPLOAD_FOLDER"]) / "party_ids"
+    return send_from_directory(folder,rel.name,as_attachment=False)
+
+@bp.get("/clients/<int:client_id>/identity")
+@permission_required("clients.view")
+def client_identity(client_id):
+    client=db.session.get(Client,client_id)
+    if not client or not client.identity_image: return ("الملف غير موجود",404)
+    rel=Path(client.identity_image)
+    if rel.parts[:1] != ("party_ids",): return ("الملف غير موجود",404)
+    folder=Path(current_app.config["UPLOAD_FOLDER"]) / "party_ids"
     return send_from_directory(folder,rel.name,as_attachment=False)
