@@ -239,3 +239,35 @@
 .gate-detail-footer{display:flex;justify-content:space-between;gap:10px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);font-size:10px}
 @media(max-width:700px){.gate-detail-grid{grid-template-columns:1fr 1fr}.gate-detail-head{grid-template-columns:auto 1fr}.gate-detail-amount{grid-column:1/-1}}
 @media(max-width:420px){.gate-detail-grid{grid-template-columns:1fr}.gate-detail-paper{padding:13px}}
+
+/* Official voucher */
+.document-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.official-voucher{background:#fff!important;padding:14px;max-width:920px;margin-inline:auto}
+.official-voucher-border{border:2px solid var(--primary);border-radius:10px;padding:18px;position:relative}
+.official-voucher-border:before{content:"";position:absolute;inset:7px;border:1px solid var(--primary-border);border-radius:7px;pointer-events:none}
+.official-voucher .document-heading,.official-voucher .official-voucher-meta,.official-voucher .official-voucher-statement,.official-voucher .official-table,.official-voucher .official-voucher-signatures,.official-voucher .official-voucher-foot{position:relative}
+.official-voucher .document-heading{border-bottom:2px solid var(--primary);padding-bottom:12px}
+.official-voucher .document-heading strong{font-size:20px}
+.official-voucher .document-heading small{font-size:10px}
+.official-voucher-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.official-voucher-meta>div{padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--neutral-soft)}
+.official-voucher-meta span,.official-voucher-meta strong{display:block}
+.official-voucher-meta span{font-size:9px;color:var(--muted)}
+.official-voucher-meta strong{font-size:12px;margin-top:4px}
+.official-voucher-statement{padding:12px;margin-top:10px;border:1px solid var(--border);border-radius:9px}
+.official-voucher-statement span{display:block;font-size:9px;color:var(--muted)}
+.official-voucher-statement strong{display:block;font-size:12px;margin-top:4px;white-space:pre-wrap}
+.official-table th{background:var(--primary-faint)!important}
+.official-voucher-signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:40px;text-align:center}
+.official-voucher-signatures span,.official-voucher-signatures b{display:block}
+.official-voucher-signatures span{font-size:10px;color:var(--muted)}
+.official-voucher-signatures b{font-size:11px;margin-top:24px}
+.official-voucher-foot{display:flex;justify-content:space-between;gap:10px;margin-top:22px;padding-top:8px;border-top:1px dashed var(--border);font-size:8px;color:var(--muted)}
+@media(max-width:650px){.official-voucher-meta,.official-voucher-signatures{grid-template-columns:1fr}.official-voucher-border{padding:12px}}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff!important}
+  .print-hide,.topbar,.mobile-nav,.app-drawer,.menu-backdrop,.site-footer{display:none!important}
+  .content{margin:0!important;padding:0!important;max-width:none!important}
+  .official-voucher{box-shadow:none!important;border:0!important;max-width:none!important}
+}
