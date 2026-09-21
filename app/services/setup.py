@@ -1,6 +1,7 @@
 from ..extensions import db
-from ..models import Account, AccountType, User, Role, VehicleType
+from ..models import Account, AccountType, Employee, Role, Setting, User, VehicleType
 from ..permissions import seed_permissions
+from .accounts import ensure_employee_account, ensure_employee_payroll_account
 
 ROOTS=[
 ("1","الأصول",AccountType.ASSET.value,"root_assets"),
@@ -21,6 +22,7 @@ CHILDREN=[
 ("401","إيرادات دخول السوق",AccountType.REVENUE.value,"root_revenue",False,"entry_revenue"),
 ("402","إيرادات الإيجارات",AccountType.REVENUE.value,"root_revenue",False,"rent_revenue"),
 ("403","إيرادات أخرى",AccountType.REVENUE.value,"root_revenue",False,"other_revenue"),
+("404","إيرادات خروج السوق",AccountType.REVENUE.value,"root_revenue",False,"exit_revenue"),
 ("501","الرواتب والأجور",AccountType.EXPENSE.value,"root_expenses",False,"salary_expense"),
 ("502","مصروفات تشغيلية",AccountType.EXPENSE.value,"root_expenses",False,"operating_expense")]
 
@@ -49,10 +51,46 @@ def ensure_admin(username="admin",password="admin"):
         user.active=True
     return user
 
+def ensure_employees_for_users():
+    users=User.query.order_by(User.id).all()
+    for user in users:
+        if user.employee:
+            continue
+        last=Employee.query.order_by(Employee.id.desc()).first()
+        next_id=(last.id+1) if last else 1
+        emp=Employee(
+            code=f"EMP-{next_id:05d}",
+            full_name=user.full_name or user.username,
+            phone=user.phone,
+            job_title="مدير النظام" if user.role==Role.ADMIN.value else ("متحصل" if user.role==Role.COLLECTOR.value else "موظف"),
+            monthly_salary=0,
+            active=user.active,
+            employment_type="دوام كامل",
+            weekly_hours=48,
+            work_days="0,1,2,3,4,5",
+        )
+        db.session.add(emp)
+        db.session.flush()
+        user.employee_id=emp.id
+        ensure_employee_account(emp)
+        ensure_employee_payroll_account(emp)
+
 def seed():
     ensure_system_accounts()
     seed_permissions()
     ensure_admin()
+    ensure_employees_for_users()
+    defaults=[
+        ("organization_name","سوق الجملة","string","اسم المنشأة"),
+        ("project_name","سوق الجملة","string","اسم المشروع الظاهر"),
+        ("currency_name","ريال يمني","string","العملة"),
+        ("ui_theme","light","string","المظهر"),
+        ("customer_portal","0","boolean","إتاحة لوحة العميل"),
+    ]
+    for key,value,value_type,description in defaults:
+        row=Setting.query.filter_by(key=key).first()
+        if not row:
+            db.session.add(Setting(key=key,value=value,value_type=value_type,description=description))
     for name in ["دينه","قلاب","ناقلة","شاص","باص","سوزوكي","أخرى"]:
         if not db.session.query(VehicleType).filter_by(name=name).first():
             db.session.add(VehicleType(name=name,is_system=True))
