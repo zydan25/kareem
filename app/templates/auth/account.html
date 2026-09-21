@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}حسابي - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">الملف الشخصي</span><h1>حسابي</h1><p>تعديل الاسم ورقم الهاتف وكلمة المرور دون تغيير صلاحياتك.</p></div></div>
+<div class="profile-grid">
+  <div class="card-soft">
+    <div class="profile-head"><div class="profile-avatar">{{user.full_name[:1]}}</div><div><h3>{{user.full_name}}</h3><span class="badge-soft">{{role_labels.get(user.role,user.role)}}</span></div></div>
+    <div class="profile-facts"><div><span>اسم المستخدم</span><strong>{{user.username}}</strong></div><div><span>الهاتف</span><strong>{{user.phone or 'غير مسجل'}}</strong></div><div><span>الموظف</span><strong>{{user.employee.full_name if user.employee else 'غير مرتبط'}}</strong></div></div>
+    {% if user.employee %}<a class="btn btn-outline-primary w-100" href="{{url_for('master_data.employee_detail',employee_id=user.employee.id)}}">ملف الموظف</a>{% endif %}
+  </div>
+  <div class="card-soft">
+    <div class="section-title"><div><h3>تحديث بيانات الدخول</h3><small class="text-muted">رقم الهاتف هو وسيلة الدخول الأساسية.</small></div></div>
+    <form method="post" class="row g-3">
+      <div class="col-12"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control form-control-lg" value="{{user.full_name}}" required></div>
+      <div class="col-12"><label class="form-label">رقم الهاتف</label><input name="phone" class="form-control form-control-lg" value="{{user.phone or ''}}" inputmode="tel" autocomplete="tel"></div>
+      <div class="col-12"><label class="form-label">كلمة المرور الجديدة</label><input name="new_password" type="password" class="form-control form-control-lg" autocomplete="new-password" placeholder="اتركها فارغة لعدم التغيير"></div>
+      <div class="col-12"><button class="btn btn-primary btn-lg">حفظ التغييرات</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
