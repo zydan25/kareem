@@ -13,7 +13,7 @@
     <div class="employee-profile-actions">
       <a class="btn btn-light" href="{{url_for('master_data.employees')}}"><i class="bi bi-arrow-right"></i> الموظفون</a>
       {% if can("employees.manage") %}<a class="btn btn-outline-primary" href="{{url_for('master_data.edit_employee',employee_id=employee.id)}}"><i class="bi bi-pencil"></i> تعديل</a>{% endif %}
-      <a class="btn btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=employee.id)}}"><i class="bi bi-bar-chart"></i> تقرير</a>
+      {% if can("reports.view") %}<a class="btn btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=employee.id)}}"><i class="bi bi-bar-chart"></i> تقرير</a>{% endif %}
       {% if employee.user and can("permissions.manage") %}<a class="btn btn-outline-primary" href="{{url_for('admin.permissions',user_id=employee.user.id)}}"><i class="bi bi-shield-check"></i> الصلاحيات</a>{% endif %}
       <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
     </div>
