@@ -295,3 +295,21 @@
 .journal-transfer-summary{margin-top:18px;padding:12px;background:var(--primary-faint);border-radius:14px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .journal-transfer-summary div{min-width:105px}.journal-transfer-summary span{display:block;color:var(--muted);font-size:10px}.journal-transfer-summary strong{font-size:16px}
 @media(max-width:700px){.from-to-journal{grid-template-columns:1fr;gap:8px}.journal-transfer-arrow{transform:rotate(90deg);height:30px}.journal-transfer-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px}.journal-transfer-summary .btn{grid-column:1/-1;width:100%}}
+
+/* searchable account tree */
+.account-tree-picker{position:relative}
+.account-picker-trigger{width:100%;min-height:46px;border:1px solid #d5e1dd;border-radius:11px;background:#fff;color:var(--ink);font-family:inherit;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;text-align:right;font-size:13px}
+.account-tree-picker.open .account-picker-trigger{border-color:var(--primary-border-strong);box-shadow:0 0 0 .2rem rgba(11,110,79,.1)}
+.account-picker-panel{position:absolute;top:calc(100% + 6px);right:0;left:0;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 18px 45px rgba(15,35,30,.16);z-index:150;padding:8px}
+.account-picker-search{position:relative;margin-bottom:7px}.account-picker-search i{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#8a999c}.account-picker-search input{padding-right:36px}
+.account-picker-tree{max-height:300px;overflow:auto;padding:2px}
+.account-picker-group,.account-picker-leaf{width:100%;min-height:36px;display:flex;align-items:center;gap:7px;border:0;border-radius:8px;padding-top:6px;padding-bottom:6px;font-family:inherit;text-align:right;font-size:11px}
+.account-picker-group{background:#f8faf9;color:var(--primary);font-weight:900;margin:3px 0}
+.account-picker-leaf{background:#fff;color:var(--ink);cursor:pointer}
+.account-picker-leaf:hover{background:var(--primary-faint);color:var(--primary)}
+.account-picker-branch{color:#9aaba6;font-size:12px}
+.account-picker-empty{padding:18px;text-align:center;color:var(--muted);font-size:11px}
+.collector-amount-input{max-width:180px}
+.collector-amount-wrap{max-width:250px}
+.collector-amount-words{min-height:24px;margin-top:5px;color:#c62828;font-size:15px;font-weight:900;line-height:1.55}
+@media(max-width:600px){.account-picker-panel{position:fixed;right:10px;left:10px;top:auto;margin-top:6px;max-height:70vh}.account-picker-tree{max-height:52vh}.collector-amount-wrap{max-width:none}.collector-amount-input{max-width:none}}
