@@ -479,7 +479,7 @@ def add_employee_fine():
         fine_date=date.fromisoformat(request.form.get("fine_date") or date.today().isoformat())
         ensure_employee_account(employee)
         revenue=get_system_account("employee_fines_revenue")
-        fine=EmployeeFine(employee_id=employee.id,fine_date=fine_date,amount=amount,reason=reason,created_by_id=current_user.id,journal_entry_id=0)
+        fine=EmployeeFine(employee_id=employee.id,fine_date=fine_date,amount=amount,reason=reason,created_by_id=current_user.id,journal_entry_id=None)
         db.session.add(fine)
         db.session.flush()
         entry=create_posted_entry(
