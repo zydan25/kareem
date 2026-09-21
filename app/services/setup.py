@@ -23,6 +23,7 @@ CHILDREN=[
 ("402","إيرادات الإيجارات",AccountType.REVENUE.value,"root_revenue",False,"rent_revenue"),
 ("403","إيرادات أخرى",AccountType.REVENUE.value,"root_revenue",False,"other_revenue"),
 ("404","إيرادات خروج السوق",AccountType.REVENUE.value,"root_revenue",False,"exit_revenue"),
+("405","إيرادات غرامات ومخالفات الموظفين",AccountType.REVENUE.value,"root_revenue",False,"employee_fines_revenue"),
 ("501","الرواتب والأجور",AccountType.EXPENSE.value,"root_expenses",False,"salary_expense"),
 ("502","مصروفات تشغيلية",AccountType.EXPENSE.value,"root_expenses",False,"operating_expense")]
 
@@ -93,7 +94,7 @@ def seed():
         row=Setting.query.filter_by(key=key).first()
         if not row:
             db.session.add(Setting(key=key,value=value,value_type=value_type,description=description))
-    for name in ["دينه","قلاب","ناقلة","شاص","باص","سوزوكي","أخرى"]:
+    for name in ["خصوصي","نقل","دينة","قلاب","ناقلة","شاص","باص","سوزوكي","صهريج","معدات","أخرى"]:
         if not db.session.query(VehicleType).filter_by(name=name).first():
             db.session.add(VehicleType(name=name,is_system=True))
     db.session.commit()
