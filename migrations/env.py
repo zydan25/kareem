@@ -1,4 +1,3 @@
-from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from flask import current_app
@@ -6,9 +5,6 @@ from app import create_app
 from app.extensions import db
 
 config=context.config
-if config.config_file_name is not None and config.has_section("loggers"):
-    fileConfig(config.config_file_name)
-
 try:
     app=current_app._get_current_object()
 except RuntimeError:
