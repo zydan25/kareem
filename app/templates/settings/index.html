@@ -1,26 +1,51 @@
 {% extends 'base.html' %}
 {% block title %}الإعدادات - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الإعدادات</span><h1>إعدادات النظام</h1><p>المظهر، بيانات المنشأة، إعدادات لوحة العميل وأنواع المركبات.</p></div><a class="btn btn-outline-primary" href="{{url_for('auth.account')}}">حسابي</a></div>
+<div class="page-head"><div><span class="eyebrow">الإعدادات</span><h1>إعدادات النظام والهوية</h1><p>يمكن للمدير تغيير اسم النظام واللون والشعار والأيقونة وإعدادات الواجهة من مكان واحد.</p></div><a class="btn btn-outline-primary" href="{{url_for('auth.account')}}">حسابي</a></div>
+
 <div class="settings-grid">
-<div class="card-soft">
-<div class="section-title"><div><h3>بيانات المنشأة</h3><small class="text-muted">تظهر في المستندات والواجهات عند استخدامها.</small></div></div>
-<form method="post" class="row g-3">
-{% for s in settings %}<div class="col-12 col-md-6"><label class="form-label">{{s.description or s.key}}</label>
-{% if s.key=="ui_theme" %}<select name="setting_{{s.key}}" class="form-select"><option value="light" {% if s.value=="light" %}selected{% endif %}>فاتح</option><option value="dark" {% if s.value=="dark" %}selected{% endif %}>داكن</option></select>
-{% elif s.key=="customer_portal" %}<select name="setting_{{s.key}}" class="form-select"><option value="1" {% if s.value=="1" %}selected{% endif %}>مفعلة</option><option value="0" {% if s.value!="1" %}selected{% endif %}>غير مفعلة</option></select>
-{% else %}<input name="setting_{{s.key}}" class="form-control" value="{{s.value or ''}}">{% endif %}
-</div>{% endfor %}
-<div class="col-12"><button class="btn btn-primary">حفظ الإعدادات</button></div>
-</form>
+  <div class="card-soft">
+    <div class="section-title"><div><h3>الهوية البصرية</h3><small class="text-muted">تظهر في الموقع وصفحة الدخول والتطبيق المثبت.</small></div></div>
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+      <div class="col-12 col-md-6"><label class="form-label">اسم المنشأة / اسم النظام</label><input name="setting_organization_name" class="form-control form-control-lg" value="{{organization_name}}" required></div>
+      <div class="col-12 col-md-6"><label class="form-label">الوصف تحت الاسم</label><input name="setting_project_name" class="form-control" value="{{project_name}}"></div>
+      <div class="col-12 col-md-6"><label class="form-label">العملة</label><input name="setting_currency_name" class="form-control" value="{{currency_name}}"></div>
+      <div class="col-12 col-md-6"><label class="form-label">اللون الرئيسي للموقع</label><div class="brand-color-input"><input type="color" id="brand-color-picker" value="{{brand_color}}" aria-label="اختيار اللون"><input id="brand-color-text" name="setting_brand_color" class="form-control" value="{{brand_color}}" maxlength="7" oninput="syncColorFromText()"></div></div>
+      <div class="col-12 col-md-6"><label class="form-label">الشعار الرئيسي</label><input type="file" name="brand_logo" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted">اختياري — PNG/JPG/WEBP</small></div>
+      <div class="col-12 col-md-6"><label class="form-label">أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted">اختياري — تستخدم أيضًا مع PWA.</small></div>
+      <div class="col-12 col-md-6"><label class="form-label">المظهر</label><select name="setting_ui_theme" class="form-select">{% set theme = settings|selectattr('key','equalto','ui_theme')|map(attribute='value')|first %}<option value="light" {% if theme!='dark' %}selected{% endif %}>فاتح</option><option value="dark" {% if theme=='dark' %}selected{% endif %}>داكن</option></select></div>
+      <div class="col-12 col-md-6"><label class="form-label">لوحة العميل</label><select name="setting_customer_portal" class="form-select">{% set portal = settings|selectattr('key','equalto','customer_portal')|map(attribute='value')|first %}<option value="1" {% if portal=='1' %}selected{% endif %}>مفعلة</option><option value="0" {% if portal!='1' %}selected{% endif %}>غير مفعلة</option></select></div>
+      <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-palette"></i> حفظ الهوية والإعدادات</button></div>
+    </form>
+  </div>
+
+  <div class="card-soft branding-preview">
+    <div class="section-title"><div><h3>المعاينة</h3><small class="text-muted">المظهر بعد حفظ الإعدادات.</small></div></div>
+    <div class="brand-preview-box" style="--preview-color:{{brand_color}}">
+      <div class="brand-preview-mark">{% if brand_logo %}<img src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt="">{% else %}<span>س</span>{% endif %}</div>
+      <div><strong>{{organization_name}}</strong><small>{{project_name}}</small></div>
+    </div>
+    {% if brand_logo %}<div class="brand-current"><span>الشعار الحالي</span><img src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></div>{% endif %}
+    {% if brand_icon %}<div class="brand-current"><span>الأيقونة الحالية</span><img class="brand-icon-preview" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></div>{% endif %}
+    <div class="policy-item mt-3"><i class="bi bi-brush"></i><strong>الهوية موحدة</strong><span>الاسم واللون والأيقونة تتغير في رأس الموقع وملف PWA والهوية العامة بعد الحفظ.</span></div>
+  </div>
 </div>
-<div class="card-soft">
-<div class="section-title"><div><h3>أنواع المركبات</h3><small class="text-muted">أنواع النظام + الأنواع المخصصة.</small></div></div>
-{% if can_manage %}<form method="post" class="d-flex gap-2 mb-3"><input type="text" name="vehicle_type_name" class="form-control" placeholder="نوع جديد مثل: تريلا"><button class="btn btn-primary">إضافة</button></form>{% endif %}
-<div class="entity-list">{% for t in vehicle_types %}<div class="entity-row"><div class="entity-main"><div class="entity-icon vehicle"><i class="bi bi-truck-front"></i></div><div><strong>{{t.name}}</strong><div class="entity-meta"><span>{{'نظامي' if t.is_system else 'مخصص'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if t.active else 'off'}}"></span>{{'نشط' if t.active else 'موقوف'}}</div>{% if can_manage and not t.is_system %}<form method="post" action="{{url_for('settings.toggle_type',type_id=t.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if t.active else 'تفعيل'}}</button></form>{% endif %}</div>{% else %}<div class="empty-state"><span>لا توجد أنواع.</span></div>{% endfor %}</div>
+
+<div class="card-soft mt-4">
+  <div class="section-title"><div><h3>أنواع المركبات</h3><small class="text-muted">أنواع النظام + الأنواع المخصصة.</small></div></div>
+  {% if can_manage %}<form method="post" class="d-flex gap-2 mb-3"><input type="text" name="vehicle_type_name" class="form-control" placeholder="نوع جديد مثل: تريلا"><button class="btn btn-primary">إضافة</button></form>{% endif %}
+  <div class="entity-list">{% for t in vehicle_types %}<div class="entity-row"><div class="entity-main"><div class="entity-icon vehicle"><i class="bi bi-truck-front"></i></div><div><strong>{{t.name}}</strong><div class="entity-meta"><span>{{'نظامي' if t.is_system else 'مخصص'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if t.active else 'off'}}"></span>{{'نشط' if t.active else 'موقوف'}}</div>{% if can_manage and not t.is_system %}<form method="post" action="{{url_for('settings.toggle_type',type_id=t.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if t.active else 'تفعيل'}}</button></form>{% endif %}</div>{% else %}<div class="empty-state"><span>لا توجد أنواع.</span></div>{% endfor %}</div>
 </div>
-</div>
-<div class="card-soft mt-4"><div class="section-title"><div><h3>سياسات النظام</h3></div></div><div class="policy-grid">
-<div class="policy-item"><i class="bi bi-lock"></i><strong>الحسابات</strong><span>الرئيسية للتجميع والفروع للقيد.</span></div><div class="policy-item"><i class="bi bi-receipt"></i><strong>السندات</strong><span>نوع السند يستنتج من «من» و«إلى».</span></div><div class="policy-item"><i class="bi bi-clock"></i><strong>الوردية</strong><span>تفتح تلقائيًا مع أول عملية مالية.</span></div><div class="policy-item"><i class="bi bi-safe2"></i><strong>العهدة</strong><span>تُسلّم للصندوق بعد الاعتماد.</span></div><div class="policy-item"><i class="bi bi-phone"></i><strong>PWA</strong><span>التثبيت يظهر للمتصفح الداعم.</span></div><div class="policy-item"><i class="bi bi-person-vcard"></i><strong>لوحة العميل</strong><span>يمكن تفعيلها أو إيقافها من الإعدادات.</span></div>
+
+<div class="card-soft mt-4"><div class="section-title"><div><h3>السياسات والجهة المطورة</h3></div></div><div class="policy-grid">
+<div class="policy-item"><i class="bi bi-lock"></i><strong>الحسابات</strong><span>الرئيسية للتجميع والفروع للقيد.</span></div><div class="policy-item"><i class="bi bi-receipt"></i><strong>السندات</strong><span>نوع السند يستنتج من «من» و«إلى».</span></div><div class="policy-item"><i class="bi bi-clock"></i><strong>الوردية</strong><span>تفتح تلقائيًا مع أول عملية مالية.</span></div><div class="policy-item"><i class="bi bi-safe2"></i><strong>العهدة</strong><span>المتحصل لا يقدم طلب إخلاء يدويًا؛ التسليم يمر بالمراجعة.</span></div><div class="policy-item"><i class="bi bi-phone"></i><strong>PWA</strong><span>الاسم والأيقونة ولون التطبيق قابلة للتغيير من الهوية البصرية.</span></div><div class="policy-item"><i class="bi bi-code-slash"></i><strong>برمجة وتصميم</strong><span>يمن كود للتقنيات الذكية · 774952665</span></div>
 </div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const picker=document.getElementById('brand-color-picker');
+const textInput=document.getElementById('brand-color-text');
+picker?.addEventListener('input',()=>{textInput.value=picker.value;});
+function syncColorFromText(){if(/^#[0-9a-fA-F]{6}$/.test(textInput.value))picker.value=textInput.value;}
+</script>
 {% endblock %}
