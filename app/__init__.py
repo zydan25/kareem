@@ -1,6 +1,7 @@
 from flask import Flask
 from config import Config
 from .extensions import db, migrate, login_manager
+from .permissions import can
 
 def create_app(config_class=Config):
     app=Flask(__name__)
@@ -13,6 +14,7 @@ def create_app(config_class=Config):
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User,int(user_id))
+
     login_manager.init_app(app)
 
     from .blueprints.auth import bp as auth_bp
@@ -31,5 +33,9 @@ def create_app(config_class=Config):
 
     @app.context_processor
     def inject_globals():
-        return {"app_name":app.config["PWA_NAME"],"currency":app.config["DEFAULT_CURRENCY"]}
+        return {
+            "app_name":app.config["PWA_NAME"],
+            "currency":app.config["DEFAULT_CURRENCY"],
+            "can":can,
+        }
     return app
