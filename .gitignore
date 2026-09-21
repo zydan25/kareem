@@ -2,10 +2,13 @@
 venv/
 __pycache__/
 *.py[cod]
-instance/*.db
+instance/
 .env
 .pytest_cache/
 .mypy_cache/
 .coverage
 htmlcov/
 .DS_Store
+logs/
+backups/
+*.log
