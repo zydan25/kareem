@@ -53,9 +53,12 @@ def _permission_cache():
 def can(permission):
     if not current_user.is_authenticated or not current_user.active:
         return False
-    # The collector role may record transactions and hand over its shift,
-    # but can never request or approve custody clearance, even when an
-    # old UserPermission row explicitly granted those permissions.
+    # Administrative roles are role-based and always receive their full role
+    # permission set. They are not reduced by stale per-user override rows.
+    if current_user.role in {"admin","manager"}:
+        return True
+    # A collector can record gate movements and hand over the shift, but can
+    # never request or approve custody clearance.
     if current_user.role=="collector" and permission in {"collector.settle","collector.approve_settlement"}:
         return False
     cached=_permission_cache()
