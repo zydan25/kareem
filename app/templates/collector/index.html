@@ -80,7 +80,7 @@
 
   <div class="collector-optional-fields">
     <div><label class="form-label">الوكيل <small>(اختياري)</small></label><select id="agent_id" name="agent_id" class="form-select form-select-lg"><option value="">غير مربوط — على عهدة المتحصل</option>{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
-    <div><label class="form-label">المبلغ</label><div class="input-group input-group-lg"><input name="amount" id="amount" class="form-control text-center fw-bold" inputmode="decimal" required><span class="input-group-text">{{currency}}</span></div></div>
+    <div class="collector-amount-wrap"><label class="form-label">المبلغ</label><div class="input-group"><input name="amount" id="amount" class="form-control text-center fw-bold collector-amount-input" inputmode="decimal" required autocomplete="off" data-money-words="collector-amount-words" data-currency="{{currency}}"><span class="input-group-text">{{currency}}</span></div><div id="collector-amount-words" class="collector-amount-words" aria-live="polite"></div></div>
   </div>
 
   <div class="direction-buttons">
