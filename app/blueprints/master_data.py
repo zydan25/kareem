@@ -193,7 +193,8 @@ def clients():
             return redirect(url_for("master_data.client_detail",client_id=client.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/clients.html",clients=rows,agents=agents,can_manage=can("clients.manage"),q=q)
+    vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
+    return render_template("master_data/clients.html",clients=rows,agents=agents,vehicle_types=vehicle_types,can_manage=can("clients.manage"),q=q)
 
 @bp.get("/clients/<int:client_id>")
 @permission_required("clients.view")
