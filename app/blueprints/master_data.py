@@ -335,7 +335,7 @@ def edit_employee(employee_id):
     if not emp: return ("غير موجود",404)
     if request.method=="POST":
         try:
-            emp.code=request.form["code"].strip(); emp.full_name=request.form["full_name"].strip()
+            emp.full_name=request.form["full_name"].strip()
             emp.phone=request.form.get("phone","").strip() or None; emp.identity_number=request.form.get("identity_number") or None
             emp.gender=request.form.get("gender") or None; emp.employment_type=request.form.get("employment_type") or "دوام كامل"
             emp.weekly_hours=D(request.form.get("weekly_hours","48")); emp.job_title=request.form.get("job_title") or "موظف"
