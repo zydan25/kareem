@@ -86,6 +86,8 @@ def seed():
         ("currency_name","ريال يمني","string","العملة"),
         ("ui_theme","light","string","المظهر"),
         ("customer_portal","0","boolean","إتاحة لوحة العميل"),
+        ("brand_color","#0b6e4f","string","اللون الرئيسي"),
+        ("brand_version","1","string","نسخة الهوية"),
     ]
     for key,value,value_type,description in defaults:
         row=Setting.query.filter_by(key=key).first()
