@@ -135,6 +135,8 @@ def manual_journal():
 @bp.route("/settlements",methods=["GET","POST"])
 @permission_required("collector.settle")
 def settlements():
+    if current_user.role == "collector":
+        return ("Forbidden",403)
     custody_root=get_system_account("collector_root")
     sources=Account.query.filter_by(account_type="asset",is_group=False,active=True,allow_manual_posting=True,parent_id=custody_root.id).order_by(Account.code).all()
     source_balances=[(a,account_balance(a.id)) for a in sources]
