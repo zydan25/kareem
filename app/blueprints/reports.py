@@ -60,7 +60,9 @@ def collectors():
     rows=(db.session.query(User.id,User.full_name,User.role,func.count(GateTransaction.id).label("count"),
         func.coalesce(func.sum(GateTransaction.amount),0).label("total"))
         .outerjoin(GateTransaction,(GateTransaction.collector_id==User.id)&
-                   (GateTransaction.transaction_date>=start_dt)&(GateTransaction.transaction_date<end_dt))
+                   (GateTransaction.transaction_date>=start_dt)&(GateTransaction.transaction_date<end_dt)&
+                   (GateTransaction.direction=="entry")&(GateTransaction.amount>0)&
+                   (GateTransaction.counted_for_work.is_(True)))
         .filter(User.role=="collector").group_by(User.id,User.full_name,User.role)
         .order_by(User.full_name).all())
     return render_template("reports/collectors.html",rows=rows,start=start,end=end)
@@ -80,8 +82,11 @@ def account_statement(account_id):
     lines=(db.session.query(JournalLine).join(JournalEntry)
         .filter(JournalLine.account_id==account_id,JournalEntry.status=="posted",JournalEntry.entry_date>=start,JournalEntry.entry_date<=end)
         .order_by(JournalEntry.entry_date,JournalLine.id).all())
-    running=0
-    for line in reversed(lines): pass
+    opening=(db.session.query(func.coalesce(func.sum(JournalLine.debit-JournalLine.credit),0))
+        .join(JournalEntry,JournalEntry.id==JournalLine.entry_id)
+        .filter(JournalLine.account_id==account_id,JournalEntry.status=="posted",JournalEntry.entry_date<start)
+        .scalar() or 0)
+    running=opening
     balance_lines=[]
     for line in lines:
         running += (line.debit or 0) - (line.credit or 0)
