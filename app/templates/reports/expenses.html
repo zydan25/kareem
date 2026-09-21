@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}تقرير المصروفات - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">التقارير المالية</span><h1>تقرير المصروفات</h1><p>من {{start}} إلى {{end}}.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="card-soft print-hide mb-4"><form class="row g-2"><div class="col-6 col-md-4"><input type="date" name="start" value="{{start}}" class="form-control"></div><div class="col-6 col-md-4"><input type="date" name="end" value="{{end}}" class="form-control"></div><div class="col-12 col-md-4"><button class="btn btn-primary w-100">عرض الفترة</button></div></form></div>
+<div class="stat-grid mb-4"><div class="stat-card primary"><span>إجمالي المصروفات</span><strong>{{'{:,.2f}'.format(total)}}</strong><small>{{currency}}</small></div><div class="stat-card"><span>عدد المصروفات</span><strong>{{rows|length}}</strong><small>السجل المعروض</small></div></div>
+<div class="card-soft table-wrap"><table class="table"><thead><tr><th>الرقم</th><th>التاريخ</th><th>البيان</th><th>الحساب</th><th>المستفيد</th><th>المبلغ</th><th>تفاصيل</th></tr></thead><tbody>{% for e in rows %}<tr><td>{{e.number}}</td><td>{{e.expense_date}}</td><td>{{e.description}}</td><td>{{e.expense_account.name}}</td><td>{{e.beneficiary or '—'}}</td><td>{{'{:,.2f}'.format(e.amount)}} {{currency}}</td><td><a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.expense_detail',expense_id=e.id)}}">عرض</a></td></tr>{% else %}<tr><td colspan="7" class="text-center text-muted py-4">لا توجد مصروفات.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
