@@ -95,7 +95,7 @@ def expenses():
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     return render_template("operations/expenses.html",rows=rows,expense_accounts=expense_accounts,cash_accounts=cash_accounts,
-                           default_expense=default_expense,default_cash=default_cash)
+                           default_expense=default_expense,default_cash=default_cash,account_options=_account_picker())
 
 @bp.get("/expenses/<int:expense_id>")
 @permission_required("expenses.view")
@@ -165,7 +165,7 @@ def settlements():
             db.session.commit(); flash(f"تم إنشاء طلب الإخلاء {settlement.number}","success")
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/settlements.html",sources=sources,source_balances=source_balances,target=target,rows=rows,shifts=shifts)
+    return render_template("operations/settlements.html",sources=sources,source_balances=source_balances,target=target,rows=rows,shifts=shifts,account_options=_account_picker())
 
 @bp.post("/settlements/<int:settlement_id>/approve")
 @permission_required("collector.approve_settlement")
