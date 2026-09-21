@@ -3,7 +3,10 @@
 {% block guest_content %}
 <div class="login-shell">
   <div class="login-card">
-    <div class="brand big mb-4"><span class="brand-mark">س</span><div><strong>{{app_name}}</strong><small>دخول الموظفين والإدارة</small></div></div>
+    <div class="brand big mb-4">
+  {% if brand_logo %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></span>{% else %}<span class="brand-mark">س</span>{% endif %}
+  <div><strong>{{app_name}}</strong><small>{{project_name or 'دخول الموظفين والإدارة'}}</small></div>
+</div>
     {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="alert alert-{{category}}">{{message}}</div>{% endfor %}{% endwith %}
     <form method="post" id="login-form" class="vstack gap-3">
       <div><label class="form-label">رقم الهاتف</label><input id="login-identifier" name="identifier" class="form-control form-control-lg" type="tel" inputmode="tel" autocomplete="tel" required placeholder="رقم الموظف"><small class="text-muted">يمكن استخدام اسم المستخدم القديم للحسابات السابقة.</small></div>
