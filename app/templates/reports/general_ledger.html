@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}دفتر الأستاذ - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">التقارير المحاسبية</span><h1>دفتر الأستاذ</h1><p>كشف حركة حساب واحد مع الرصيد الجاري خلال الفترة.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="card-soft print-hide mb-4"><form class="row g-3">
+  <div class="col-12 col-md-4"><label class="form-label">الحساب</label><select name="account_id" class="form-select" required><option value="">اختر الحساب</option>{% for a in accounts %}<option value="{{a.id}}" {% if a.id==account_id %}selected{% endif %}>{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
+  <div class="col-6 col-md-3"><label class="form-label">من</label><input type="date" name="start" class="form-control" value="{{start}}"></div>
+  <div class="col-6 col-md-3"><label class="form-label">إلى</label><input type="date" name="end" class="form-control" value="{{end}}"></div>
+  <div class="col-12 col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100">عرض</button></div>
+</form></div>
+{% if account %}
+<div class="card-soft mb-3"><div class="report-summary"><span>الحساب: <strong>{{account.code}} — {{account.name}}</strong></span><span>افتتاحي: <strong>{{'{:,.2f}'.format(opening)}} {{currency}}</strong></span><span>ختامي: <strong>{{'{:,.2f}'.format(closing)}} {{currency}}</strong></span></div>
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>التاريخ</th><th>القيد</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>
+{% for l,b in rows %}<tr><td>{{l.entry.entry_date}}</td><td>{{l.entry.number}}</td><td>{{l.description}}</td><td>{{'{:,.2f}'.format(l.debit)}}</td><td>{{'{:,.2f}'.format(l.credit)}}</td><td><strong>{{'{:,.2f}'.format(b)}}</strong></td></tr>{% else %}<tr><td colspan="6" class="text-center py-5 text-muted">لا توجد حركة في الفترة.</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% else %}<div class="card-soft text-center py-5 text-muted"><i class="bi bi-journal-bookmark fs-1 d-block mb-2"></i>اختر حسابًا لعرض دفتر الأستاذ.</div>{% endif %}
+{% endblock %}
