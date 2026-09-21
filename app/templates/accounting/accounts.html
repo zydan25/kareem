@@ -21,7 +21,7 @@
     <div class="account-node-name" style="padding-right:{{level*22}}px">
       {% if row.children %}<button class="tree-toggle" type="button" onclick="toggleAccountNode(this)" aria-label="فتح أو إغلاق"><i class="bi bi-chevron-down"></i></button>{% else %}<span class="tree-spacer"></span>{% endif %}
       <span class="account-type-icon">{{'📁' if a.is_group else '•'}}</span>
-      <div><strong>{{a.name}}</strong><small>{{a.code}} · {{account_type_labels.get(a.account_type,a.account_type)}}</small></div>
+      <div><strong>{{a.name}}</strong><small>{{account_type_labels.get(a.account_type,a.account_type)}}</small></div>
     </div>
     <div class="account-node-balance">{% if not a.is_group %}<strong>{{'{:,.2f}'.format(row.balance)}}</strong><small>{{currency}}</small>{% else %}<span>تجميعي</span>{% endif %}</div>
     <div class="account-node-actions">
