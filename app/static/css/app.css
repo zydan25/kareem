@@ -271,3 +271,6 @@
   .content{margin:0!important;padding:0!important;max-width:none!important}
   .official-voucher{box-shadow:none!important;border:0!important;max-width:none!important}
 }
+
+/* compact dashboard shortcuts */
+@media(max-width:600px){.dashboard-head .d-flex{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important}.dashboard-head .btn{width:100%;padding:7px 3px;font-size:10px;white-space:nowrap}.quick-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.quick-grid a{padding:9px 5px;min-height:78px;align-items:center;text-align:center;justify-content:center}.quick-grid i{font-size:18px}.quick-grid span{font-size:9.5px;line-height:1.35}.quick-grid small{display:none}}
