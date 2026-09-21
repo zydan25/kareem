@@ -217,3 +217,25 @@
 .permission-row.role-default{background:var(--primary-faint)}
 .party-identity-preview img{width:56px;height:56px}
 @media(max-width:700px){.dashboard-charts{grid-template-columns:1fr}.role-permission-summary{grid-template-columns:1fr}}
+
+/* Gate movement detail */
+.collector-note-field{padding-top:2px}
+.gate-detail-paper{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:18px}
+.gate-detail-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.gate-detail-icon{width:48px;height:48px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-size:22px}
+.gate-detail-head strong,.gate-detail-head span{display:block}
+.gate-detail-head strong{font-size:18px}
+.gate-detail-head span{font-size:10px;color:var(--muted);margin-top:3px}
+.gate-detail-amount{font-size:20px;font-weight:800;color:var(--primary);white-space:nowrap}
+.gate-detail-amount small{font-size:9px;font-weight:500;color:var(--muted)}
+.gate-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:14px}
+.gate-detail-grid>div{padding:10px;background:var(--neutral-soft);border:1px solid var(--border);border-radius:11px}
+.gate-detail-grid span,.gate-detail-grid strong{display:block}
+.gate-detail-grid span{font-size:9px;color:var(--muted)}
+.gate-detail-grid strong{font-size:11px;margin-top:3px}
+.gate-detail-notes{margin-top:11px;padding:11px;background:var(--primary-faint);border:1px solid var(--primary-border);border-radius:12px}
+.gate-detail-notes span{font-size:9px;color:var(--muted)}
+.gate-detail-notes p{margin:4px 0 0;font-size:11px;white-space:pre-wrap}
+.gate-detail-footer{display:flex;justify-content:space-between;gap:10px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);font-size:10px}
+@media(max-width:700px){.gate-detail-grid{grid-template-columns:1fr 1fr}.gate-detail-head{grid-template-columns:auto 1fr}.gate-detail-amount{grid-column:1/-1}}
+@media(max-width:420px){.gate-detail-grid{grid-template-columns:1fr}.gate-detail-paper{padding:13px}}
