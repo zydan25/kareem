@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}مركز التقارير - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">التقارير</span><h1>مركز التقارير</h1><p>كل التقارير التشغيلية والمحاسبية في مكان واحد، مع فترة زمنية وطباعة مباشرة.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="card-soft mb-4">
+<form class="row g-3">
+  <div class="col-12 col-md-4"><label class="form-label">من تاريخ</label><input type="date" name="start" value="{{start}}" class="form-control"></div>
+  <div class="col-12 col-md-4"><label class="form-label">إلى تاريخ</label><input type="date" name="end" value="{{end}}" class="form-control"></div>
+  <div class="col-12 col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100">تحديث الروابط</button></div>
+</form>
+</div>
+<div class="report-cards">
+  <a class="report-card" href="{{url_for('reports.gate',start=start,end=end)}}"><i class="bi bi-door-open"></i><span><strong>تقرير البوابة</strong><small>الدخول والخروج، المبالغ، المتحصل، الوكيل والوردية</small></span></a>
+  <a class="report-card" href="{{url_for('reports.collectors',start=start,end=end)}}"><i class="bi bi-person-lines-fill"></i><span><strong>المتحصلون</strong><small>عدد الحركات والإيرادات خلال الفترة</small></span></a>
+  <a class="report-card" href="{{url_for('reports.accounts_report',start=start,end=end)}}"><i class="bi bi-list-columns"></i><span><strong>ملخص الحسابات</strong><small>افتتاحي ومدين ودائن وختامي لكل حساب</small></span></a>
+  <a class="report-card" href="{{url_for('reports.general_ledger',start=start,end=end)}}"><i class="bi bi-journal-bookmark"></i><span><strong>دفتر الأستاذ</strong><small>حركة حساب محدد مع الرصيد الجاري</small></span></a>
+  <a class="report-card" href="{{url_for('reports.income_expenses',start=start,end=end)}}"><i class="bi bi-pie-chart"></i><span><strong>الإيرادات والمصروفات</strong><small>إجمالي الإيراد والمصروف وصافي الفترة</small></span></a>
+  <a class="report-card" href="{{url_for('reports.trial_balance',start=start,end=end)}}"><i class="bi bi-calculator"></i><span><strong>ميزان المراجعة</strong><small>الحسابات الفرعية والأرصدة المدينة والدائنة</small></span></a>
+  <a class="report-card" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i><span><strong>دفتر القيود</strong><small>القيود المرحّلة ومراجعة تفاصيل كل قيد</small></span></a>
+  <a class="report-card" href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3"></i><span><strong>شجرة الحسابات</strong><small>الأرصدة والهيكل والحسابات القابلة للقيد</small></span></a>
+</div>
+{% endblock %}
