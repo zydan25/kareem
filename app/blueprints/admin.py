@@ -11,38 +11,11 @@ ROLE_LABELS={"admin":"مدير النظام","manager":"مدير","accountant":"
 
 bp=Blueprint("admin",__name__,url_prefix="/admin")
 
-@bp.route("/users",methods=["GET","POST"])
+@bp.get("/users")
 @permission_required("users.manage")
 def users():
-    employees=Employee.query.filter_by(active=True).order_by(Employee.full_name).all()
     rows=User.query.order_by(User.active.desc(),User.full_name).all()
-    if request.method=="POST":
-        try:
-            username=request.form["username"].strip()
-            if User.query.filter_by(username=username).first(): raise ValueError("اسم المستخدم مستخدم مسبقًا")
-            u=User(username=username,full_name=request.form["full_name"].strip(),
-                phone=request.form.get("phone"),role=request.form.get("role","collector"),
-                employee_id=int(request.form["employee_id"]) if request.form.get("employee_id") else None,active=True)
-            u.set_password(request.form["password"])
-            db.session.add(u); db.session.flush()
-            if u.employee:
-                emp=u.employee
-            else:
-                last=Employee.query.order_by(Employee.id.desc()).first()
-                next_id=(last.id+1) if last else 1
-                job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,"موظف")
-                emp=Employee(code=f"EMP-{next_id:05d}",full_name=u.full_name,phone=u.phone,job_title=job_title,
-                    monthly_salary=0,hire_date=date.today(),active=u.active)
-                db.session.add(emp); db.session.flush()
-                u.employee_id=emp.id
-            ensure_employee_account(emp)
-            ensure_employee_payroll_account(emp)
-            audit("create","user",u.id,u.username); db.session.commit(); flash("تم إنشاء المستخدم والملف المالي المرتبط به","success")
-            return redirect(url_for("admin.users"))
-        except Exception as exc:
-            db.session.rollback(); flash(str(exc),"danger")
-    return render_template("admin/users.html",users=rows,employees=employees,roles=[r.value for r in Role],
-                           role_labels=ROLE_LABELS,can_manage=True)
+    return render_template("admin/users.html",users=rows,role_labels=ROLE_LABELS)
 
 @bp.route("/users/<int:user_id>/edit",methods=["GET","POST"])
 @permission_required("users.manage")
