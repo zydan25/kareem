@@ -79,6 +79,7 @@ class Client(TimestampMixin,db.Model):
     active=db.Column(db.Boolean,nullable=False,default=True)
     account_id=db.Column(db.Integer,db.ForeignKey("accounts.id",ondelete="SET NULL"),unique=True)
     account=db.relationship("Account",foreign_keys=[account_id])
+    vehicles=db.relationship("Vehicle",back_populates="client",cascade="all, delete-orphan",order_by="Vehicle.id")
 
 class ClientAgent(TimestampMixin,db.Model):
     __tablename__="client_agents"
@@ -99,16 +100,17 @@ class VehicleType(TimestampMixin,db.Model):
 class Vehicle(TimestampMixin,db.Model):
     __tablename__="vehicles"
     id=db.Column(db.Integer,primary_key=True)
-    plate_number=db.Column(db.String(40),nullable=False)
+    plate_number=db.Column(db.String(40),nullable=True)
     plate_separator=db.Column(db.String(40))
     plate_letters=db.Column(db.String(40))
+    registration_status=db.Column(db.String(30),nullable=False,default="registered")
     vehicle_type_id=db.Column(db.Integer,db.ForeignKey("vehicle_types.id",ondelete="RESTRICT"),nullable=False)
     client_id=db.Column(db.Integer,db.ForeignKey("clients.id",ondelete="SET NULL"))
     notes=db.Column(db.Text)
     active=db.Column(db.Boolean,nullable=False,default=True)
     vehicle_type=db.relationship("VehicleType")
-    client=db.relationship("Client")
-    __table_args__=(UniqueConstraint("plate_number","plate_separator",name="uq_vehicle_plate"),Index("ix_vehicle_plate_search","plate_number","plate_separator"))
+    client=db.relationship("Client",back_populates="vehicles")
+    __table_args__=(CheckConstraint("registration_status IN ('registered','without_customs')",name="ck_vehicle_registration_status"),UniqueConstraint("plate_number","plate_separator",name="uq_vehicle_plate"),Index("ix_vehicle_plate_search","plate_number","plate_separator"))
 
 class VehicleAgent(TimestampMixin,db.Model):
     __tablename__="vehicle_agents"
