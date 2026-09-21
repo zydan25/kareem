@@ -65,3 +65,11 @@ def permissions(user_id):
             db.session.rollback(); flash(str(exc),"danger")
     grants={x.permission_id:x.granted for x in UserPermission.query.filter_by(user_id=user.id).all()}
     return render_template("admin/permissions.html",user=user,permissions=perms,grants=grants)
+
+
+@bp.get("/audit")
+@permission_required("audit.view")
+def audit_logs():
+    from ..models import AuditLog
+    rows=AuditLog.query.order_by(AuditLog.created_at.desc()).limit(300).all()
+    return render_template("admin/audit.html",rows=rows)
