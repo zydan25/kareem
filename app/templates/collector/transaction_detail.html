@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}تفاصيل حركة البوابة - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">حركة البوابة</span><h1>{{tx.receipt_number}}</h1><p>{{'دخول' if tx.direction=='entry' else 'خروج وتحـصيل'}} · {{tx.transaction_date.strftime('%Y-%m-%d %H:%M')}}</p></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light" href="{{url_for('collector.index')}}">العودة للتحصيل</a><button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button></div></div>
+<div class="gate-detail-paper">
+  <div class="gate-detail-head"><div class="gate-detail-icon"><i class="bi bi-truck-front-fill"></i></div><div><strong>{{tx.vehicle.plate_number or 'بدون رقم جمركي'}}</strong><span>{{tx.vehicle.vehicle_type.name}} · {{'بدون جمارك' if tx.vehicle.registration_status=='without_customs' else 'جمركية'}}</span></div><div class="gate-detail-amount">{{'{:,.2f}'.format(tx.amount)}} <small>{{currency}}</small></div></div>
+  <div class="gate-detail-grid">
+    <div><span>العميل</span><strong>{{tx.client.name if tx.client else '—'}}</strong></div>
+    <div><span>الهاتف</span><strong>{{tx.client.phone if tx.client else '—'}}</strong></div>
+    <div><span>الوكيل</span><strong>{{tx.agent.name if tx.agent else 'عهدة المتحصل'}}</strong></div>
+    <div><span>المتحصل</span><strong>{{tx.collector.full_name}}</strong></div>
+    <div><span>الوردية</span><strong>{{tx.shift.shift_name if tx.shift else '—'}}</strong></div>
+    <div><span>نوع الحركة</span><strong>{{'دخول' if tx.direction=='entry' else 'خروج وتحـصيل'}}</strong></div>
+    <div><span>التاريخ والوقت</span><strong>{{tx.transaction_date.strftime('%Y-%m-%d %H:%M')}}</strong></div>
+    <div><span>وسيلة الدفع</span><strong>{{'نقدي' if tx.payment_method=='cash' else tx.payment_method}}</strong></div>
+  </div>
+  <div class="gate-detail-notes"><span>ملاحظات الحركة</span><p>{{tx.notes or 'لا توجد ملاحظات مسجلة.'}}</p></div>
+  <div class="gate-detail-footer"><span>رقم السند</span><strong>{{tx.receipt_number}}</strong></div>
+</div>
+{% endblock %}
