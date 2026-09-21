@@ -444,6 +444,7 @@ def employees():
     query=Employee.query
     if q: query=query.filter(or_(Employee.full_name.ilike(f"%{q}%"),Employee.code.ilike(f"%{q}%"),Employee.phone.ilike(f"%{q}%"),Employee.job_title.ilike(f"%{q}%")))
     rows=query.order_by(Employee.active.desc(),Employee.code).all()
+    fine_employees=Employee.query.filter_by(active=True).order_by(Employee.full_name).all()
     if request.method=="POST":
         if not can("employees.manage"): return ("Forbidden",403)
         try:
@@ -461,7 +462,7 @@ def employees():
             return redirect(url_for("master_data.employee_detail",employee_id=emp.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/employees.html",employees=rows,can_manage=can("employees.manage"),q=q,today=date.today(),roles=[r.value for r in Role],role_labels=ROLE_LABELS,weekdays=WEEKDAYS)
+    return render_template("master_data/employees.html",employees=rows,fine_employees=fine_employees,can_manage=can("employees.manage"),q=q,today=date.today(),roles=[r.value for r in Role],role_labels=ROLE_LABELS,weekdays=WEEKDAYS)
 
 @bp.post("/employees/fines")
 @permission_required("employees.manage")
