@@ -31,7 +31,22 @@ def index():
         GateTransaction.counted_for_work.is_(True),GateTransaction.direction=="entry",
         GateTransaction.amount>0).distinct().count()
 
+    chart_labels=[]
+    chart_totals=[]
+    chart_entries=[]
+    chart_exits=[]
+    for offset in range(6,-1,-1):
+        day=today-timedelta(days=offset)
+        day_start=datetime.combine(day,datetime.min.time(),tzinfo=LOCAL_TZ).astimezone(UTC_TZ)
+        day_end=(datetime.combine(day,datetime.min.time(),tzinfo=LOCAL_TZ)+timedelta(days=1)).astimezone(UTC_TZ)
+        day_rows=GateTransaction.query.filter(GateTransaction.transaction_date>=day_start,GateTransaction.transaction_date<day_end).all()
+        chart_labels.append(day.strftime("%d/%m"))
+        chart_totals.append(float(sum((x.amount for x in day_rows),0)))
+        chart_entries.append(float(sum((x.amount for x in day_rows if x.direction=="entry"),0)))
+        chart_exits.append(float(sum((x.amount for x in day_rows if x.direction=="exit"),0)))
+
     return render_template("dashboard/index.html",today=today,total=total,count=count,worked=worked,
         agents=db.session.query(Agent).filter_by(active=True).count(),
         vehicles=db.session.query(Vehicle).filter_by(active=True).count(),
-        employees=db.session.query(Employee).filter_by(active=True).count())
+        employees=db.session.query(Employee).filter_by(active=True).count(),
+        chart_labels=chart_labels,chart_totals=chart_totals,chart_entries=chart_entries,chart_exits=chart_exits)
