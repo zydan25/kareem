@@ -17,6 +17,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 280}
     REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_DURATION = __import__("datetime").timedelta(days=30)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     PWA_NAME = "سوق الجملة"
