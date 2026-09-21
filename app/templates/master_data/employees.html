@@ -1,1 +1,63 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>الموظفون</h1><p>لكل موظف حساب عهدة وحساب مستحق راتب.</p></div>{% if can_manage %}<a href="#add" class="btn btn-primary">إضافة موظف</a>{% endif %}</div>{% if can_manage %}<div id="add" class="card-soft mb-4"><form method="post" class="row g-3"><div class="col-md-2"><label class="form-label">الكود</label><input name="code" class="form-control"></div><div class="col-md-3"><label class="form-label">الاسم</label><input name="full_name" class="form-control" required></div><div class="col-md-2"><label class="form-label">الهاتف</label><input name="phone" class="form-control"></div><div class="col-md-2"><label class="form-label">الوظيفة</label><input name="job_title" class="form-control"></div><div class="col-md-3"><label class="form-label">الراتب الشهري</label><input name="monthly_salary" class="form-control" inputmode="decimal" value="0"></div><div class="col-md-3"><label class="form-label">تاريخ التوظيف</label><input type="date" name="hire_date" class="form-control"></div><div class="col-12"><button class="btn btn-primary">حفظ</button></div></form></div>{% endif %}<div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>الكود</th><th>الموظف</th><th>الوظيفة</th><th>الراتب</th><th>الحسابات</th><th>الحالة</th>{% if can_manage %}<th></th>{% endif %}</tr></thead><tbody>{% for e in employees %}<tr><td>{{e.code}}</td><td class="fw-bold">{{e.full_name}}</td><td>{{e.job_title}}</td><td>{{'{:,.2f}'.format(e.monthly_salary or 0)}}</td><td>{{'جاهزة' if e.account and e.payroll_account else 'تُنشأ تلقائيًا'}}</td><td>{{'نشط' if e.active else 'موقوف'}}</td>{% if can_manage %}<td><a class="btn btn-sm btn-light" href="{{url_for('master_data.edit_employee',employee_id=e.id)}}">تعديل</a><form class="d-inline" method="post" action="{{url_for('master_data.toggle_employee',employee_id=e.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if e.active else 'تفعيل'}}</button></form></td>{% endif %}</tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}شؤون الموظفين - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">الموارد البشرية</span><h1>شؤون الموظفين</h1><p>ملف الموظف، حساب العهدة، مستحق الراتب وحساب الدخول والصلاحيات في شاشة واحدة.</p></div>
+  {% if can_manage %}<a href="#add-employee" class="btn btn-primary"><i class="bi bi-person-plus"></i> إضافة موظف</a>{% endif %}
+</div>
+
+{% if can_manage %}
+<div id="add-employee" class="card-soft mb-4">
+  <div class="section-title"><div><h3>إضافة موظف جديد</h3><small class="text-muted">يمكن إنشاء حساب دخول للموظف اختياريًا من نفس النموذج.</small></div></div>
+  <form method="post" class="row g-3">
+    <div class="col-6 col-lg-2"><label class="form-label">الكود</label><input name="code" class="form-control" placeholder="تلقائي"></div>
+    <div class="col-6 col-lg-4"><label class="form-label">اسم الموظف</label><input name="full_name" class="form-control" required></div>
+    <div class="col-6 col-lg-2"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
+    <div class="col-6 col-lg-2"><label class="form-label">الوظيفة</label><input name="job_title" class="form-control" value="موظف"></div>
+    <div class="col-6 col-lg-2"><label class="form-label">الراتب الشهري</label><input name="monthly_salary" class="form-control" inputmode="decimal" value="0"></div>
+    <div class="col-6 col-lg-2"><label class="form-label">تاريخ التوظيف</label><input type="date" name="hire_date" class="form-control"></div>
+
+    <div class="col-12"><div class="form-section-title">حساب الدخول للموظف <span>اختياري</span></div></div>
+    <div class="col-6 col-lg-3"><label class="form-label">اسم المستخدم</label><input name="login_username" class="form-control" autocomplete="off"></div>
+    <div class="col-6 col-lg-3"><label class="form-label">كلمة المرور</label><input name="login_password" type="password" class="form-control" autocomplete="new-password"></div>
+    <div class="col-12 col-lg-3"><label class="form-label">الدور</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}">{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-lg-3 d-flex align-items-end"><button class="btn btn-primary w-100"><i class="bi bi-check2-circle"></i> حفظ الموظف</button></div>
+  </form>
+</div>
+{% endif %}
+
+<div class="card-soft">
+  <div class="section-title"><div><h3>سجل الموظفين</h3><small class="text-muted">{{employees|length}} موظف</small></div><input id="employee-filter" class="form-control w-auto" placeholder="بحث بالاسم أو الكود"></div>
+  <div class="table-wrap">
+    <table class="table align-middle" id="employees-table">
+      <thead><tr><th>الكود</th><th>الموظف</th><th>الوظيفة</th><th>الهاتف</th><th>الراتب</th><th>الحسابات</th><th>الدخول</th><th>الحالة</th>{% if can_manage %}<th>إجراء</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for e in employees %}
+      <tr>
+        <td><code>{{e.code}}</code></td>
+        <td class="fw-bold">{{e.full_name}}</td>
+        <td>{{e.job_title}}</td>
+        <td>{{e.phone or '—'}}</td>
+        <td>{{'{:,.2f}'.format(e.monthly_salary or 0)}} {{currency}}</td>
+        <td><span class="badge-soft">{{'جاهزة' if e.account and e.payroll_account else 'ناقص'}}</span></td>
+        <td>
+          {% if e.user %}
+            <span class="badge-soft"><i class="bi bi-person-check"></i> {{e.user.username}}</span>
+            {% if can("permissions.manage") %}<a class="btn btn-sm btn-outline-primary ms-1" href="{{url_for('admin.permissions',user_id=e.user.id)}}">صلاحيات</a>{% endif %}
+          {% else %}<span class="text-muted">بدون حساب دخول</span>{% endif %}
+        </td>
+        <td>{{'نشط' if e.active else 'موقوف'}}</td>
+        {% if can_manage %}<td class="text-nowrap"><a class="btn btn-sm btn-light" href="{{url_for('master_data.edit_employee',employee_id=e.id)}}">تعديل</a><form class="d-inline" method="post" action="{{url_for('master_data.toggle_employee',employee_id=e.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if e.active else 'تفعيل'}}</button></form></td>{% endif %}
+      </tr>
+      {% else %}<tr><td colspan="9" class="text-center py-5 text-muted">لا يوجد موظفون بعد.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const ef=document.getElementById('employee-filter');
+ef&&ef.addEventListener('input',()=>{const q=ef.value.trim().toLowerCase();document.querySelectorAll('#employees-table tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')});
+</script>
+{% endblock %}
