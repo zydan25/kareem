@@ -222,7 +222,8 @@ def charge_lease(lease_id):
 @permission_required("leases.view")
 def rents():
     rows=AgentRent.query.order_by(AgentRent.rent_month.desc(),AgentRent.id.desc()).limit(300).all()
-    return render_template("operations/rents.html",rows=rows,cash=get_system_account("main_cash"))
+    leases=AgentLease.query.filter_by(active=True).order_by(AgentLease.id.desc()).all()
+    return render_template("operations/rents.html",rows=rows,leases=leases,cash=get_system_account("main_cash"))
 
 @bp.post("/rents/<int:rent_id>/pay")
 @permission_required("leases.pay")
