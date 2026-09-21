@@ -1,1 +1,19 @@
-{% extends 'base.html' %}{% block guest_content %}<div class="login-shell"><div class="login-card"><div class="brand big"><span class="brand-mark">س</span><div><strong>سوق الجملة</strong><small>نظام الإدارة والمحاسبة</small></div></div><form method="post" class="mt-4"><label class="form-label">اسم المستخدم</label><input name="username" class="form-control form-control-lg" autocomplete="username" required><label class="form-label mt-3">كلمة المرور</label><input name="password" type="password" class="form-control form-control-lg" autocomplete="current-password" required><button class="btn btn-primary w-100 btn-lg mt-4">دخول النظام <i class="bi bi-arrow-left"></i></button></form><div class="small text-muted mt-3 text-center">الحساب الافتراضي الأولي: admin / admin</div></div></div>{% endblock %}
+{% extends 'base.html' %}
+{% block guest_content %}
+<div class="login-shell">
+  <div class="login-card">
+    {% with messages=get_flashed_messages(with_categories=true) %}
+      {% for category,message in messages %}<div class="alert alert-{{category}}">{{message}}</div>{% endfor %}
+    {% endwith %}
+    <div class="brand big"><span class="brand-mark">س</span><div><strong>سوق الجملة</strong><small>نظام الإدارة والمحاسبة</small></div></div>
+    <form method="post" class="mt-4">
+      <label class="form-label">اسم المستخدم</label>
+      <input name="username" class="form-control form-control-lg" autocomplete="username" required>
+      <label class="form-label mt-3">كلمة المرور</label>
+      <input name="password" type="password" class="form-control form-control-lg" autocomplete="current-password" required>
+      <button class="btn btn-primary w-100 btn-lg mt-4">دخول النظام <i class="bi bi-arrow-left"></i></button>
+    </form>
+    <div class="small text-muted mt-3 text-center">الحساب الافتراضي الأولي: admin / admin</div>
+  </div>
+</div>
+{% endblock %}
