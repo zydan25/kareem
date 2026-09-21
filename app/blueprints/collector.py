@@ -115,5 +115,5 @@ def search():
         or_(Vehicle.plate_number.ilike(f"%{q}%"),Vehicle.plate_separator.ilike(f"%{q}%")))
         .order_by(Vehicle.updated_at.desc()).limit(15).all())
     return jsonify([{"id":v.id,"plate":f"{v.plate_number}{(' / '+v.plate_separator) if v.plate_separator else ''}",
-        "client_id":v.client_id,"client":v.client.name if v.client else None,
+        "client_id":v.client_id,"client":v.client.name if v.client else None,"vehicle_type_id":v.vehicle_type_id,"vehicle_type":v.vehicle_type.name if v.vehicle_type else None,
         "suggested_agents":[{"id":a.id,"name":a.name} for a in recent_suggestions(v)]} for v in rows])
