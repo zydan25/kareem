@@ -1,30 +1,13 @@
 {% extends 'base.html' %}
 {% block title %}تعديل موظف - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>تعديل الموظف</h1><p>{{employee.code}} — {{employee.full_name}}</p></div><a class="btn btn-light" href="{{url_for('master_data.employees')}}">رجوع</a></div>
-<div class="card-soft">
-<form method="post" class="row g-3">
-  <div class="col-6 col-lg-2"><label class="form-label">الكود</label><input name="code" class="form-control" value="{{employee.code}}" required></div>
-  <div class="col-12 col-lg-4"><label class="form-label">اسم الموظف</label><input name="full_name" class="form-control" value="{{employee.full_name}}" required></div>
-  <div class="col-6 col-lg-2"><label class="form-label">الهاتف</label><input name="phone" class="form-control" value="{{employee.phone or ''}}" inputmode="tel"></div>
-  <div class="col-6 col-lg-2"><label class="form-label">الوظيفة</label><input name="job_title" class="form-control" value="{{employee.job_title or 'موظف'}}"></div>
-  <div class="col-6 col-lg-2"><label class="form-label">الراتب الشهري</label><input name="monthly_salary" class="form-control" value="{{employee.monthly_salary or 0}}" inputmode="decimal"></div>
-  <div class="col-6 col-lg-2"><label class="form-label">تاريخ التوظيف</label><input type="date" name="hire_date" class="form-control" value="{{employee.hire_date.isoformat() if employee.hire_date else ''}}"></div>
-  <div class="col-12"><div class="form-section-title">حساب الدخول والصلاحيات <span>{% if employee.user %}الحساب موجود: {{employee.user.username}}{% else %}لا يوجد حساب دخول{% endif %}</span></div></div>
-  <div class="col-12 col-lg-3"><label class="form-label">اسم المستخدم</label><input name="login_username" class="form-control" value="{{employee.user.username if employee.user else ''}}" autocomplete="off"></div>
-  <div class="col-12 col-lg-3"><label class="form-label">كلمة مرور جديدة</label><input name="login_password" type="password" class="form-control" autocomplete="new-password" placeholder="{% if employee.user %}اختياري{% else %}مطلوبة مع اسم المستخدم{% endif %}"></div>
-  <div class="col-12 col-lg-3"><label class="form-label">الدور</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}" {% if employee.user and employee.user.role==r %}selected{% endif %}>{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
-  <div class="col-12 col-lg-3 d-flex align-items-end">
-    {% if employee.user and can("permissions.manage") %}<a class="btn btn-outline-primary w-100" href="{{url_for('admin.permissions',user_id=employee.user.id)}}"><i class="bi bi-shield-check"></i> صلاحيات المستخدم</a>{% endif %}
-  </div>
-  <div class="col-12"><button class="btn btn-primary">حفظ جميع التعديلات</button></div>
-</form>
-</div>
-<div class="card-soft mt-3">
-  <div class="section-title"><h3>الحسابات المرتبطة</h3></div>
-  <div class="row g-3">
-    <div class="col-12 col-md-6"><div class="info-tile"><span>حساب العهدة</span><strong>{{employee.account.code if employee.account else 'يُنشأ عند الحفظ'}}</strong><small>{{employee.account.name if employee.account else ''}}</small></div></div>
-    <div class="col-12 col-md-6"><div class="info-tile"><span>حساب مستحق الراتب</span><strong>{{employee.payroll_account.code if employee.payroll_account else 'يُنشأ عند الحفظ'}}</strong><small>{{employee.payroll_account.name if employee.payroll_account else ''}}</small></div></div>
-  </div>
-</div>
+<div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>تعديل الموظف</h1><p>{{employee.code}} · {{employee.full_name}}</p></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light" href="{{url_for('master_data.employees')}}">الموظفون</a><a class="btn btn-outline-primary" href="{{url_for('master_data.employee_detail',employee_id=employee.id)}}">ملف الموظف</a></div></div>
+<div class="card-soft"><form method="post" enctype="multipart/form-data" class="row g-3">
+<div class="col-6 col-lg-2"><label class="form-label">الكود</label><input name="code" class="form-control" value="{{employee.code}}" required></div><div class="col-12 col-lg-4"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control" value="{{employee.full_name}}" required></div><div class="col-6 col-lg-3"><label class="form-label">رقم الهاتف</label><input name="phone" class="form-control" value="{{employee.phone or ''}}" inputmode="tel"></div><div class="col-6 col-lg-3"><label class="form-label">رقم البطاقة</label><input name="identity_number" class="form-control" value="{{employee.identity_number or ''}}"></div>
+<div class="col-6 col-lg-2"><label class="form-label">النوع</label><select name="gender" class="form-select"><option value="">غير محدد</option><option value="ذكر" {% if employee.gender=='ذكر' %}selected{% endif %}>ذكر</option><option value="أنثى" {% if employee.gender=='أنثى' %}selected{% endif %}>أنثى</option></select></div><div class="col-6 col-lg-3"><label class="form-label">نوع العمل</label><select name="employment_type" class="form-select">{% for x in ['دوام كامل','دوام جزئي','متعاون','مؤقت'] %}<option value="{{x}}" {% if employee.employment_type==x %}selected{% endif %}>{{x}}</option>{% endfor %}</select></div><div class="col-6 col-lg-3"><label class="form-label">الوظيفة</label><input name="job_title" class="form-control" value="{{employee.job_title or 'موظف'}}"></div><div class="col-6 col-lg-2"><label class="form-label">الراتب الشهري</label><input name="monthly_salary" class="form-control" value="{{employee.monthly_salary or 0}}" inputmode="decimal"></div><div class="col-6 col-lg-2"><label class="form-label">الساعات الأسبوعية</label><input name="weekly_hours" class="form-control" value="{{employee.weekly_hours or 48}}" inputmode="decimal"></div><div class="col-6 col-lg-3"><label class="form-label">تاريخ التوظيف</label><input type="date" name="hire_date" class="form-control" value="{{employee.hire_date.isoformat() if employee.hire_date else ''}}"></div><div class="col-6 col-lg-4"><label class="form-label">صورة البطاقة</label><input type="file" name="identity_image" class="form-control" accept="image/png,image/jpeg,image/webp"></div>
+<div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات">{{employee.notes or ''}}</textarea></div>
+<div class="col-12"><div class="form-section-title">حساب الدخول <span>الهاتف هو طريقة الدخول الأساسية</span></div></div>
+<div class="col-12 col-md-4"><label class="form-label">اسم المستخدم</label><input name="login_username" class="form-control" value="{{employee.user.username if employee.user else ''}}" placeholder="افتراضيًا الهاتف"></div><div class="col-12 col-md-4"><label class="form-label">كلمة مرور جديدة</label><input name="login_password" type="password" class="form-control" autocomplete="new-password" placeholder="{% if employee.user %}اختياري{% else %}مطلوبة{% endif %}"></div><div class="col-12 col-md-4"><label class="form-label">الدور</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}" {% if employee.user and employee.user.role==r %}selected{% endif %}>{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
+<div class="col-12 d-flex gap-2 flex-wrap"><button class="btn btn-primary">حفظ جميع التعديلات</button>{% if employee.user and can("permissions.manage") %}<a class="btn btn-outline-primary" href="{{url_for('admin.permissions',user_id=employee.user.id)}}">إدارة الصلاحيات</a>{% endif %}</div>
+</form></div>
 {% endblock %}
