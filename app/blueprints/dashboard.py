@@ -1,4 +1,5 @@
 from datetime import datetime,timedelta,timezone
+from zoneinfo import ZoneInfo
 from flask import Blueprint,render_template
 from sqlalchemy import func
 from ..extensions import db
@@ -11,7 +12,7 @@ bp=Blueprint("dashboard",__name__)
 @bp.route("/dashboard")
 @permission_required("dashboard.view")
 def index():
-    today=datetime.now(timezone.utc).date()
+    today=datetime.now(ZoneInfo("Asia/Aden")).date()
     start=datetime.combine(today,datetime.min.time(),tzinfo=timezone.utc); end=start+timedelta(days=1)
     total=db.session.query(func.coalesce(func.sum(GateTransaction.amount),0)).filter(GateTransaction.transaction_date>=start,GateTransaction.transaction_date<end).scalar()
     count=db.session.query(func.count(GateTransaction.id)).filter(GateTransaction.transaction_date>=start,GateTransaction.transaction_date<end).scalar()
