@@ -4,7 +4,7 @@ from io import StringIO
 from zoneinfo import ZoneInfo
 
 from flask import Blueprint, Response, render_template, request
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 
 from ..extensions import db
 from ..models import Account, Agent, GateTransaction, JournalEntry, JournalLine, Shift, User
@@ -53,7 +53,11 @@ def gate():
 @permission_required("reports.export")
 def gate_csv():
     start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
-    rows=GateTransaction.query.filter(GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt).order_by(GateTransaction.transaction_date).all()
+    q=GateTransaction.query.filter(GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt)
+    if request.args.get("collector_id"): q=q.filter_by(collector_id=int(request.args["collector_id"]))
+    if request.args.get("agent_id"): q=q.filter_by(agent_id=int(request.args["agent_id"]))
+    if request.args.get("shift_id"): q=q.filter_by(shift_id=int(request.args["shift_id"]))
+    rows=q.order_by(GateTransaction.transaction_date).all()
     out=StringIO(); w=csv.writer(out); w.writerow(["السند","التاريخ","الحركة","اللوحة","العميل","الوكيل","المتحصل","المبلغ"])
     for x in rows:
         w.writerow([x.receipt_number,x.transaction_date.isoformat(),x.direction,
@@ -81,9 +85,11 @@ def _account_period_rows(start,end, account_type=None):
         func.coalesce(func.sum(JournalLine.debit),0).label("debit"),
         func.coalesce(func.sum(JournalLine.credit),0).label("credit"))
        .outerjoin(JournalLine,JournalLine.account_id==Account.id)
-       .outerjoin(JournalEntry,(JournalEntry.id==JournalLine.entry_id)&(JournalEntry.status=="posted")&
-                  (JournalEntry.entry_date>=start)&(JournalEntry.entry_date<=end))
-       .filter(Account.is_group.is_(False)))
+       .outerjoin(JournalEntry,JournalEntry.id==JournalLine.entry_id)
+       .filter(Account.is_group.is_(False))
+       .filter(or_(JournalEntry.id.is_(None),and_(JournalEntry.status=="posted",
+                                                   JournalEntry.entry_date>=start,
+                                                   JournalEntry.entry_date<=end))))
     if account_type: q=q.filter(Account.account_type==account_type)
     q=q.group_by(Account.id,Account.code,Account.name,Account.account_type).order_by(Account.code)
     result=[]
@@ -160,6 +166,31 @@ def account_statement(account_id):
     return render_template("reports/account_statement.html",account=account,lines=balance_lines,start=start,end=end,opening=opening,
                            debit_total=sum((D(x.debit) for x in lines),D(0)),
                            credit_total=sum((D(x.credit) for x in lines),D(0)),closing=running)
+
+
+
+@bp.get("/custody")
+@permission_required("reports.view")
+def custody():
+    start,end=parse_dates()
+    custody_root=Account.query.filter_by(system_key="collector_root").one_or_none()
+    rows=[]
+    if custody_root:
+        accounts=Account.query.filter_by(account_type="asset",is_group=False,active=True,parent_id=custody_root.id).order_by(Account.code).all()
+        for account in accounts:
+            period_lines=(db.session.query(JournalLine).join(JournalEntry)
+                          .filter(JournalLine.account_id==account.id,JournalEntry.status=="posted",
+                                  JournalEntry.entry_date>=start,JournalEntry.entry_date<=end).all())
+            rows.append({
+                "account":account,
+                "opening":account_balance(account.id,end=start-timedelta(days=1)),
+                "period_debit":sum((D(x.debit) for x in period_lines),D(0)),
+                "period_credit":sum((D(x.credit) for x in period_lines),D(0)),
+                "balance":account_balance(account.id),
+            })
+    from ..models import Settlement
+    settlements=Settlement.query.filter(Settlement.settlement_date>=start,Settlement.settlement_date<=end).order_by(Settlement.id.desc()).all()
+    return render_template("reports/custody.html",rows=rows,settlements=settlements,start=start,end=end)
 
 @bp.get("/trial-balance")
 @permission_required("reports.view")
