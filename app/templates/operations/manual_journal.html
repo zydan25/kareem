@@ -1,3 +1,4 @@
+{% from 'components/account_picker.html' import picker %}
 {% extends 'base.html' %}
 {% block title %}قيد يومية - {{app_name}}{% endblock %}
 {% block content %}
@@ -11,26 +12,12 @@
     <div class="from-to-journal">
       <div class="journal-side">
         <span class="journal-side-label">من حساب <small>دائن</small></span>
-        <select name="from_account_id" id="from-account" class="form-select form-select-lg" required>
-          <option value="">اختر الحساب الدائن</option>
-          {% for a,depth in account_options %}
-            {% if not a.is_group and a.allow_manual_posting %}
-              <option value="{{a.id}}">{{'↳ ' * depth}}{{a.code}} — {{a.name}}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
+        {{picker('from_account_id','من حساب',account_options,accounts|map(attribute='id')|list,None,'اختر الحساب الدائن')}}
       </div>
       <div class="journal-transfer-arrow"><i class="bi bi-arrow-left-right"></i><span>إلى</span></div>
       <div class="journal-side">
         <span class="journal-side-label">إلى حساب <small>مدين</small></span>
-        <select name="to_account_id" id="to-account" class="form-select form-select-lg" required>
-          <option value="">اختر الحساب المدين</option>
-          {% for a,depth in account_options %}
-            {% if not a.is_group and a.allow_manual_posting %}
-              <option value="{{a.id}}">{{'↳ ' * depth}}{{a.code}} — {{a.name}}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
+        {{picker('to_account_id','إلى حساب',account_options,accounts|map(attribute='id')|list,None,'اختر الحساب المدين')}}
       </div>
     </div>
   </div>
@@ -65,8 +52,8 @@ const amount=document.getElementById('journal-amount');
 const debit=document.getElementById('preview-debit');
 const credit=document.getElementById('preview-credit');
 const status=document.getElementById('preview-status');
-const from=document.getElementById('from-account');
-const to=document.getElementById('to-account');
+const from=document.querySelector('[data-account-picker][data-name="from_account_id"] [data-account-value]');
+const to=document.querySelector('[data-account-picker][data-name="to_account_id"] [data-account-value]');
 function preview(){
   const n=parseFloat(amount.value)||0;
   debit.textContent=n.toFixed(2);
