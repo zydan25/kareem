@@ -42,7 +42,11 @@ def ensure_admin(username="admin",password="admin"):
     user=db.session.query(User).filter_by(username=username).first()
     if not user:
         user=User(username=username,full_name="مدير النظام",role=Role.ADMIN.value,active=True)
-        user.set_password(password); db.session.add(user)
+        user.set_password(password)
+        db.session.add(user)
+    else:
+        user.role=Role.ADMIN.value
+        user.active=True
     return user
 
 def seed():
