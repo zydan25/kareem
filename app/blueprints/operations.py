@@ -165,7 +165,7 @@ def settlements():
             db.session.commit(); flash(f"تم إنشاء طلب الإخلاء {settlement.number}","success")
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/settlements.html",sources=sources,source_balances=source_balances,target=target,rows=rows,shifts=shifts,account_options=_account_picker())
+    return render_template("operations/settlements.html",sources=sources,source_balances=source_balances,source_account_ids=[a.id for a,_ in source_balances],target=target,rows=rows,shifts=shifts,account_options=_account_picker())
 
 @bp.post("/settlements/<int:settlement_id>/approve")
 @permission_required("collector.approve_settlement")
