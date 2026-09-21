@@ -12,7 +12,7 @@ from ..services.accounts import ensure_agent_account, ensure_employee_payroll_ac
 from ..services.audit import audit
 from ..services.operations import (
     approve_settlement, build_payroll, charge_rent, pay_rent, pay_salary,
-    post_payroll, post_voucher, create_settlement,
+    post_payroll, post_voucher, create_settlement, post_expense,
 )
 
 bp=Blueprint("operations",__name__,url_prefix="/operations")
@@ -51,6 +51,42 @@ def voucher_detail(voucher_id):
     if not voucher: return ("السند غير موجود",404)
     entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,voucher.journal_entry_id) if voucher.journal_entry_id else None
     return render_template("operations/voucher_detail.html",voucher=voucher,entry=entry)
+
+
+
+@bp.route("/expenses",methods=["GET","POST"])
+@permission_required("expenses.view")
+def expenses():
+    from ..models import Expense
+    expense_accounts=Account.query.filter_by(account_type="expense",is_group=False,active=True,allow_manual_posting=True).order_by(Account.code).all()
+    cash_accounts=Account.query.filter_by(account_type="asset",is_group=False,active=True,allow_manual_posting=True).order_by(Account.code).all()
+    default_expense=get_system_account("operating_expense")
+    default_cash=get_system_account("main_cash")
+    rows=Expense.query.order_by(Expense.expense_date.desc(),Expense.id.desc()).limit(250).all()
+    if request.method=="POST":
+        try:
+            if not can("expenses.manage"): raise ValueError("ليست لديك صلاحية إدارة المصروفات")
+            expense_account=db.session.get(Account,int(request.form["expense_account_id"]))
+            cash_account=db.session.get(Account,int(request.form.get("cash_account_id") or default_cash.id))
+            expense,entry=post_expense(amount=request.form["amount"],expense_account=expense_account,cash_account=cash_account,
+                description=request.form.get("description","مصروف تشغيلي"),beneficiary=request.form.get("beneficiary",""),
+                expense_date=date.fromisoformat(request.form.get("expense_date") or date.today().isoformat()),user_id=current_user.id)
+            audit("create_expense","expense",expense.id,expense.number)
+            db.session.commit(); flash(f"تم ترحيل المصروف {expense.number}","success")
+            return redirect(url_for("operations.expenses"))
+        except Exception as exc:
+            db.session.rollback(); flash(str(exc),"danger")
+    return render_template("operations/expenses.html",rows=rows,expense_accounts=expense_accounts,cash_accounts=cash_accounts,
+                           default_expense=default_expense,default_cash=default_cash)
+
+@bp.get("/expenses/<int:expense_id>")
+@permission_required("expenses.view")
+def expense_detail(expense_id):
+    from ..models import Expense, JournalEntry
+    expense=db.session.get(Expense,expense_id)
+    if not expense: return ("المصروف غير موجود",404)
+    entry=db.session.get(JournalEntry,expense.journal_entry_id) if expense.journal_entry_id else None
+    return render_template("operations/expense_detail.html",expense=expense,entry=entry)
 
 @bp.route("/manual-journal",methods=["GET","POST"])
 @permission_required("accounting.post")
@@ -175,7 +211,8 @@ def leases():
 def charge_lease(lease_id):
     try:
         lease=db.session.get(AgentLease,lease_id)
-        rent,entry=charge_rent(lease=lease,rent_month=date.fromisoformat(request.form["rent_month"]),user_id=current_user.id)
+        rent,entry=charge_rent(lease=lease,rent_month=date.fromisoformat(request.form["rent_month"]),user_id=current_user.id,
+            base_amount=request.form.get("base_amount") or None,discount=request.form.get("discount","0"),addition=request.form.get("addition","0"))
         audit("charge_rent","agent_rent",rent.id,entry.number); db.session.commit(); flash("تم إثبات استحقاق الإيجار","success")
     except Exception as exc:
         db.session.rollback(); flash(str(exc),"danger")
