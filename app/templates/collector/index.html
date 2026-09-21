@@ -73,6 +73,11 @@
     <button type="button" class="btn btn-sm btn-light" id="change-vehicle">تغيير المركبة</button>
   </div>
 
+  <div class="collector-note-field">
+    <label class="form-label">ملاحظات الحركة <small>(اختياري)</small></label>
+    <textarea name="gate_notes" id="gate_notes" class="form-control" rows="2" placeholder="مثال: دخول بضائع، موعد خاص، ملاحظة على المركبة..."></textarea>
+  </div>
+
   <div class="collector-optional-fields">
     <div><label class="form-label">الوكيل <small>(اختياري)</small></label><select id="agent_id" name="agent_id" class="form-select form-select-lg"><option value="">غير مربوط — على عهدة المتحصل</option>{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
     <div><label class="form-label">المبلغ</label><div class="input-group input-group-lg"><input name="amount" id="amount" class="form-control text-center fw-bold" inputmode="decimal" required><span class="input-group-text">{{currency}}</span></div></div>
@@ -94,7 +99,7 @@
 </div>
 </div>
 
-<div class="card-soft mt-3"><div class="section-title"><div><h3>آخر حركاتي اليوم</h3><small class="text-muted">{{recent|length}} حركة</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.collectors')}}">تقارير المتحصلين</a></div><div class="table-wrap"><table class="table"><thead><tr><th>الوقت</th><th>اللوحة</th><th>العميل</th><th>الوكيل</th><th>الحركة</th><th>المبلغ</th></tr></thead><tbody>{% for x in recent %}<tr><td>{{x.transaction_date.strftime('%H:%M')}}</td><td class="fw-bold">{{x.vehicle.plate_number or 'بدون جمارك'}}</td><td>{{x.client.name if x.client else '—'}}</td><td>{{x.agent.name if x.agent else 'العهدة'}}</td><td><span class="badge-soft">{{'دخول' if x.direction=='entry' else 'خروج'}}</span></td><td>{{'{:,.2f}'.format(x.amount)}} {{currency}}</td></tr>{% else %}<tr><td colspan="6" class="text-center text-muted py-4">لا توجد عمليات اليوم.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card-soft mt-3"><div class="section-title"><div><h3>آخر حركاتي اليوم</h3><small class="text-muted">{{recent|length}} حركة</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.collectors')}}">تقارير المتحصلين</a></div><div class="table-wrap"><table class="table"><thead><tr><th>الوقت</th><th>اللوحة</th><th>العميل</th><th>الوكيل</th><th>الحركة</th><th>المبلغ</th><th>التفاصيل</th></tr></thead><tbody>{% for x in recent %}<tr><td>{{x.transaction_date.strftime('%H:%M')}}</td><td class="fw-bold">{{x.vehicle.plate_number or 'بدون جمارك'}}</td><td>{{x.client.name if x.client else '—'}}</td><td>{{x.agent.name if x.agent else 'العهدة'}}</td><td><span class="badge-soft">{{'دخول' if x.direction=='entry' else 'خروج'}}</span></td><td>{{'{:,.2f}'.format(x.amount)}} {{currency}}</td><td><a class="btn btn-sm btn-outline-primary" href="{{url_for('collector.transaction_detail',transaction_id=x.id)}}">تفاصيل</a></td></tr>{% else %}<tr><td colspan="7" class="text-center text-muted py-4">لا توجد عمليات اليوم.</td></tr>{% endfor %}</tbody></table></div></div>
 
 <div id="new-client-modal" class="collector-modal" hidden>
   <div class="collector-modal-backdrop" data-new-client-close></div>
