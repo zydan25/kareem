@@ -5,9 +5,9 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 from sqlalchemy import func, or_
 
 from ..extensions import db
-from ..models import Agent, AgentLease, AgentRent, AuditLog, Client, ClientAgent, Employee, EmployeeSchedule, GateTransaction, PayrollLine, Role, Shift, User, Vehicle, VehicleAgent, VehicleType
+from ..models import Agent, AgentLease, AgentRent, AuditLog, Client, ClientAgent, Employee, EmployeeFine, EmployeeSchedule, GateTransaction, PayrollLine, Role, Shift, User, Vehicle, VehicleAgent, VehicleType
 from ..permissions import can, permission_required
-from ..services.accounting import account_balance
+from ..services.accounting import account_balance, create_posted_entry, get_system_account
 from ..services.audit import audit
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_payroll_account
 from ..services.setup import ensure_employees_for_users
@@ -185,6 +185,8 @@ def clients():
             statuses=request.form.getlist("vehicle_registration_status")
             type_ids=request.form.getlist("vehicle_type_id")
             vehicle_notes=request.form.getlist("vehicle_notes")
+            vehicle_separators=request.form.getlist("vehicle_plate_separator")
+            vehicle_letters=request.form.getlist("vehicle_plate_letters")
             created=0
             for i,type_id in enumerate(type_ids):
                 plate=(plates[i] if i<len(plates) else "").strip() or None
@@ -196,8 +198,8 @@ def clients():
                     raise ValueError("المركبة ذات اللوحة الجمركية يجب أن تحتوي على رقم لوحة")
                 vehicle=Vehicle(
                     plate_number=plate,
-                    plate_separator=None,
-                    plate_letters=None,
+                    plate_separator=(vehicle_separators[i] if i<len(vehicle_separators) else "").strip() or None,
+                    plate_letters=(vehicle_letters[i] if i<len(vehicle_letters) else "").strip() or None,
                     registration_status=status,
                     vehicle_type_id=int(type_id),
                     client_id=client.id,
@@ -256,11 +258,15 @@ def edit_client(client_id):
             submitted_statuses=request.form.getlist("vehicle_registration_status")
             submitted_types=request.form.getlist("vehicle_type_id")
             submitted_notes=request.form.getlist("vehicle_notes")
+            submitted_separators=request.form.getlist("vehicle_plate_separator")
+            submitted_letters=request.form.getlist("vehicle_plate_letters")
 
             for i,type_id in enumerate(submitted_types):
                 plate=(submitted_plates[i] if i<len(submitted_plates) else "").strip() or None
                 status=(submitted_statuses[i] if i<len(submitted_statuses) else "registered").strip() or "registered"
                 note=(submitted_notes[i] if i<len(submitted_notes) else "").strip() or None
+                separator=(submitted_separators[i] if i<len(submitted_separators) else "").strip() or None
+                letters=(submitted_letters[i] if i<len(submitted_letters) else "").strip() or None
                 vid=request.form.getlist("vehicle_id")[i] if i<len(request.form.getlist("vehicle_id")) else ""
                 if not type_id:
                     continue
@@ -271,11 +277,13 @@ def edit_client(client_id):
                     if int(vehicle.client_id or 0)!=client.id:
                         raise ValueError("مركبة غير مرتبطة بالعميل")
                     vehicle.plate_number=plate
+                    vehicle.plate_separator=separator
+                    vehicle.plate_letters=letters
                     vehicle.registration_status=status
                     vehicle.vehicle_type_id=int(type_id)
                     vehicle.notes=note
                 else:
-                    vehicle=Vehicle(plate_number=plate,registration_status=status,vehicle_type_id=int(type_id),
+                    vehicle=Vehicle(plate_number=plate,plate_separator=separator,plate_letters=letters,registration_status=status,vehicle_type_id=int(type_id),
                         client_id=client.id,notes=note,active=True)
                     db.session.add(vehicle)
 
@@ -394,6 +402,39 @@ def toggle_vehicle(vehicle_id):
     if not v: return ("غير موجود",404)
     v.active=not v.active; audit("toggle","vehicle",v.id,v.plate_number); db.session.commit(); return redirect(url_for("master_data.vehicles"))
 
+@bp.route("/vehicle-types",methods=["POST"])
+@permission_required("vehicles.manage")
+def add_vehicle_type():
+    name=request.form.get("name","").strip()
+    if not name:
+        flash("اكتب اسم نوع المركبة","danger")
+        return redirect(url_for("master_data.vehicles"))
+    try:
+        existing=VehicleType.query.filter(func.lower(VehicleType.name)==name.lower()).first()
+        if existing:
+            raise ValueError("نوع المركبة موجود بالفعل")
+        db.session.add(VehicleType(name=name,is_system=False,active=True))
+        audit("create","vehicle_type",None,name)
+        db.session.commit()
+        flash(f"تم إضافة نوع المركبة: {name}","success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("master_data.vehicles"))
+
+
+@bp.post("/vehicle-types/<int:type_id>/toggle")
+@permission_required("vehicles.manage")
+def toggle_vehicle_type(type_id):
+    row=db.session.get(VehicleType,type_id)
+    if not row:
+        return ("غير موجود",404)
+    row.active=not row.active
+    audit("toggle","vehicle_type",row.id,f"{row.name}|{row.active}")
+    db.session.commit()
+    return redirect(url_for("master_data.vehicles"))
+
+
 @bp.route("/employees",methods=["GET","POST"])
 @permission_required("employees.view")
 def employees():
@@ -421,6 +462,43 @@ def employees():
             db.session.rollback(); flash(str(exc),"danger")
     return render_template("master_data/employees.html",employees=rows,can_manage=can("employees.manage"),q=q,roles=[r.value for r in Role],role_labels=ROLE_LABELS,weekdays=WEEKDAYS)
 
+@bp.post("/employees/fines")
+@permission_required("employees.manage")
+def add_employee_fine():
+    try:
+        employee_id=request.form.get("employee_id",type=int)
+        employee=db.session.get(Employee,employee_id)
+        if not employee or not employee.active:
+            raise ValueError("اختر موظفًا نشطًا")
+        amount=D(request.form.get("amount","0"))
+        if amount<=0:
+            raise ValueError("مبلغ الغرامة يجب أن يكون أكبر من صفر")
+        reason=request.form.get("reason","").strip()
+        if not reason:
+            raise ValueError("بيان الغرامة مطلوب")
+        fine_date=date.fromisoformat(request.form.get("fine_date") or date.today().isoformat())
+        ensure_employee_account(employee)
+        revenue=get_system_account("employee_fines_revenue")
+        fine=EmployeeFine(employee_id=employee.id,fine_date=fine_date,amount=amount,reason=reason,created_by_id=current_user.id,journal_entry_id=0)
+        db.session.add(fine)
+        db.session.flush()
+        entry=create_posted_entry(
+            description=f"غرامة/مخالفة موظف: {employee.full_name} — {reason}",
+            entry_date=fine_date,created_by_id=current_user.id,
+            source_type="employee_fine",source_id=fine.id,prefix="FINE",
+            lines=[{"account":employee.account,"debit":amount},{"account":revenue,"credit":amount}],
+            audit=f"غرامة موظف {employee.full_name}: {amount}"
+        )
+        fine.journal_entry_id=entry.id
+        audit("create","employee_fine",fine.id,f"{employee.full_name}|{amount}|{reason}")
+        db.session.commit()
+        flash(f"تم تسجيل غرامة الموظف {employee.full_name} وترحيل القيد {entry.number}","success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("master_data.employees",q=request.form.get("return_q","")))
+
+
 @bp.get("/employees/<int:employee_id>")
 @permission_required("employees.view")
 def employee_detail(employee_id):
@@ -432,7 +510,7 @@ def employee_detail(employee_id):
     audits=AuditLog.query.filter_by(user_id=emp.user.id if emp.user else -1).order_by(AuditLog.created_at.desc()).limit(30).all()
     gates=GateTransaction.query.filter_by(collector_id=emp.user.id if emp.user else -1).order_by(GateTransaction.transaction_date.desc()).limit(30).all()
     payroll_lines=(PayrollLine.query.filter_by(employee_id=emp.id).order_by(PayrollLine.id.desc()).limit(24).all())
-    return render_template("master_data/employee_detail.html",employee=emp,custody=custody,payroll_due=payroll_due,shifts=shifts,audits=audits,gates=gates,payroll_lines=payroll_lines,weekdays=WEEKDAYS,role_labels=ROLE_LABELS)
+    return render_template("master_data/employee_detail.html",employee=emp,custody=custody,payroll_due=payroll_due,shifts=shifts,audits=audits,gates=gates,payroll_lines=payroll_lines,fines=EmployeeFine.query.filter_by(employee_id=emp.id).order_by(EmployeeFine.fine_date.desc(),EmployeeFine.id.desc()).limit(30).all(),weekdays=WEEKDAYS,role_labels=ROLE_LABELS)
 
 @bp.route("/employees/<int:employee_id>/edit",methods=["GET","POST"])
 @permission_required("employees.manage")
