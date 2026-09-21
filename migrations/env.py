@@ -6,7 +6,7 @@ from app import create_app
 from app.extensions import db
 
 config=context.config
-if config.config_file_name is not None:
+if config.config_file_name is not None and config.has_section("loggers"):
     fileConfig(config.config_file_name)
 
 try:
