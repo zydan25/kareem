@@ -160,8 +160,51 @@ def search():
 @permission_required("collector.view")
 def search_clients():
     q=request.args.get("q","").strip()
-    if len(q)<1:
+    if not q:
         return jsonify([])
-    rows=Client.query.filter(Client.active.is_(True),
-        or_(Client.name.ilike(f"%{q}%"),Client.phone.ilike(f"%{q}%"))).order_by(Client.name).limit(10).all()
-    return jsonify([{"id":c.id,"name":c.name,"phone":c.phone,"address":c.address} for c in rows])
+
+    compact=q.replace(" ","").replace("-","").replace("/","")
+    results=[]
+
+    client_rows=(Client.query
+        .filter(Client.active.is_(True),
+            or_(Client.name.ilike(f"%{q}%"),Client.phone.ilike(f"%{q}%")))
+        .order_by(Client.name)
+        .limit(10).all())
+
+    for client in client_rows:
+        results.append({
+            "kind":"client","id":client.id,"name":client.name,
+            "phone":client.phone,"address":client.address,
+            "plate":None,"vehicle_id":None,
+        })
+
+    vehicle_rows=(Vehicle.query
+        .filter(Vehicle.active.is_(True),
+            or_(Vehicle.plate_number.ilike(f"%{compact}%"),
+                Vehicle.plate_letters.ilike(f"%{compact}%"),
+                Vehicle.plate_separator.ilike(f"%{q}%")))
+        .order_by(Vehicle.updated_at.desc()).limit(10).all())
+
+    for vehicle in vehicle_rows:
+        client=vehicle.client
+        results.append({
+            "kind":"vehicle",
+            "id":client.id if client else None,
+            "name":client.name if client else "مركبة بدون عميل",
+            "phone":client.phone if client else None,
+            "address":client.address if client else None,
+            "plate":vehicle.plate_number,
+            "vehicle_id":vehicle.id,
+            "vehicle_type_id":vehicle.vehicle_type_id,
+            "vehicle_type":vehicle.vehicle_type.name if vehicle.vehicle_type else None,
+            "vehicle_separator":vehicle.plate_separator,
+        })
+
+    vehicle_client_ids={x["id"] for x in results if x["kind"]=="vehicle" and x.get("id")}
+    final=[]
+    for item in results:
+        if item["kind"]=="client" and item["id"] in vehicle_client_ids:
+            continue
+        final.append(item)
+    return jsonify(final[:15])
