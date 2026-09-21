@@ -20,7 +20,7 @@ def upgrade():
         sa.Column("fine_date", sa.Date(), nullable=False),
         sa.Column("amount", sa.Numeric(18, 2), nullable=False),
         sa.Column("reason", sa.String(length=500), nullable=False),
-        sa.Column("journal_entry_id", sa.Integer(), nullable=False),
+        sa.Column("journal_entry_id", sa.Integer(), nullable=True),
         sa.Column("created_by_id", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
