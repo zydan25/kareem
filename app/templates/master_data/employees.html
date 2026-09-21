@@ -6,7 +6,7 @@
 {% if can_manage %}<div id="add-employee" class="card-soft add-panel"><form method="post" enctype="multipart/form-data" class="row g-3">
 <div class="col-12"><div class="form-section-title">بيانات الموظف <span>المعرف والصورة اختياريان · الكود ينشأ تلقائيًا</span></div></div>
 <div class="col-12 col-lg-4"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control form-control-lg" required></div>
-<div class="col-6 col-lg-2"><label class="form-label">رقم الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
+<div class="col-6 col-lg-2"><label class="form-label">رقم الهاتف</label><input name="phone" class="form-control" inputmode="tel" required></div>
 <div class="col-6 col-lg-2"><label class="form-label">رقم البطاقة</label><input name="identity_number" class="form-control"></div>
 <div class="col-6 col-lg-2"><label class="form-label">النوع</label><select name="gender" class="form-select"><option value="">غير محدد</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
 <div class="col-6 col-lg-2"><label class="form-label">نوع العمل</label><select name="employment_type" class="form-select"><option>دوام كامل</option><option>دوام جزئي</option><option>متعاون</option><option>مؤقت</option></select></div>
@@ -16,10 +16,9 @@
 <div class="col-6 col-lg-4"><label class="form-label">تاريخ التوظيف</label><input type="date" name="hire_date" class="form-control"></div>
 <div class="col-12 col-lg-4"><label class="form-label">صورة البطاقة <small>(اختياري)</small></label><input type="file" name="identity_image" class="form-control" accept="image/png,image/jpeg,image/webp"></div>
 <div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات الموظف"></textarea></div>
-<div class="col-12"><div class="form-section-title">حساب الدخول <span>يمكن الدخول برقم الهاتف + كلمة المرور</span></div></div>
-<div class="col-12 col-lg-4"><label class="form-label">اسم المستخدم (اختياري)</label><input name="login_username" class="form-control" placeholder="يستخدم الهاتف افتراضيًا"></div>
-<div class="col-12 col-lg-4"><label class="form-label">كلمة المرور</label><input name="login_password" type="password" class="form-control" autocomplete="new-password" placeholder="اترك الحساب بدون دخول إن لم تكتب"></div>
-<div class="col-12 col-lg-4"><label class="form-label">الدور</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}">{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
+<div class="col-12"><div class="form-section-title">حساب الدخول والصلاحيات <span>ينشأ تلقائيًا من الموظف — اسم المستخدم هو الهاتف</span></div></div>
+<div class="col-12 col-lg-5"><label class="form-label">كلمة المرور</label><input name="login_password" type="password" class="form-control" autocomplete="new-password" required placeholder="كلمة مرور الدخول"></div>
+<div class="col-12 col-lg-5"><label class="form-label">نوع الموظف / الصلاحيات</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}">{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
 <div class="col-12"><button class="btn btn-primary btn-lg">حفظ الموظف</button></div>
 </form></div>{% endif %}
 <div class="card-soft"><div class="section-title"><div><h3>الموظفون</h3><small class="text-muted">{{employees|length}} موظف</small></div></div><div class="entity-list">
