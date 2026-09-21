@@ -50,6 +50,10 @@ def index():
         amount=D(request.form.get("amount","0"))
 
         try:
+            if direction not in {"entry","exit"}:
+                raise ValueError("نوع الحركة غير صالح")
+            if registration_status not in {"registered","without_customs"}:
+                raise ValueError("حالة المركبة غير صالحة")
             if amount<=0:
                 raise ValueError("المبلغ يجب أن يكون أكبر من صفر في الدخول والخروج")
 
@@ -85,6 +89,8 @@ def index():
                     db.session.flush()
                     ensure_client_account(client)
             if client:
+                if vehicle.client_id and vehicle.client_id != client.id:
+                    raise ValueError("المركبة المحددة مرتبطة بعميل آخر")
                 vehicle.client_id=client.id
 
             agent=db.session.get(Agent,agent_id) if agent_id else None
