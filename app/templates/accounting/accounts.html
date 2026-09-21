@@ -2,45 +2,45 @@
 {% block title %}شجرة الحسابات - {{app_name}}{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div><span class="eyebrow">المحاسبة</span><h1>شجرة الحسابات</h1><p>عرض هرمي للحسابات مع الرصيد الحالي، نوع الحساب، وإمكانية الإدارة للحسابات غير النظامية.</p></div>
-  {% if can_manage %}<a class="btn btn-primary" href="{{url_for('accounting.account_new')}}"><i class="bi bi-folder-plus"></i> إضافة حساب فرعي</a>{% endif %}
+  <div><span class="eyebrow">المحاسبة</span><h1>شجرة الحسابات</h1><p>نفس أسلوب POS: حسابات رئيسية قابلة للفتح، وفروع تفصيلية للحركة والقيود.</p></div>
+  {% if can_manage %}<a class="btn btn-primary" href="{{url_for('accounting.account_new')}}"><i class="bi bi-plus-lg"></i> حساب جديد</a>{% endif %}
 </div>
-<div class="card-soft mb-3">
-  <div class="row g-2 align-items-center">
-    <div class="col-12 col-lg-7"><input id="account-filter" class="form-control form-control-lg" placeholder="ابحث بالكود أو اسم الحساب"></div>
-    <div class="col-12 col-lg-5 d-flex gap-2 flex-wrap">
-      <span class="badge-soft">الحسابات الرئيسية للتجميع</span>
-      <span class="badge-soft">الحسابات الفرعية للقيود</span>
-      <a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.accounts_report')}}">ملخص الأرصدة</a>
+<div class="stat-grid mb-4">
+<div class="stat-card primary"><span>كل الحسابات</span><strong>{{stats.count}}</strong><small>{{stats.groups}} رئيسي · {{stats.leaves}} تفصيلي</small></div>
+<div class="stat-card"><span>الحسابات التفصيلية</span><strong>{{stats.leaves}}</strong><small>يمكن القيد عليها فقط</small></div>
+<div class="stat-card"><span>التقارير</span><strong>8</strong><small>أستاذ، ميزان، دخل، عهد...</small></div>
+<div class="stat-card"><span>الرصيد التفصيلي</span><strong>{{'{:,.2f}'.format(stats.balance)}}</strong><small>{{currency}}</small></div>
+</div>
+<div class="card-soft mb-3"><div class="search-input"><i class="bi bi-search"></i><input id="account-tree-search" class="form-control form-control-lg" placeholder="بحث في شجرة الحسابات"></div></div>
+<div class="card-soft account-tree-card">
+{% macro node(items,level=0) %}
+{% for row in items %}
+{% set a=row.account %}
+<div class="account-node-wrap" data-search="{{a.code}} {{a.name}}">
+  <div class="account-node {% if a.is_group %}group{% endif %}">
+    <div class="account-node-name" style="padding-right:{{level*22}}px">
+      {% if row.children %}<button class="tree-toggle" type="button" onclick="toggleAccountNode(this)" aria-label="فتح أو إغلاق"><i class="bi bi-chevron-down"></i></button>{% else %}<span class="tree-spacer"></span>{% endif %}
+      <span class="account-type-icon">{{'📁' if a.is_group else '•'}}</span>
+      <div><strong>{{a.name}}</strong><small>{{a.code}} · {{account_type_labels.get(a.account_type,a.account_type)}}</small></div>
+    </div>
+    <div class="account-node-balance">{% if not a.is_group %}<strong>{{'{:,.2f}'.format(account_balance(a.id) if account_balance is defined else 0)}}</strong><small>{{currency}}</small>{% else %}<span>تجميعي</span>{% endif %}</div>
+    <div class="account-node-actions">
+      {% if not a.is_group %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a>{% endif %}
+      <a class="btn btn-sm btn-light" href="{{url_for('accounting.account_edit',account_id=a.id)}}">تعديل</a>
     </div>
   </div>
+  {% if row.children %}
+  <div class="account-children">{% if row.children is defined %}{{node(row.children,level+1)}}{% endif %}</div>
+  {% endif %}
 </div>
-<div class="card-soft table-wrap">
-<table class="table align-middle" id="accounts-table">
-<thead><tr><th>الكود</th><th>الحساب</th><th>النوع</th><th>الطبيعة</th><th>الرصيد</th><th>القيد</th><th>إدارة</th></tr></thead>
-<tbody>
-{% for row in rows %}
-{% set a=row.account %}
-<tr data-search="{{a.code}} {{a.name}}">
-  <td><code>{{a.code}}</code></td>
-  <td style="padding-right:{{12 + row.depth*22}}px" class="{% if a.is_group %}fw-bold{% endif %}">{% if a.is_group %}<i class="bi bi-folder2-open text-warning"></i>{% else %}<i class="bi bi-dot text-success"></i>{% endif %} {{a.name}}</td>
-  <td>{{account_type_labels.get(a.account_type,a.account_type)}}</td>
-  <td>{{'مدين' if a.account_type in ['asset','expense'] else 'دائن'}}</td>
-  <td>{% if row.balance is not none %}<strong>{{'{:,.2f}'.format(row.balance)}} {{currency}}</strong>{% else %}<span class="text-muted">تجميعي</span>{% endif %}</td>
-  <td>{{'غير قابل للقيد' if a.is_group else ('قابل للقيد' if a.allow_manual_posting else 'نظامي')}}</td>
-  <td class="text-nowrap">
-    {% if not a.is_group %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a>{% endif %}
-    {% if can_manage and not a.system_key %}<a class="btn btn-sm btn-light" href="{{url_for('accounting.account_edit',account_id=a.id)}}">تعديل</a>{% if not a.children %}<form class="d-inline" method="post" action="{{url_for('accounting.account_toggle',account_id=a.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if a.active else 'تفعيل'}}</button></form>{% endif %}{% endif %}
-  </td>
-</tr>
-{% else %}<tr><td colspan="7" class="text-center py-5 text-muted">لا توجد حسابات.</td></tr>{% endfor %}
-</tbody>
-</table>
+{% endfor %}
+{% endmacro %}
+{{node(tree)}}
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-const f=document.getElementById('account-filter');
-f&&f.addEventListener('input',()=>{const q=f.value.trim().toLowerCase();document.querySelectorAll('#accounts-table tbody tr').forEach(r=>r.style.display=(r.dataset.search||r.innerText).toLowerCase().includes(q)?'':'none')});
+function toggleAccountNode(btn){const wrap=btn.closest('.account-node-wrap'),children=wrap.querySelector(':scope > .account-children'),icon=btn.querySelector('i');if(!children)return;children.classList.toggle('is-collapsed');icon.className=children.classList.contains('is-collapsed')?'bi bi-chevron-left':'bi bi-chevron-down'}
+const sf=document.getElementById('account-tree-search');sf?.addEventListener('input',()=>{const q=sf.value.trim().toLowerCase();document.querySelectorAll('.account-node-wrap').forEach(x=>x.style.display=!q||x.dataset.search.toLowerCase().includes(q)?'':'none');});
 </script>
 {% endblock %}
