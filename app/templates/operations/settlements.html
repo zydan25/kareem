@@ -19,7 +19,7 @@
 <div class="card-soft mb-4 print-hide">
   <div class="section-title"><div><h3>طلب إخلاء عهدة</h3><small class="text-muted">لن يترحل ماليًا حتى يتم اعتماده.</small></div></div>
   <form method="post" class="row g-3">
-    <div class="col-12 col-lg-5"><label class="form-label">حساب العهدة</label>{{picker('source_account_id','حساب العهدة',account_options,source_balances|map(attribute=0)|map(attribute='id')|list,None,'اختر حساب العهدة')}}</div>
+    <div class="col-12 col-lg-5"><label class="form-label">حساب العهدة</label>{{picker('source_account_id','حساب العهدة',account_options,source_account_ids,None,'اختر حساب العهدة')}}</div>
     <div class="col-12 col-sm-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
     <div class="col-12 col-sm-6 col-lg-3"><label class="form-label">الوردية</label><select name="shift_id" class="form-select"><option value="">بدون ربط</option>{% for s in shifts %}<option value="{{s.id}}">{{s.shift_name}} — {{s.opened_at.strftime('%Y-%m-%d %H:%M')}}</option>{% endfor %}</select></div>
     <div class="col-12 col-lg-2"><label class="form-label">الهدف</label><input class="form-control" value="{{target.name}}" disabled></div>
