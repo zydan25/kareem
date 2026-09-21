@@ -1,9 +1,11 @@
+from datetime import date
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from ..extensions import db
 from ..models import Employee, Permission, User, UserPermission, Role
 from ..permissions import can, permission_required
 from ..services.audit import audit
+from ..services.accounts import ensure_employee_account, ensure_employee_payroll_account
 
 ROLE_LABELS={"admin":"مدير النظام","manager":"مدير","accountant":"محاسب","collector":"متحصل","auditor":"مراجع"}
 
@@ -22,7 +24,20 @@ def users():
                 phone=request.form.get("phone"),role=request.form.get("role","collector"),
                 employee_id=int(request.form["employee_id"]) if request.form.get("employee_id") else None,active=True)
             u.set_password(request.form["password"])
-            db.session.add(u); db.session.flush(); audit("create","user",u.id,u.username); db.session.commit(); flash("تم إنشاء المستخدم","success")
+            db.session.add(u); db.session.flush()
+            if u.employee:
+                emp=u.employee
+            else:
+                last=Employee.query.order_by(Employee.id.desc()).first()
+                next_id=(last.id+1) if last else 1
+                job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,"موظف")
+                emp=Employee(code=f"EMP-{next_id:05d}",full_name=u.full_name,phone=u.phone,job_title=job_title,
+                    monthly_salary=0,hire_date=date.today(),active=u.active)
+                db.session.add(emp); db.session.flush()
+                u.employee_id=emp.id
+            ensure_employee_account(emp)
+            ensure_employee_payroll_account(emp)
+            audit("create","user",u.id,u.username); db.session.commit(); flash("تم إنشاء المستخدم والملف المالي المرتبط به","success")
             return redirect(url_for("admin.users"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
@@ -43,7 +58,22 @@ def edit_user(user_id):
             u.username=username; u.full_name=request.form["full_name"].strip(); u.phone=request.form.get("phone")
             u.role=request.form.get("role","collector"); u.employee_id=int(request.form["employee_id"]) if request.form.get("employee_id") else None
             if request.form.get("password"): u.set_password(request.form["password"])
-            audit("update","user",u.id,u.username); db.session.commit(); flash("تم تحديث المستخدم","success"); return redirect(url_for("admin.users"))
+            if u.employee:
+                u.employee.full_name=u.full_name
+                u.employee.phone=u.phone
+                u.employee.active=u.active
+                u.employee.job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,u.employee.job_title or "موظف")
+                ensure_employee_account(u.employee)
+                ensure_employee_payroll_account(u.employee)
+            else:
+                last=Employee.query.order_by(Employee.id.desc()).first()
+                next_id=(last.id+1) if last else 1
+                emp=Employee(code=f"EMP-{next_id:05d}",full_name=u.full_name,phone=u.phone,
+                    job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,"موظف"),
+                    monthly_salary=0,hire_date=date.today(),active=u.active)
+                db.session.add(emp); db.session.flush(); u.employee_id=emp.id
+                ensure_employee_account(emp); ensure_employee_payroll_account(emp)
+            audit("update","user",u.id,u.username); db.session.commit(); flash("تم تحديث المستخدم وملفه المالي","success"); return redirect(url_for("admin.users"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     return render_template("admin/user_form.html",user=u,employees=employees,roles=[r.value for r in Role],role_labels=ROLE_LABELS)
