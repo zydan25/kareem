@@ -150,8 +150,7 @@ let currentCustomerVehicles=[];
 function formatPlate(v){
   const number=(v.plate||'').trim();
   const separator=(v.separator||'').trim();
-  const letters=(v.letters||'').trim();
-  return [number,separator,letters].filter(Boolean).join(' ');
+  return [number,separator].filter(Boolean).join(' ');
 }
 function setSelectedVehicle(v){
   vehicleHidden.value=v.id||'';
@@ -206,7 +205,7 @@ function chooseVehicleResult(x){
   clientPhone.value=x.phone||'';
   clientAddress.value=x.address||'';
   clientNotes.value='';
-  setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,letters:x.vehicle_letters,registration_status:x.registration_status,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type});
+  setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,registration_status:x.registration_status,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type});
   clearSuggestions();
 }
 function applyNewClient(){
