@@ -30,10 +30,37 @@
   });
 
   document.addEventListener("keydown",event=>{if(event.key==="Escape")closeMenu();});
-  document.addEventListener("click",event=>{
-    document.querySelectorAll(".more-menu[open]").forEach(el=>{
-      if(!el.contains(event.target)) el.removeAttribute("open");
+  // Reliable action menus for entity rows (employees, vehicles, etc.).
+  function closeMoreMenus(except){
+    document.querySelectorAll(".more-menu.is-open").forEach(menu=>{
+      if(menu!==except){
+        menu.classList.remove("is-open");
+        const button=menu.querySelector("[data-more-toggle]");
+        const panel=menu.querySelector(".more-pop");
+        button?.setAttribute("aria-expanded","false");
+        if(panel) panel.hidden=true;
+      }
     });
+  }
+  document.addEventListener("click",event=>{
+    const toggle=event.target.closest("[data-more-toggle]");
+    if(toggle){
+      event.preventDefault();
+      event.stopPropagation();
+      const menu=toggle.closest(".more-menu");
+      const panel=menu?.querySelector(".more-pop");
+      if(!menu || !panel)return;
+      const willOpen=!menu.classList.contains("is-open");
+      closeMoreMenus(willOpen?menu:null);
+      menu.classList.toggle("is-open",willOpen);
+      toggle.setAttribute("aria-expanded",willOpen?"true":"false");
+      panel.hidden=!willOpen;
+      return;
+    }
+    if(!event.target.closest(".more-menu")) closeMoreMenus(null);
+  });
+  document.addEventListener("keydown",event=>{
+    if(event.key==="Escape") closeMoreMenus(null);
   });
 
   let deferredPrompt=null;
