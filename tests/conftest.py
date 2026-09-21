@@ -1,4 +1,5 @@
 import pytest
+from flask_migrate import upgrade, downgrade
 from app import create_app
 from app.extensions import db
 from app.services.setup import seed
@@ -13,9 +14,10 @@ class TestConfig:
 def app():
     app=create_app(TestConfig)
     with app.app_context():
-        db.create_all(); seed()
+        upgrade()
+        seed()
         yield app
-        db.session.remove(); db.drop_all()
+        db.session.remove()
 
 @pytest.fixture()
 def client(app):
