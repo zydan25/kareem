@@ -30,7 +30,7 @@
   <td>{{'غير قابل للقيد' if a.is_group else ('قابل للقيد' if a.allow_manual_posting else 'نظامي')}}</td>
   <td class="text-nowrap">
     {% if not a.is_group %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a>{% endif %}
-    {% if can_manage and not a.system_key %}<a class="btn btn-sm btn-light" href="{{url_for('accounting.account_edit',account_id=a.id)}}">تعديل</a>{% endif %}
+    {% if can_manage and not a.system_key %}<a class="btn btn-sm btn-light" href="{{url_for('accounting.account_edit',account_id=a.id)}}">تعديل</a>{% if not a.children %}<form class="d-inline" method="post" action="{{url_for('accounting.account_toggle',account_id=a.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if a.active else 'تفعيل'}}</button></form>{% endif %}{% endif %}
   </td>
 </tr>
 {% else %}<tr><td colspan="7" class="text-center py-5 text-muted">لا توجد حسابات.</td></tr>{% endfor %}
