@@ -11,6 +11,14 @@ ROLE_LABELS = {
     "auditor": "مراجع",
 }
 
+def _read_setting(key, default):
+    try:
+        from .models import Setting
+        row=db.session.query(Setting).filter_by(key=key).first()
+        return row.value if row and row.value is not None else default
+    except Exception:
+        return default
+
 def create_app(config_class=Config):
     app=Flask(__name__)
     app.config.from_object(config_class)
@@ -35,15 +43,26 @@ def create_app(config_class=Config):
     from .blueprints.reports import bp as reports_bp
     from .blueprints.settings import bp as settings_bp
 
-    for blueprint in (auth_bp,dashboard_bp,collector_bp,master_data_bp,accounting_bp,
-                      operations_bp,admin_bp,reports_bp,settings_bp):
+    for blueprint in (auth_bp,dashboard_bp,collector_bp,master_data_bp,accounting_bp,operations_bp,
+                      admin_bp,reports_bp,settings_bp):
         app.register_blueprint(blueprint)
 
     @app.context_processor
     def inject_globals():
+        organization_name=_read_setting("organization_name",app.config["PWA_NAME"])
+        project_name=_read_setting("project_name","إدارة السوق والمحاسبة")
+        currency_name=_read_setting("currency_name",app.config["DEFAULT_CURRENCY"])
+        brand_color=_read_setting("brand_color","#0b6e4f")
+        if not isinstance(brand_color,str) or not __import__("re").fullmatch(r"#[0-9a-fA-F]{6}",brand_color):
+            brand_color="#0b6e4f"
         return {
-            "app_name":app.config["PWA_NAME"],
-            "currency":app.config["DEFAULT_CURRENCY"],
+            "app_name":organization_name or app.config["PWA_NAME"],
+            "project_name":project_name or "إدارة السوق والمحاسبة",
+            "currency":currency_name or app.config["DEFAULT_CURRENCY"],
+            "brand_color":brand_color,
+            "brand_logo":_read_setting("brand_logo",""),
+            "brand_icon":_read_setting("brand_icon",""),
+            "brand_version":_read_setting("brand_version","1"),
             "can":can,
             "role_labels": ROLE_LABELS,
         }
