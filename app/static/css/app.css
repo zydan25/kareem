@@ -324,3 +324,12 @@
 .developer-credit strong{color:var(--primary);font-size:11px}
 .developer-credit b{font-size:11px;direction:ltr;display:inline-block}
 @media(max-width:600px){.dashboard-shortcuts-card{padding:12px}.dashboard-quick-grid a{min-height:78px}.site-footer{margin-top:14px;padding-bottom:18px}.developer-credit{line-height:1.7}}
+
+/* Reliable entity action menus: avoid native <details> quirks and clipping. */
+.entity-list,.entity-row{overflow:visible}
+.entity-row{position:relative}
+.more-trigger{width:36px;height:36px;border:1px solid var(--border);border-radius:11px;display:grid;place-items:center;cursor:pointer;color:#66757a;background:#fff;font-family:inherit;font-size:18px;padding:0}
+.more-menu.is-open .more-trigger{background:var(--primary-soft);color:var(--primary);border-color:var(--primary-border)}
+.more-pop[hidden]{display:none!important}
+.more-pop{min-width:190px}
+@media(max-width:600px){.more-pop{width:210px;max-width:calc(100vw - 36px)}}
