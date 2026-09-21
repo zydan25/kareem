@@ -1,7 +1,8 @@
 from datetime import date, time
 from pathlib import Path
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_from_directory, url_for
+from flask_login import current_user, login_required
 from sqlalchemy import func, or_
 
 from ..extensions import db
@@ -502,10 +503,16 @@ def add_employee_fine():
 
 
 @bp.get("/employees/<int:employee_id>")
-@permission_required("employees.view")
+@login_required
 def employee_detail(employee_id):
     emp=db.session.get(Employee,employee_id)
     if not emp: return ("غير موجود",404)
+    # Employees may open their own profile from "حسابي" without being granted
+    # the management-wide employees.view permission. Other profiles still
+    # require the normal employees.view permission.
+    is_own_profile=bool(emp.user and emp.user.id==current_user.id)
+    if not is_own_profile and not can("employees.view"):
+        abort(403)
     custody=account_balance(emp.account_id) if emp.account_id else D(0)
     payroll_due=account_balance(emp.payroll_account_id) if emp.payroll_account_id else D(0)
     shifts=Shift.query.filter_by(collector_id=emp.user.id if emp.user else -1).order_by(Shift.opened_at.desc()).limit(60).all()
