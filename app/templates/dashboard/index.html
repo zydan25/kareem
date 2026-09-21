@@ -1,1 +1,31 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">لوحة التحكم</span><h1>أهلًا {{ current_user.full_name }}</h1><p>ملخص حركة سوق الجملة لليوم {{ today }}</p></div><a class="btn btn-primary" href="{{ url_for('collector.index') }}"><i class="bi bi-plus-lg"></i> تسجيل حركة بوابة</a></div><div class="stat-grid"><div class="stat-card primary"><span>إيرادات اليوم</span><strong>{{ '{:,.2f}'.format(total or 0) }}</strong><small>{{ currency }}</small></div><div class="stat-card"><span>حركات البوابة</span><strong>{{ count }}</strong><small>سندات اليوم</small></div><div class="stat-card"><span>المتحصلون الذين عملوا</span><strong>{{ worked }}</strong><small>حسب السندات الفعلية</small></div><div class="stat-card"><span>الوكلاء</span><strong>{{ agents }}</strong><small>نشط</small></div></div><div class="card-soft mt-4"><div class="section-title"><h3>الوصول السريع</h3></div><div class="quick-grid"><a href="{{ url_for('collector.index') }}"><i class="bi bi-upc-scan"></i><span>تحصيل البوابة</span><small>بحث باللوحة وتحديد الوكيل</small></a><a href="{{ url_for('accounting.accounts') }}"><i class="bi bi-diagram-3"></i><span>شجرة الحسابات</span><small>رئيسي وفرعي وقابل للقيد</small></a><a href="{{ url_for('reports.collectors') }}"><i class="bi bi-clipboard-data"></i><span>مراقبة المتحصلين</span><small>من عمل وكم حصّل</small></a><a href="{{ url_for('settings.index') }}"><i class="bi bi-gear"></i><span>الإعدادات</span><small>أنواع المركبات والمستخدمون</small></a></div></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}الرئيسية - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">لوحة التحكم</span><h1>أهلًا {{ current_user.full_name }}</h1><p>ملخص سوق الجملة لليوم {{ today }} مع وصول مباشر لكل الوحدات التشغيلية والمحاسبية.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('collector.index') }}"><i class="bi bi-plus-lg"></i> تسجيل حركة بوابة</a>
+</div>
+<div class="stat-grid">
+  <div class="stat-card primary"><span>إيرادات اليوم</span><strong>{{ '{:,.2f}'.format(total or 0) }}</strong><small>{{ currency }}</small></div>
+  <div class="stat-card"><span>حركات البوابة</span><strong>{{ count }}</strong><small>دخول وخروج اليوم</small></div>
+  <div class="stat-card"><span>متحصلون عملوا</span><strong>{{ worked }}</strong><small>قبض فعلي اليوم</small></div>
+  <div class="stat-card"><span>البيانات النشطة</span><strong>{{ agents + vehicles + employees }}</strong><small>{{ agents }} وكيل · {{ vehicles }} مركبة · {{ employees }} موظف</small></div>
+</div>
+
+<div class="card-soft mt-4">
+  <div class="section-title"><div><h3>مركز التشغيل</h3><small class="text-muted">كل ما يحتاجه المستخدم من شاشة واحدة.</small></div></div>
+  <div class="quick-grid">
+    <a href="{{url_for('collector.index')}}"><i class="bi bi-upc-scan"></i><span>البوابة والتحصيل</span><small>تسجيل دخول وخروج المركبات</small></a>
+    {% if can("employees.view") %}<a href="{{url_for('master_data.employees')}}"><i class="bi bi-person-workspace"></i><span>شؤون الموظفين</span><small>إضافة وتعديل الموظفين والحسابات</small></a>{% endif %}
+    {% if can("users.manage") %}<a href="{{url_for('admin.users')}}"><i class="bi bi-shield-check"></i><span>المستخدمون والصلاحيات</span><small>أدوار وصلاحيات تفصيلية</small></a>{% endif %}
+    {% if can("agents.view") %}<a href="{{url_for('master_data.agents')}}"><i class="bi bi-people-fill"></i><span>الوكلاء والعملاء</span><small>السجلات والروابط والحسابات</small></a>{% endif %}
+    {% if can("vehicles.view") %}<a href="{{url_for('master_data.vehicles')}}"><i class="bi bi-truck-front"></i><span>المركبات واللوحات</span><small>النوع والعميل والوكلاء</small></a>{% endif %}
+    {% if can("accounting.view") %}<a href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3-fill"></i><span>شجرة الحسابات</span><small>حسابات فرعية وأرصدة وكشوف</small></a>{% endif %}
+    {% if can("vouchers.post") %}<a href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt"></i><span>السندات المالية</span><small>قبض وصرف وتحويل وطباعة</small></a>{% endif %}
+    {% if can("collector.settle") %}<a href="{{url_for('operations.settlements')}}"><i class="bi bi-safe2"></i><span>العهد وإخلاء العهدة</span><small>أرصدة واعتماد وتسويات</small></a>{% endif %}
+    {% if can("payroll.view") %}<a href="{{url_for('operations.payroll')}}"><i class="bi bi-wallet2"></i><span>الرواتب</span><small>مسير واعتماد وصرف</small></a>{% endif %}
+    {% if can("leases.view") %}<a href="{{url_for('operations.leases')}}"><i class="bi bi-building"></i><span>الإيجارات</span><small>عقود واستحقاقات وتحصيل</small></a>{% endif %}
+    {% if can("reports.view") %}<a href="{{url_for('reports.index')}}"><i class="bi bi-bar-chart-line"></i><span>مركز التقارير</span><small>تشغيلية ومالية ومحاسبية</small></a>{% endif %}
+  </div>
+</div>
+{% endblock %}
