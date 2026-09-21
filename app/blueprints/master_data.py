@@ -284,7 +284,16 @@ def toggle_client(client_id):
 def vehicles():
     q=request.args.get("q","").strip()
     query=Vehicle.query
-    if q: query=query.filter(or_(Vehicle.plate_number.ilike(f"%{q}%"),Vehicle.plate_separator.ilike(f"%{q}%"),Vehicle.plate_letters.ilike(f"%{q}%")))
+    if q:
+        compact=q.replace(" ","").replace("-","").replace("/","")
+        query=query.filter(or_(
+            Vehicle.plate_number.ilike(f"%{q}%"),
+            Vehicle.plate_separator.ilike(f"%{q}%"),
+            Vehicle.plate_letters.ilike(f"%{q}%"),
+            func.replace(func.replace(func.replace(Vehicle.plate_number," ",""),"-",""),"/","").ilike(f"%{compact}%"),
+            Vehicle.registration_status.ilike(f"%{q}%"),
+            Vehicle.client.has(Client.name.ilike(f"%{q}%"))
+        ))
     rows=query.order_by(Vehicle.active.desc(),Vehicle.updated_at.desc()).all()
     types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
     clients=Client.query.filter_by(active=True).order_by(Client.name).all()
@@ -306,7 +315,8 @@ def vehicles():
             return redirect(url_for("master_data.vehicles"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/vehicles.html",vehicles=rows,vehicle_types=types,clients=clients,agents=agents,can_manage=can("vehicles.manage"),q=q)
+    selected_client_id=request.args.get("client_id",type=int)
+    return render_template("master_data/vehicles.html",vehicles=rows,vehicle_types=types,clients=clients,agents=agents,can_manage=can("vehicles.manage"),q=q,selected_client_id=selected_client_id)
 
 @bp.get("/vehicles/<int:vehicle_id>")
 @permission_required("vehicles.view")
