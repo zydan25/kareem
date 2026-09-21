@@ -14,6 +14,8 @@
 <div class="report-cards">
 <a class="report-card" href="{{url_for('reports.gate',start=start,end=end)}}"><i class="bi bi-door-open"></i><span><strong>البوابة والتحصيل</strong><small>الدخول والخروج، العميل، الوكيل، المتحصل والوردية</small></span></a>
 <a class="report-card" href="{{url_for('reports.collectors',start=start,end=end)}}"><i class="bi bi-person-lines-fill"></i><span><strong>المتحصلون</strong><small>النشاط والتحصيل لكل متحصل</small></span></a>
+<a class="report-card" href="{{url_for('reports.clients',start=start,end=end)}}"><i class="bi bi-people"></i><span><strong>تقرير العملاء</strong><small>عدد المركبات وحركة الدخول والخروج والأرصدة</small></span></a>
+<a class="report-card" href="{{url_for('reports.vehicles',start=start,end=end)}}"><i class="bi bi-truck-front"></i><span><strong>دخول وخروج المركبات</strong><small>حركة كل مركبة خلال الفترة</small></span></a>
 <a class="report-card" href="{{url_for('reports.custody',start=start,end=end)}}"><i class="bi bi-safe2"></i><span><strong>العهد</strong><small>أرصدة العهد وإخلاءات الفترة</small></span></a>
 <a class="report-card" href="{{url_for('reports.employees_report',start=start,end=end)}}"><i class="bi bi-person-workspace"></i><span><strong>الموظفون</strong><small>الحركة والورديات والعهد</small></span></a>
 <a class="report-card" href="{{url_for('reports.expenses_report',start=start,end=end)}}"><i class="bi bi-wallet2"></i><span><strong>المصروفات</strong><small>كل المصروفات حسب الحساب والفترة</small></span></a>
