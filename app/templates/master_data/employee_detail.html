@@ -1,44 +1,88 @@
 {% extends 'base.html' %}
 {% block title %}ملف {{employee.full_name}} - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head">
-<div><span class="eyebrow">ملف الموظف</span><h1>{{employee.full_name}}</h1><p>{{employee.code}} · {{employee.job_title}} · {{employee.phone or 'بدون هاتف'}}</p></div>
-<div class="d-flex gap-2 flex-wrap"><a class="btn btn-light" href="{{url_for('master_data.employees')}}">الموظفون</a>{% if can("employees.manage") %}<a class="btn btn-outline-primary" href="{{url_for('master_data.edit_employee',employee_id=employee.id)}}">تعديل</a>{% endif %}<a class="btn btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=employee.id)}}">تقرير الموظف</a>{% if employee.user and can("permissions.manage") %}<a class="btn btn-outline-primary" href="{{url_for('admin.permissions',user_id=employee.user.id)}}">الصلاحيات</a>{% endif %}<button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
-</div>
-<div class="stat-grid mb-4"><div class="stat-card primary"><span>الراتب الشهري</span><strong>{{'{:,.2f}'.format(employee.monthly_salary or 0)}}</strong><small>{{currency}}</small></div><div class="stat-card"><span>عهدة الموظف</span><strong>{{'{:,.2f}'.format(custody)}}</strong><small>{{currency}}</small></div><div class="stat-card"><span>المستحق من الرواتب</span><strong>{{'{:,.2f}'.format(-payroll_due if payroll_due<0 else payroll_due)}}</strong><small>{{currency}}</small></div><div class="stat-card"><span>الحالة</span><strong>{{'نشط' if employee.active else 'موقوف'}}</strong><small>{{employee.employment_type}}</small></div></div>
+<div class="employee-profile-page">
+  <div class="employee-profile-head">
+    <div class="employee-avatar-lg">{% if employee.identity_image %}<img src="{{url_for('master_data.employee_identity',employee_id=employee.id)}}" alt="صورة الموظف">{% else %}<i class="bi bi-person-badge"></i>{% endif %}</div>
+    <div class="employee-profile-title">
+      <span class="eyebrow">الملف الوظيفي</span>
+      <h1>{{employee.full_name}}</h1>
+      <p>{{employee.job_title}} · {{employee.phone or 'بدون هاتف'}}</p>
+      <div class="employee-tags"><span class="badge-soft">{{'نشط' if employee.active else 'موقوف'}}</span><span class="badge-soft">{{role_labels.get(employee.user.role,employee.user.role) if employee.user else 'بدون دخول'}}</span></div>
+    </div>
+    <div class="employee-profile-actions">
+      <a class="btn btn-light" href="{{url_for('master_data.employees')}}"><i class="bi bi-arrow-right"></i> الموظفون</a>
+      {% if can("employees.manage") %}<a class="btn btn-outline-primary" href="{{url_for('master_data.edit_employee',employee_id=employee.id)}}"><i class="bi bi-pencil"></i> تعديل</a>{% endif %}
+      <a class="btn btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=employee.id)}}"><i class="bi bi-bar-chart"></i> تقرير</a>
+      {% if employee.user and can("permissions.manage") %}<a class="btn btn-outline-primary" href="{{url_for('admin.permissions',user_id=employee.user.id)}}"><i class="bi bi-shield-check"></i> الصلاحيات</a>{% endif %}
+      <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
+    </div>
+  </div>
 
-<div class="detail-grid">
-<div class="card-soft">
-<div class="section-title"><div><h3>بيانات الموظف</h3><small class="text-muted">الملف الإداري</small></div></div>
-{% if employee.identity_image %}<a class="identity-preview" href="{{url_for('master_data.employee_identity',employee_id=employee.id)}}" target="_blank"><img src="{{url_for('master_data.employee_identity',employee_id=employee.id)}}" alt="صورة البطاقة"><span>عرض صورة البطاقة</span></a>{% endif %}
-<div class="profile-facts"><div><span>الهاتف</span><strong>{{employee.phone or '—'}}</strong></div><div><span>رقم البطاقة</span><strong>{{employee.identity_number or '—'}}</strong></div><div><span>النوع</span><strong>{{employee.gender or '—'}}</strong></div><div><span>نوع العمل</span><strong>{{employee.employment_type}}</strong></div><div><span>تاريخ التوظيف</span><strong>{{employee.hire_date or '—'}}</strong></div><div><span>الساعات الأسبوعية</span><strong>{{employee.weekly_hours or 0}}</strong></div></div>
-</div>
-<div class="card-soft">
-<div class="section-title"><div><h3>حسابات الموظف</h3><small class="text-muted">كل حساب له كشف مستقل</small></div></div>
-<div class="account-tile"><span>حساب العهدة</span><strong>{{employee.account.code if employee.account else '—'}}</strong>{% if employee.account %}<a href="{{url_for('reports.account_statement',account_id=employee.account.id)}}">كشف الحساب</a>{% endif %}</div>
-<div class="account-tile"><span>حساب مستحق الراتب</span><strong>{{employee.payroll_account.code if employee.payroll_account else '—'}}</strong>{% if employee.payroll_account %}<a href="{{url_for('reports.account_statement',account_id=employee.payroll_account.id)}}">كشف الحساب</a>{% endif %}</div>
-<div class="account-tile"><span>حساب الدخول</span><strong>{{employee.user.phone if employee.user else 'بدون حساب'}}</strong><small>{{role_labels.get(employee.user.role,employee.user.role) if employee.user else ''}}</small></div>
-</div>
-</div>
+  <div class="employee-kpis">
+    <div class="employee-kpi accent"><span>الراتب الشهري</span><strong>{{'{:,.2f}'.format(employee.monthly_salary or 0)}}</strong><small>{{currency}}</small></div>
+    <div class="employee-kpi"><span>العهدة</span><strong>{{'{:,.2f}'.format(custody)}}</strong><small>{{currency}}</small></div>
+    <div class="employee-kpi"><span>مستحق الرواتب</span><strong>{{'{:,.2f}'.format(-payroll_due if payroll_due<0 else payroll_due)}}</strong><small>{{currency}}</small></div>
+    <div class="employee-kpi"><span>الدوام الأسبوعي</span><strong>{{employee.weekly_hours or 0}}</strong><small>ساعة</small></div>
+  </div>
 
-<div class="card-soft mt-4">
-<div class="section-title"><div><h3>جدول الورديات والعمل</h3><small class="text-muted">حدد أيام وساعات العمل المتوقعة.</small></div></div>
-{% if can("employees.manage") %}<form method="post" action="{{url_for('master_data.add_schedule',employee_id=employee.id)}}" class="row g-2 align-items-end mb-3">
-<div class="col-12 col-sm-3"><label class="form-label">اليوم</label><select name="weekday" class="form-select">{% for n,label in weekdays %}<option value="{{n}}">{{label}}</option>{% endfor %}</select></div>
-<div class="col-12 col-sm-3"><label class="form-label">اسم الوردية</label><input name="shift_name" class="form-control" value="دوام"></div>
-<div class="col-6 col-sm-2"><label class="form-label">من</label><input type="time" name="start_time" class="form-control"></div>
-<div class="col-6 col-sm-2"><label class="form-label">إلى</label><input type="time" name="end_time" class="form-control"></div>
-<div class="col-12 col-sm-2"><button class="btn btn-primary w-100">إضافة</button></div>
-</form>{% endif %}
-<div class="table-wrap"><table class="table"><thead><tr><th>اليوم</th><th>الوردية</th><th>الوقت</th>{% if can("employees.manage") %}<th></th>{% endif %}</tr></thead><tbody>{% for s in employee.schedules %}<tr><td>{{dict(weekdays)[s.weekday]}}</td><td>{{s.shift_name}}</td><td>{{s.start_time.strftime('%H:%M') if s.start_time else '—'}} - {{s.end_time.strftime('%H:%M') if s.end_time else '—'}}</td>{% if can("employees.manage") %}<td><form method="post" action="{{url_for('master_data.delete_schedule',schedule_id=s.id)}}"><button class="btn btn-sm btn-outline-danger">حذف</button></form></td>{% endif %}</tr>{% else %}<tr><td colspan="4" class="text-center text-muted py-4">لم يتم تحديد جدول دوام.</td></tr>{% endfor %}</tbody></table></div>
-</div>
+  <div class="employee-section-grid">
+    <section class="employee-section">
+      <div class="employee-section-head"><div><h2>البيانات الشخصية والوظيفية</h2><small>المعلومات الأساسية</small></div></div>
+      <div class="employee-facts">
+        <div><span>الهاتف</span><strong>{{employee.phone or '—'}}</strong></div>
+        <div><span>رقم البطاقة</span><strong>{{employee.identity_number or '—'}}</strong></div>
+        <div><span>النوع</span><strong>{{employee.gender or '—'}}</strong></div>
+        <div><span>نوع العمل</span><strong>{{employee.employment_type}}</strong></div>
+        <div><span>تاريخ التوظيف</span><strong>{{employee.hire_date or '—'}}</strong></div>
+        <div><span>المسمى الوظيفي</span><strong>{{employee.job_title or '—'}}</strong></div>
+      </div>
+      {% if employee.identity_image %}<a class="employee-id-photo" href="{{url_for('master_data.employee_identity',employee_id=employee.id)}}" target="_blank"><img src="{{url_for('master_data.employee_identity',employee_id=employee.id)}}" alt="صورة الهوية"><span>عرض صورة الهوية</span></a>{% endif %}
+      {% if employee.notes %}<div class="employee-note"><i class="bi bi-sticky"></i><span>{{employee.notes}}</span></div>{% endif %}
+    </section>
 
-<div class="detail-grid mt-4">
-<div class="card-soft"><div class="section-title"><div><h3>ورديات الموظف</h3><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=employee.id)}}">التقرير</a></div></div><div class="table-wrap"><table class="table"><thead><tr><th>الوردية</th><th>الفتح</th><th>الإغلاق</th><th>الحالة</th></tr></thead><tbody>{% for s in shifts %}<tr><td>{{s.shift_name}}</td><td>{{s.opened_at.strftime('%Y-%m-%d %H:%M')}}</td><td>{{s.closed_at.strftime('%Y-%m-%d %H:%M') if s.closed_at else '—'}}</td><td>{{{'open':'مفتوحة','pending':'تسليم قيد الاعتماد','closed':'مغلقة'}.get(s.status,s.status)}}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-muted py-4">لا توجد ورديات.</td></tr>{% endfor %}</tbody></table></div></div>
-<div class="card-soft"><div class="section-title"><h3>الرواتب</h3></div><div class="table-wrap"><table class="table"><thead><tr><th>الشهر</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th></tr></thead><tbody>{% for p in payroll_lines %}<tr><td>{{p.payroll_run.payroll_month if p.payroll_run else p.id}}</td><td>{{p.gross_amount}}</td><td>{{p.deductions}}</td><td>{{p.net_amount}}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-muted py-4">لا يوجد سجل رواتب.</td></tr>{% endfor %}</tbody></table></div></div>
-</div>
+    <section class="employee-section">
+      <div class="employee-section-head"><div><h2>الحسابات والدخول</h2><small>الربط المالي والحساب الوظيفي</small></div></div>
+      <div class="employee-account-grid">
+        <div><span>حساب العهدة</span><strong>{{employee.account.code if employee.account else '—'}}</strong>{% if employee.account %}<a href="{{url_for('reports.account_statement',account_id=employee.account.id)}}">كشف الحساب</a>{% endif %}</div>
+        <div><span>حساب مستحق الراتب</span><strong>{{employee.payroll_account.code if employee.payroll_account else '—'}}</strong>{% if employee.payroll_account %}<a href="{{url_for('reports.account_statement',account_id=employee.payroll_account.id)}}">كشف الحساب</a>{% endif %}</div>
+        <div><span>رقم الدخول</span><strong>{{employee.user.phone if employee.user else '—'}}</strong>{% if employee.user %}<small>{{role_labels.get(employee.user.role,employee.user.role)}}</small>{% endif %}</div>
+      </div>
+      {% if employee.user and employee.user.role in ['admin','manager'] %}<div class="role-lock-note"><i class="bi bi-shield-check"></i><span>هذا النوع لديه جميع صلاحيات النظام تلقائيًا.</span></div>{% endif %}
+    </section>
+  </div>
 
-{% if employee.user and employee.user.role=="collector" %}
-<div class="card-soft mt-4"><div class="section-title"><div><h3>آخر عمليات البوابة</h3><small class="text-muted">سجل المتحصل</small></div></div><div class="table-wrap"><table class="table"><thead><tr><th>الوقت</th><th>اللوحة</th><th>الحركة</th><th>المبلغ</th></tr></thead><tbody>{% for x in gates %}<tr><td>{{x.transaction_date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{x.vehicle.plate_number}}</td><td>{{'دخول' if x.direction=='entry' else 'خروج'}}</td><td>{{'{:,.2f}'.format(x.amount)}} {{currency}}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-muted py-4">لا توجد عمليات.</td></tr>{% endfor %}</tbody></table></div></div>
-{% endif %}
+  <section class="employee-section">
+    <div class="employee-section-head">
+      <div><h2>جدول العمل</h2><small>أيام وساعات الدوام المتوقعة</small></div>
+      {% if can("employees.manage") %}<span class="section-note">الإضافة والتعديل من هنا</span>{% endif %}
+    </div>
+    {% if can("employees.manage") %}
+    <form method="post" action="{{url_for('master_data.add_schedule',employee_id=employee.id)}}" class="employee-schedule-form">
+      <select name="weekday" class="form-select">{% for n,label in weekdays %}<option value="{{n}}">{{label}}</option>{% endfor %}</select>
+      <input name="shift_name" class="form-control" value="دوام" placeholder="اسم الوردية">
+      <input type="time" name="start_time" class="form-control">
+      <input type="time" name="end_time" class="form-control">
+      <button class="btn btn-primary"><i class="bi bi-plus"></i> إضافة</button>
+    </form>
+    {% endif %}
+    <div class="employee-table">
+      <table class="table"><thead><tr><th>اليوم</th><th>الوردية</th><th>من</th><th>إلى</th>{% if can("employees.manage") %}<th></th>{% endif %}</tr></thead>
+      <tbody>{% for s in employee.schedules %}<tr><td>{{dict(weekdays)[s.weekday]}}</td><td>{{s.shift_name}}</td><td>{{s.start_time.strftime('%H:%M') if s.start_time else '—'}}</td><td>{{s.end_time.strftime('%H:%M') if s.end_time else '—'}}</td>{% if can("employees.manage") %}<td><form method="post" action="{{url_for('master_data.delete_schedule',schedule_id=s.id)}}"><button class="btn btn-sm btn-outline-danger">حذف</button></form></td>{% endif %}</tr>{% else %}<tr><td colspan="5" class="text-center py-4 text-muted">لم يتم تحديد جدول.</td></tr>{% endfor %}</tbody></table>
+    </div>
+  </section>
+
+  {% if employee.user and employee.user.role=="collector" %}
+  <div class="employee-section-grid">
+    <section class="employee-section"><div class="employee-section-head"><div><h2>ورديات المتحصل</h2><small>الفتح والتسليم والاعتماد</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=employee.id)}}">تقرير</a></div><div class="employee-table"><table class="table"><thead><tr><th>الوردية</th><th>الفتح</th><th>الإغلاق</th><th>الحالة</th></tr></thead><tbody>{% for s in shifts %}<tr><td>{{s.shift_name}}</td><td>{{s.opened_at.strftime('%Y-%m-%d %H:%M')}}</td><td>{{s.closed_at.strftime('%Y-%m-%d %H:%M') if s.closed_at else '—'}}</td><td>{{{'open':'مفتوحة','pending':'بانتظار اعتماد التسليم','closed':'مغلقة'}.get(s.status,s.status)}}</td></tr>{% else %}<tr><td colspan="4" class="text-center py-4 text-muted">لا توجد ورديات.</td></tr>{% endfor %}</tbody></table></div></section>
+
+    <section class="employee-section"><div class="employee-section-head"><div><h2>آخر حركات البوابة</h2><small>آخر 30 عملية</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=employee.id)}}">كل التقرير</a></div><div class="employee-table"><table class="table"><thead><tr><th>الوقت</th><th>المركبة</th><th>الحركة</th><th>المبلغ</th></tr></thead><tbody>{% for x in gates %}<tr><td>{{x.transaction_date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{x.vehicle.plate_number or 'بدون جمارك'}}</td><td>{{'دخول' if x.direction=='entry' else 'خروج'}}</td><td>{{'{:,.2f}'.format(x.amount)}} {{currency}}</td></tr>{% else %}<tr><td colspan="4" class="text-center py-4 text-muted">لا توجد عمليات.</td></tr>{% endfor %}</tbody></table></div></section>
+  </div>
+  {% endif %}
+
+  <section class="employee-section">
+    <div class="employee-section-head"><div><h2>سجل الرواتب</h2><small>المسيرات المرتبطة بالموظف</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.payroll')}}">الرواتب</a></div>
+    <div class="employee-table"><table class="table"><thead><tr><th>الشهر</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th></tr></thead><tbody>{% for p in payroll_lines %}<tr><td>{{p.payroll_run.payroll_month if p.payroll_run else p.id}}</td><td>{{p.gross_amount}}</td><td>{{p.deductions}}</td><td>{{p.net_amount}}</td></tr>{% else %}<tr><td colspan="4" class="text-center py-4 text-muted">لا يوجد سجل رواتب.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+</div>
 {% endblock %}
