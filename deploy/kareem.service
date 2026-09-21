@@ -1,0 +1,15 @@
+[Unit]
+Description=Kareem Wholesale Market Flask Application
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/home/root/projects/kareem
+EnvironmentFile=/home/root/projects/kareem/.env
+ExecStart=/home/root/projects/kareem/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:4040 wsgi:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
