@@ -35,8 +35,10 @@ def current_shift():
 @permission_required("collector.post")
 def index():
     if request.method=="POST":
-        plate_number=request.form.get("plate_number","").strip()
+        plate_number=request.form.get("plate_number","").strip() or None
         separator=request.form.get("plate_separator","").strip() or None
+        vehicle_id=request.form.get("vehicle_id",type=int)
+        registration_status=request.form.get("registration_status","registered").strip() or "registered"
         client_id=request.form.get("client_id",type=int)
         client_name=request.form.get("client_name","").strip()
         client_phone=request.form.get("client_phone","").strip()
@@ -47,26 +49,27 @@ def index():
         type_id=request.form.get("vehicle_type_id",type=int)
         amount=D(request.form.get("amount","0"))
 
-        if not plate_number:
-            flash("رقم اللوحة مطلوب","warning")
-            return redirect(url_for("collector.index"))
-
         try:
-            if direction not in {"entry","exit"}:
-                raise ValueError("نوع الحركة غير صالح")
             if amount<=0:
                 raise ValueError("المبلغ يجب أن يكون أكبر من صفر في الدخول والخروج")
 
-            vehicle=Vehicle.query.filter_by(plate_number=plate_number,plate_separator=separator).first()
+            vehicle=db.session.get(Vehicle,vehicle_id) if vehicle_id else None
+            if vehicle:
+                if not vehicle.active:
+                    raise ValueError("المركبة موقوفة ولا يمكن تسجيل حركة عليها")
+            elif plate_number:
+                vehicle=Vehicle.query.filter_by(plate_number=plate_number,plate_separator=separator).first()
+                if vehicle and not vehicle.active:
+                    raise ValueError("المركبة موقوفة ولا يمكن تسجيل حركة عليها")
             if not vehicle:
+                if registration_status=="registered" and not plate_number:
+                    raise ValueError("أدخل رقم اللوحة أو اختر «بدون جمارك»")
                 if not type_id:
                     raise ValueError("اختر نوع المركبة عند إضافة مركبة جديدة")
                 vehicle=Vehicle(plate_number=plate_number,plate_separator=separator,
-                    vehicle_type_id=type_id,active=True)
+                    vehicle_type_id=type_id,registration_status=registration_status,active=True)
                 db.session.add(vehicle)
                 db.session.flush()
-            elif not vehicle.active:
-                raise ValueError("المركبة موقوفة ولا يمكن تسجيل حركة عليها")
 
             client=None
             if client_id:
