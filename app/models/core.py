@@ -318,7 +318,7 @@ class EmployeeFine(TimestampMixin,db.Model):
     fine_date=db.Column(db.Date,nullable=False,default=date.today,index=True)
     amount=db.Column(db.Numeric(18,2),nullable=False)
     reason=db.Column(db.String(500),nullable=False)
-    journal_entry_id=db.Column(db.Integer,db.ForeignKey("journal_entries.id",ondelete="RESTRICT"),nullable=False)
+    journal_entry_id=db.Column(db.Integer,db.ForeignKey("journal_entries.id",ondelete="RESTRICT"),nullable=True)
     created_by_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="RESTRICT"),nullable=False)
     employee=db.relationship("Employee",back_populates="fines")
     journal_entry=db.relationship("JournalEntry")
