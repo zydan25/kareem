@@ -23,7 +23,7 @@ def login():
         if user and user.check_password(password):
             login_user(user,remember=request.form.get("remember")=="1")
             return redirect(request.args.get("next") or url_for("dashboard.index"))
-        flash("رقم الهاتف/اسم المستخدم أو كلمة المرور غير صحيحة","danger")
+        flash("بيانات الدخول غير صحيحة: رقم الهاتف/اسم المستخدم أو كلمة المرور غير صحيحة","danger")
     return render_template("auth/login.html")
 
 @bp.post("/logout")
