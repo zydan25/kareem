@@ -1,0 +1,4 @@
+# Flask-Migrate
+
+Run: flask --app wsgi db upgrade
+Generate future revisions: flask --app wsgi db migrate -m "describe change"
