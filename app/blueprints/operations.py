@@ -107,6 +107,8 @@ def approve(settlement_id):
 def shifts():
     if request.method=="POST":
         try:
+            existing=Shift.query.filter_by(collector_id=current_user.id,status="open").first()
+            if existing: raise ValueError(f"لديك وردية مفتوحة بالفعل: {existing.shift_name}")
             shift=Shift(collector_id=current_user.id,shift_name=request.form.get("shift_name") or "وردية",
                 opening_balance=D(request.form.get("opening_balance")))
             db.session.add(shift); audit("open_shift","shift",None,shift.shift_name); db.session.commit()
