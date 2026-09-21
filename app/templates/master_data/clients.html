@@ -33,4 +33,30 @@
 {% for c in clients %}<div class="entity-row"><div class="entity-main"><div class="entity-icon"><i class="bi bi-person-vcard"></i></div><div><strong>{{c.name}}</strong><div class="entity-meta"><span>{{c.code}}</span><span>{{c.phone or 'بدون هاتف'}}</span><span>{{c.account.name if c.account else 'حساب تلقائي'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if c.active else 'off'}}"></span>{{'نشط' if c.active else 'موقوف'}}</div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('master_data.client_detail',client_id=c.id)}}">تفاصيل</a>{% if can_manage %}<a href="{{url_for('master_data.edit_client',client_id=c.id)}}">تعديل</a>{% endif %}{% if c.account %}<a href="{{url_for('reports.account_statement',account_id=c.account.id)}}">كشف الحساب</a>{% endif %}<a href="{{url_for('reports.client_report',client_id=c.id)}}">تقرير العميل</a>{% if can_manage %}<form method="post" action="{{url_for('master_data.delete_client',client_id=c.id)}}" onsubmit="return confirm('سيتم إيقاف العميل مع حفظ تاريخه. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}</div></details></div></div>{% else %}<div class="empty-state"><i class="bi bi-people"></i><strong>لا توجد نتائج</strong><span>أضف أول عميل أو غيّر البحث.</span></div>{% endfor %}
 </div></div>
 {% endblock %}
-{% block scripts_extra %}{% endblock %}
+{% block scripts %}
+<script>
+const builder=document.getElementById('client-vehicles-builder');
+function setVehicleRequirement(row){
+  const status=row?.querySelector('.vehicle-status');
+  const plate=row?.querySelector('.vehicle-plate');
+  if(status&&plate) plate.required=status.value==='registered';
+}
+function vehicleTemplate(){
+  return '<div class="client-vehicle-row"><input type="hidden" name="vehicle_id" value=""><div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div><div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اختياري لبدون جمارك"></div><div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div><div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div><button type="button" class="btn btn-sm btn-light vehicle-remove"><i class="bi bi-x"></i></button></div>';
+}
+document.getElementById('add-client-vehicle')?.addEventListener('click',()=>{
+  builder.insertAdjacentHTML('beforeend',vehicleTemplate());
+  setVehicleRequirement(builder.lastElementChild);
+});
+builder?.addEventListener('click',e=>{
+  const btn=e.target.closest('.vehicle-remove'); if(!btn)return;
+  const rows=builder.querySelectorAll('.client-vehicle-row');
+  if(rows.length<=1)return;
+  btn.closest('.client-vehicle-row')?.remove();
+});
+builder?.addEventListener('change',e=>{
+  if(e.target.classList.contains('vehicle-status')) setVehicleRequirement(e.target.closest('.client-vehicle-row'));
+});
+const firstVehicle=builder?.querySelector('.client-vehicle-row'); if(firstVehicle)setVehicleRequirement(firstVehicle);
+</script>
+{% endblock %}
