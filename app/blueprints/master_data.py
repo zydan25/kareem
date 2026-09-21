@@ -87,7 +87,7 @@ def agents():
     if request.method=="POST":
         if not can("agents.manage"): return ("Forbidden",403)
         try:
-            agent=Agent(code=request.form.get("code") or next_code("AG",Agent),name=request.form["name"].strip(),
+            agent=Agent(code=next_code("AG",Agent),name=request.form["name"].strip(),
                 phone=request.form.get("phone"),notes=request.form.get("notes"),active=True)
             db.session.add(agent); db.session.flush(); ensure_agent_account(agent)
             audit("create","agent",agent.id,agent.name); db.session.commit(); flash("تم إضافة الوكيل وإنشاء حسابه","success")
@@ -115,7 +115,7 @@ def edit_agent(agent_id):
     if not agent: return ("غير موجود",404)
     if request.method=="POST":
         try:
-            agent.code=request.form["code"].strip(); agent.name=request.form["name"].strip()
+            agent.name=request.form["name"].strip()
             agent.phone=request.form.get("phone"); agent.notes=request.form.get("notes")
             ensure_agent_account(agent); audit("update","agent",agent.id,agent.name); db.session.commit()
             flash("تم تحديث الوكيل","success"); return redirect(url_for("master_data.agent_detail",agent_id=agent.id))
@@ -154,7 +154,7 @@ def clients():
     if request.method=="POST":
         if not can("clients.manage"): return ("Forbidden",403)
         try:
-            client=Client(code=request.form.get("code") or next_code("CL",Client),name=request.form["name"].strip(),
+            client=Client(code=next_code("CL",Client),name=request.form["name"].strip(),
                 phone=request.form.get("phone"),address=request.form.get("address"),notes=request.form.get("notes"),active=True)
             db.session.add(client); db.session.flush(); ensure_client_account(client)
             for aid in {int(x) for x in request.form.getlist("agent_ids")}:
@@ -188,7 +188,7 @@ def edit_client(client_id):
     links=ClientAgent.query.filter_by(client_id=client.id).all(); selected={x.agent_id for x in links}
     if request.method=="POST":
         try:
-            client.code=request.form["code"].strip(); client.name=request.form["name"].strip()
+            client.name=request.form["name"].strip()
             client.phone=request.form.get("phone"); client.address=request.form.get("address"); client.notes=request.form.get("notes")
             ensure_client_account(client)
             current={x.agent_id:x for x in links}; target={int(x) for x in request.form.getlist("agent_ids")}
@@ -299,7 +299,7 @@ def employees():
     if request.method=="POST":
         if not can("employees.manage"): return ("Forbidden",403)
         try:
-            emp=Employee(code=request.form.get("code") or next_code("EMP",Employee),full_name=request.form["full_name"].strip(),
+            emp=Employee(code=next_code("EMP",Employee),full_name=request.form["full_name"].strip(),
                 phone=request.form.get("phone","").strip() or None,identity_number=request.form.get("identity_number") or None,
                 gender=request.form.get("gender") or None,employment_type=request.form.get("employment_type") or "دوام كامل",
                 weekly_hours=D(request.form.get("weekly_hours","48")),job_title=request.form.get("job_title") or "موظف",
