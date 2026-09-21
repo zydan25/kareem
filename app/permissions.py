@@ -53,6 +53,11 @@ def _permission_cache():
 def can(permission):
     if not current_user.is_authenticated or not current_user.active:
         return False
+    # The collector role may record transactions and hand over its shift,
+    # but can never request or approve custody clearance, even when an
+    # old UserPermission row explicitly granted those permissions.
+    if current_user.role=="collector" and permission in {"collector.settle","collector.approve_settlement"}:
+        return False
     cached=_permission_cache()
     return "*" in cached or permission in cached
 
