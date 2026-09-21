@@ -109,7 +109,8 @@ def expense_detail(expense_id):
 @bp.route("/manual-journal",methods=["GET","POST"])
 @permission_required("accounting.post")
 def manual_journal():
-    accounts=Account.query.filter_by(is_group=False,active=True,allow_manual_posting=True).order_by(Account.code).all()
+    account_options=_account_picker()
+    accounts=[a for a,_ in account_options if not a.is_group and a.allow_manual_posting]
     if request.method=="POST":
         try:
             indices=[k.rsplit("_",1)[-1] for k in request.form if k.startswith("account_id_")]
