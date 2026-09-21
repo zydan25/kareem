@@ -88,7 +88,6 @@ class Client(TimestampMixin,db.Model):
     account_id=db.Column(db.Integer,db.ForeignKey("accounts.id",ondelete="SET NULL"),unique=True)
     account=db.relationship("Account",foreign_keys=[account_id])
     vehicles=db.relationship("Vehicle",back_populates="client",cascade="all, delete-orphan",order_by="Vehicle.id")
-    vehicles=db.relationship("Vehicle",back_populates="client",cascade="all, delete-orphan",order_by="Vehicle.id")
 
 class ClientAgent(TimestampMixin,db.Model):
     __tablename__="client_agents"
