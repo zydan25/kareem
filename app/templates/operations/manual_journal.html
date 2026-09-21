@@ -1,1 +1,20 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>قيد يومية يدوي</h1><p>اختر الحسابات الفرعية فقط؛ يجب أن يتساوى المدين والدائن.</p></div></div><form method="post"><div class="card-soft"><div class="row g-3"><div class="col-md-8"><label class="form-label">البيان</label><input name="description" class="form-control" required></div><div class="col-md-4"><label class="form-label">التاريخ</label><input type="date" name="entry_date" class="form-control" value="{{today.isoformat() if today is defined else ''}}"></div></div></div><div class="card-soft mt-3 table-wrap"><table class="table align-middle"><thead><tr><th>#</th><th>الحساب</th><th>مدين</th><th>دائن</th><th>البيان</th></tr></thead><tbody>{% for n in rows %}<tr><td>{{n}}</td><td><select name="account_id_{{n}}" class="form-select"><option value="">اختر</option>{% for a in accounts %}<option value="{{a.id}}">{{a.code}} — {{a.name}}</option>{% endfor %}</select></td><td><input name="debit_{{n}}" class="form-control" inputmode="decimal"></td><td><input name="credit_{{n}}" class="form-control" inputmode="decimal"></td><td><input name="line_description_{{n}}" class="form-control"></td></tr>{% endfor %}</tbody></table><div class="d-flex justify-content-between align-items-center"><strong>التوازن شرط للترحيل</strong><button class="btn btn-primary btn-lg">ترحيل القيد</button></div></div></form>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}قيد يومية يدوي - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>قيد يومية يدوي</h1><p>الحسابات الرئيسية للعرض فقط؛ اختر الفروع التفصيلية، ثم وازن المدين والدائن.</p></div><a class="btn btn-light" href="{{url_for('accounting.journal')}}">دفتر القيود</a></div>
+<form method="post" id="journal-form">
+<div class="card-soft mb-3"><div class="row g-3"><div class="col-12 col-lg-8"><label class="form-label">البيان</label><input name="description" class="form-control form-control-lg" required></div><div class="col-12 col-lg-4"><label class="form-label">التاريخ</label><input type="date" name="entry_date" class="form-control" value="{{today.isoformat()}}"></div></div></div>
+<div class="card-soft">
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>#</th><th>الحساب التفصيلي</th><th>مدين</th><th>دائن</th><th>بيان السطر</th></tr></thead><tbody>
+{% for n in rows %}<tr><td>{{n}}</td><td><select name="account_id_{{n}}" class="form-select account-picker"><option value="">اختر فرعًا</option>{% for a,depth in account_options %}{% if a.is_group %}<option disabled>📁 {{'—' * depth}} {{a.code}} — {{a.name}}</option>{% elif a.allow_manual_posting %}<option value="{{a.id}}">{{'↳ ' * depth}}{{a.code}} — {{a.name}}</option>{% endif %}{% endfor %}</select></td><td><input name="debit_{{n}}" class="form-control amount-field debit-field" inputmode="decimal"></td><td><input name="credit_{{n}}" class="form-control amount-field credit-field" inputmode="decimal"></td><td><input name="line_description_{{n}}" class="form-control"></td></tr>{% endfor %}
+</tbody></table></div>
+<div class="journal-totalbar"><span>المدين: <strong id="debit-total">0.00</strong></span><span>الدائن: <strong id="credit-total">0.00</strong></span><span>الفرق: <strong id="journal-diff">0.00</strong></span><button class="btn btn-primary btn-lg">ترحيل القيد</button></div>
+</div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+function calcJournal(){let d=0,c=0;document.querySelectorAll('.debit-field').forEach(x=>d+=parseFloat(x.value)||0);document.querySelectorAll('.credit-field').forEach(x=>c+=parseFloat(x.value)||0);document.getElementById('debit-total').textContent=d.toFixed(2);document.getElementById('credit-total').textContent=c.toFixed(2);document.getElementById('journal-diff').textContent=Math.abs(d-c).toFixed(2)}
+document.querySelectorAll('.amount-field').forEach(x=>x.addEventListener('input',calcJournal));calcJournal();
+</script>
+{% endblock %}
