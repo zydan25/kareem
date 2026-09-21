@@ -1,17 +1,13 @@
 {% extends 'base.html' %}
 {% block title %}إضافة حساب - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>إضافة حساب</h1><p>اختر الحساب الأب واكتب الاسم فقط؛ رمز الحساب يتولد تلقائيًا.</p></div><a class="btn btn-light" href="{{url_for('accounting.accounts')}}">رجوع</a></div>
+<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>إضافة حساب</h1><p>اختر الحساب الأب واكتب الاسم فقط؛ النظام ينشئ الرمز تلقائيًا.</p></div><a class="btn btn-light" href="{{url_for('accounting.accounts')}}">رجوع</a></div>
 <div class="card-soft">
 <form method="post" class="row g-3">
-<div class="col-12 col-lg-7"><label class="form-label">الحساب الأب</label><select name="parent_id" id="parent-account" class="form-select form-select-lg" required>{% for p in parents %}<option value="{{p.id}}" data-auto="{{auto_codes[p.id]}}" {% if selected_parent and p.id==selected_parent.id %}selected{% endif %}>📁 {{p.code}} — {{p.name}}</option>{% endfor %}</select></div>
-<div class="col-12 col-lg-5"><label class="form-label">الرمز التلقائي</label><div class="auto-code-preview"><i class="bi bi-magic"></i><strong id="auto-code">{{auto_codes[selected_parent.id] if selected_parent else 'سيولد تلقائيًا'}}</strong><small>لا يحتاج إدخالًا يدويًا</small></div></div>
-<div class="col-12"><label class="form-label">اسم الحساب</label><input name="name" class="form-control form-control-lg" required autofocus placeholder="مثال: مصروف كهرباء"></div>
+<div class="col-12"><label class="form-label">الحساب الأب</label><select name="parent_id" class="form-select form-select-lg" required>{% for p in parents %}<option value="{{p.id}}" {% if selected_parent and p.id==selected_parent.id %}selected{% endif %}>📁 {{p.code}} — {{p.name}}</option>{% endfor %}</select></div>
+<div class="col-12"><label class="form-label">اسم الحساب</label><input name="name" class="form-control form-control-lg" required autofocus placeholder="مثال: كهرباء، صيانة، مورد..."></div>
 <div class="col-12"><label class="form-check"><input class="form-check-input" type="checkbox" name="is_group" value="1"><span class="form-check-label">إنشاء مجموعة فرعية غير قابلة للقيد</span></label></div>
-<div class="col-12"><button class="btn btn-primary btn-lg">إنشاء الحساب</button></div>
+<div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check2"></i> إنشاء الحساب</button></div>
 </form>
 </div>
 {% endblock %}
-{% block scripts %}<script>
-const p=document.getElementById('parent-account'),c=document.getElementById('auto-code');p?.addEventListener('change',()=>{const o=p.selectedOptions[0];if(c)c.textContent=o?.dataset?.auto||'—'});
-</script>{% endblock %}
