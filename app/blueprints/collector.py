@@ -104,7 +104,7 @@ def index():
                 client_id=vehicle.client_id,agent_id=agent.id if agent else None,
                 collector_id=current_user.id,shift_id=shift.id,amount=amount,
                 payment_method="cash",journal_entry_id=entry.id if entry else None,
-                counted_for_work=True)
+                counted_for_work=(direction=="entry" and amount>0))
             db.session.add(tx)
             db.session.flush()
             if entry:
