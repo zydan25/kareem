@@ -14,6 +14,22 @@ from ..services.accounting import account_balance, D
 
 bp=Blueprint("reports",__name__,url_prefix="/reports")
 LOCAL_TZ=ZoneInfo("Asia/Aden")
+def account_tree_options():
+    all_accounts=Account.query.filter_by(active=True).order_by(Account.code).all()
+    children={}
+    for account in all_accounts:
+        children.setdefault(account.parent_id,[]).append(account)
+    for values in children.values():
+        values.sort(key=lambda a:a.code or "")
+    result=[]
+    def walk(parent_id=None,depth=0):
+        for account in children.get(parent_id,[]):
+            result.append((account,depth))
+            walk(account.id,depth+1)
+    walk()
+    return result
+
+
 
 def parse_dates():
     today=datetime.now(LOCAL_TZ).date()
@@ -131,7 +147,7 @@ def general_ledger():
             running += D(line.debit)-D(line.credit)
             rows.append((line,running))
         closing=running
-    return render_template("reports/general_ledger.html",accounts=accounts,rows=rows,account=account,account_id=account_id,start=start,end=end,opening=opening,closing=closing)
+    return render_template("reports/general_ledger.html",accounts=accounts,account_options=account_tree_options(),rows=rows,account=account,account_id=account_id,start=start,end=end,opening=opening,closing=closing)
 
 @bp.get("/income-expenses")
 @permission_required("reports.view")
