@@ -14,6 +14,7 @@
 <div class="col-9" id="amount-wrap"><label class="form-label">مبلغ الدخول</label><div class="input-group input-group-lg"><input name="amount" id="amount" class="form-control text-center fw-bold" inputmode="decimal" required><span class="input-group-text">{{currency}}</span></div></div>
 <div class="col-3 d-flex align-items-end"><button class="btn btn-primary btn-lg w-100"><i class="bi bi-check2-circle"></i> تسجيل</button></div>
 </form></div>
+<div class="card-soft mt-3"><div class="section-title"><h3>آخر حركاتي</h3><span class="badge-soft">{{ recent|length }} حركة</span></div><div class="table-wrap"><table class="table table-sm align-middle"><thead><tr><th>الوقت</th><th>اللوحة</th><th>الوكيل/العهدة</th><th>المبلغ</th></tr></thead><tbody>{% for x in recent %}<tr><td>{{x.transaction_date.strftime("%H:%M")}}</td><td class="fw-bold">{{x.vehicle.plate_number}}</td><td>{{x.agent.name if x.agent else "عهدة المتحصل"}}</td><td>{{"{:,.2f}".format(x.amount)}}</td></tr>{% else %}<tr><td colspan="4" class="text-muted text-center">لا توجد حركات حتى الآن.</td></tr>{% endfor %}</tbody></table></div></div>
 <div class="card-soft side-info"><h3>تدفق العملية</h3><div class="flow">
 <div><b>01</b><span>اللوحة</span><small>يسترجع سجل المركبة</small></div><div><b>02</b><span>الوكيل</span><small>اقتراح من تاريخ المركبة والعميل</small></div><div><b>03</b><span>القيد</span><small>الوكيل أو عهدة المتحصل مدينًا والإيراد دائنًا</small></div><div><b>04</b><span>العهدة</span><small>إخلاء واعتماد الإدارة إلى الصندوق</small></div>
 </div></div></div>
