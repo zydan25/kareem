@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import desc, func, or_
@@ -12,6 +13,8 @@ from ..services.audit import audit
 from ..services.operations import ensure_user_shift
 
 bp=Blueprint("collector",__name__,url_prefix="/collector")
+LOCAL_TZ=ZoneInfo("Asia/Aden")
+UTC_TZ=ZoneInfo("UTC")
 
 def recent_suggestions(vehicle):
     rows=(db.session.query(Agent)
@@ -132,9 +135,11 @@ def index():
             db.session.rollback()
             flash(f"تعذر تسجيل العملية: {exc}","danger")
 
-    today=datetime.now(timezone.utc).date()
+    today=datetime.now(LOCAL_TZ).date()
+    local_start=datetime.combine(today,datetime.min.time(),tzinfo=LOCAL_TZ).astimezone(UTC_TZ)
+    local_end=(datetime.combine(today,datetime.min.time(),tzinfo=LOCAL_TZ)+timedelta(days=1)).astimezone(UTC_TZ)
     day_rows=(GateTransaction.query.filter(GateTransaction.collector_id==current_user.id,
-        GateTransaction.transaction_date>=datetime(today.year,today.month,today.day,tzinfo=timezone.utc))
+        GateTransaction.transaction_date>=local_start,GateTransaction.transaction_date<local_end)
         .order_by(GateTransaction.transaction_date.desc()).all())
     daily_total=sum((D(x.amount) for x in day_rows if x.counted_for_work),D(0))
     daily_count=len([x for x in day_rows if x.counted_for_work])
