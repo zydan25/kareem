@@ -1,1 +1,26 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">الإعدادات</span><h1>إعدادات سوق الجملة</h1><p>الإعدادات التشغيلية منفصلة عن الحسابات النظامية المحمية.</p></div></div>{% if can_manage %}<div class="card-soft mb-4"><form method="post" class="row g-3"><div class="col-md-8"><label class="form-label">نوع مركبة جديد</label><input name="vehicle_type_name" class="form-control" placeholder="مثال: تريلا"></div><div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100">إضافة نوع</button></div>{% for s in settings %}<div class="col-md-4"><label class="form-label">{{s.description or s.key}}</label><input name="setting_{{s.key}}" class="form-control" value="{{s.value or ''}}"></div>{% endfor %}<div class="col-12"><button class="btn btn-outline-primary">حفظ الإعدادات</button></div></form></div>{% endif %}<div class="row g-4"><div class="col-lg-6"><div class="card-soft"><div class="section-title"><h3>أنواع المركبات</h3></div>{% for t in vehicle_types %}<div class="list-row"><span>{{t.name}}</span><span><small>{{'نظامي' if t.is_system else 'مخصص'}}</small>{% if can_manage and not t.is_system %}<form class="d-inline" method="post" action="{{url_for('settings.toggle_type',type_id=t.id)}}"><button class="btn btn-sm btn-light ms-2">{{'إيقاف' if t.active else 'تفعيل'}}</button></form>{% endif %}</span></div>{% endfor %}</div></div><div class="col-lg-6"><div class="card-soft"><div class="section-title"><h3>سياسة الحسابات</h3></div><div class="list-row"><span>الحسابات الرئيسية</span><small>غير قابلة للقيد</small></div><div class="list-row"><span>القيد اليومي</span><small>مدين = دائن</small></div><div class="list-row"><span>التصحيح</span><small>قيد عكسي</small></div><div class="list-row"><span>التحصيل</span><small>يرتبط بالمتحصل والوردية</small></div></div></div></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}الإعدادات - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">الإعدادات</span><h1>إعدادات النظام</h1><p>المظهر، بيانات المنشأة، إعدادات لوحة العميل وأنواع المركبات.</p></div><a class="btn btn-outline-primary" href="{{url_for('auth.account')}}">حسابي</a></div>
+<div class="settings-grid">
+<div class="card-soft">
+<div class="section-title"><div><h3>بيانات المنشأة</h3><small class="text-muted">تظهر في المستندات والواجهات عند استخدامها.</small></div></div>
+<form method="post" class="row g-3">
+{% for s in settings %}<div class="col-12 col-md-6"><label class="form-label">{{s.description or s.key}}</label>
+{% if s.key=="ui_theme" %}<select name="setting_{{s.key}}" class="form-select"><option value="light" {% if s.value=="light" %}selected{% endif %}>فاتح</option><option value="dark" {% if s.value=="dark" %}selected{% endif %}>داكن</option></select>
+{% elif s.key=="customer_portal" %}<select name="setting_{{s.key}}" class="form-select"><option value="1" {% if s.value=="1" %}selected{% endif %}>مفعلة</option><option value="0" {% if s.value!="1" %}selected{% endif %}>غير مفعلة</option></select>
+{% else %}<input name="setting_{{s.key}}" class="form-control" value="{{s.value or ''}}">{% endif %}
+</div>{% endfor %}
+<div class="col-12"><button class="btn btn-primary">حفظ الإعدادات</button></div>
+</form>
+</div>
+<div class="card-soft">
+<div class="section-title"><div><h3>أنواع المركبات</h3><small class="text-muted">أنواع النظام + الأنواع المخصصة.</small></div></div>
+{% if can_manage %}<form method="post" class="d-flex gap-2 mb-3"><input type="text" name="vehicle_type_name" class="form-control" placeholder="نوع جديد مثل: تريلا"><button class="btn btn-primary">إضافة</button></form>{% endif %}
+<div class="entity-list">{% for t in vehicle_types %}<div class="entity-row"><div class="entity-main"><div class="entity-icon vehicle"><i class="bi bi-truck-front"></i></div><div><strong>{{t.name}}</strong><div class="entity-meta"><span>{{'نظامي' if t.is_system else 'مخصص'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if t.active else 'off'}}"></span>{{'نشط' if t.active else 'موقوف'}}</div>{% if can_manage and not t.is_system %}<form method="post" action="{{url_for('settings.toggle_type',type_id=t.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if t.active else 'تفعيل'}}</button></form>{% endif %}</div>{% else %}<div class="empty-state"><span>لا توجد أنواع.</span></div>{% endfor %}</div>
+</div>
+</div>
+<div class="card-soft mt-4"><div class="section-title"><div><h3>سياسات النظام</h3></div></div><div class="policy-grid">
+<div class="policy-item"><i class="bi bi-lock"></i><strong>الحسابات</strong><span>الرئيسية للتجميع والفروع للقيد.</span></div><div class="policy-item"><i class="bi bi-receipt"></i><strong>السندات</strong><span>نوع السند يستنتج من «من» و«إلى».</span></div><div class="policy-item"><i class="bi bi-clock"></i><strong>الوردية</strong><span>تفتح تلقائيًا مع أول عملية مالية.</span></div><div class="policy-item"><i class="bi bi-safe2"></i><strong>العهدة</strong><span>تُسلّم للصندوق بعد الاعتماد.</span></div><div class="policy-item"><i class="bi bi-phone"></i><strong>PWA</strong><span>التثبيت يظهر للمتصفح الداعم.</span></div><div class="policy-item"><i class="bi bi-person-vcard"></i><strong>لوحة العميل</strong><span>يمكن تفعيلها أو إيقافها من الإعدادات.</span></div>
+</div></div>
+{% endblock %}
