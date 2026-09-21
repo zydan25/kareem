@@ -145,32 +145,48 @@ function showNewVehicle(){
   vehicleTypeHidden.value=newType.value||'';
   regHidden.value=newStatus.value||'registered';
 }
+let currentCustomerVehicles=[];
+
+function formatPlate(v){
+  const number=(v.plate||'').trim();
+  const separator=(v.separator||'').trim();
+  const letters=(v.letters||'').trim();
+  return [number,separator,letters].filter(Boolean).join(' ');
+}
 function setSelectedVehicle(v){
   vehicleHidden.value=v.id||'';
   plateHidden.value=v.plate||'';
   sep.value=v.separator||'';
   vehicleTypeHidden.value=v.vehicle_type_id||'';
   regHidden.value=v.registration_status||'registered';
-  selectedVehicleName.textContent=v.plate||'مركبة بدون رقم جمركي';
+  const plateText=formatPlate(v);
+  selectedVehicleName.textContent=plateText||'مركبة بدون رقم جمركي';
   selectedVehicleMeta.textContent=(v.vehicle_type||'مركبة')+(v.registration_status==='without_customs'?' — بدون جمارك':'')+(client.value?' — '+client.value:'');
   selectedVehicle.hidden=false;
-  customerVehicles.hidden=true;
   newVehiclePanel.hidden=true;
+  if(currentCustomerVehicles.length>1){
+    renderCustomerVehicles(currentCustomerVehicles,v.id);
+  }else{
+    customerVehicles.hidden=true;
+  }
 }
-function renderCustomerVehicles(vehicles){
+function renderCustomerVehicles(vehicles,selectedId){
+  currentCustomerVehicles=vehicles||[];
   customerVehiclesList.innerHTML='';
   customerVehiclesCount.textContent=vehicles.length===1?'مركبة واحدة':('عدد المركبات: '+vehicles.length);
-  vehicles.forEach((v,i)=>{
-    const label=v.plate || 'بدون رقم جمركي';
+  vehicles.forEach(v=>{
+    const label=formatPlate(v)||'بدون رقم جمركي';
     const meta=(v.vehicle_type||'مركبة')+(v.registration_status==='without_customs'?' · بدون جمارك':'');
     const btn=document.createElement('button');
-    btn.type='button';btn.className='customer-vehicle-option';
+    btn.type='button';
+    btn.className='customer-vehicle-option'+(Number(selectedId)===Number(v.id)?' active':'');
     btn.innerHTML='<span class="customer-vehicle-icon"><i class="bi bi-truck-front"></i></span><span><strong>'+esc(label)+'</strong><small>'+esc(meta)+'</small></span><i class="bi bi-chevron-left"></i>';
     btn.addEventListener('click',()=>setSelectedVehicle(v));
     customerVehiclesList.appendChild(btn);
   });
   customerVehicles.hidden=false;
 }
+
 function chooseCustomer(x){
   client.value=x.name||'';
   clientId.value=x.id||'';
@@ -190,7 +206,7 @@ function chooseVehicleResult(x){
   clientPhone.value=x.phone||'';
   clientAddress.value=x.address||'';
   clientNotes.value='';
-  setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,registration_status:x.registration_status,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type});
+  setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,letters:x.vehicle_letters,registration_status:x.registration_status,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type});
   clearSuggestions();
 }
 function applyNewClient(){
