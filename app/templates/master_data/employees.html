@@ -18,7 +18,7 @@
 <div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات الموظف"></textarea></div>
 <div class="col-12"><div class="form-section-title">حساب الدخول والصلاحيات <span>ينشأ تلقائيًا من الموظف — اسم المستخدم هو الهاتف</span></div></div>
 <div class="col-12 col-lg-5"><label class="form-label">كلمة المرور</label><input name="login_password" type="password" class="form-control" autocomplete="new-password" required placeholder="كلمة مرور الدخول"></div>
-<div class="col-12 col-lg-5"><label class="form-label">نوع الموظف / الصلاحيات</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}">{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
+<div class="col-12 col-lg-5"><label class="form-label">نوع الموظف / الصلاحيات</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}" {% if r=='collector' %}selected{% endif %}>{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
 <div class="col-12"><button class="btn btn-primary btn-lg">حفظ الموظف</button></div>
 </form></div>{% endif %}
 <div class="card-soft"><div class="section-title"><div><h3>الموظفون</h3><small class="text-muted">{{employees|length}} موظف</small></div></div><div class="entity-list">
