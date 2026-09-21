@@ -9,7 +9,7 @@ PERMISSIONS=[
 ("dashboard.view","عرض لوحة التحكم","لوحة التحكم"),
 ("collector.view","عرض التحصيل","البوابة"),
 ("collector.post","تسجيل حركات البوابة","البوابة"),
-("collector.settle","طلب إخلاء عهدة","العهد"),
+("collector.settle","إدارة/اعتماد تسليم العهدة","العهد"),
 ("collector.approve_settlement","اعتماد إخلاء العهدة","العهد"),
 ("agents.view","عرض الوكلاء","البيانات"),("agents.manage","إدارة الوكلاء","البيانات"),
 ("clients.view","عرض العملاء","البيانات"),("clients.manage","إدارة العملاء","البيانات"),
@@ -27,7 +27,7 @@ ROLE_DEFAULTS={
 "admin":{"*"},
 "manager":{p[0] for p in PERMISSIONS},
 "accountant":{"dashboard.view","accounting.view","accounting.post","vouchers.post","leases.view","leases.manage","leases.pay","payroll.view","payroll.manage","payroll.pay","expenses.view","expenses.manage","reports.view","reports.export","audit.view"},
-"collector":{"dashboard.view","collector.view","collector.post","collector.settle","clients.view","vehicles.view"},
+"collector":{"dashboard.view","collector.view","collector.post","clients.view","vehicles.view"},
 "auditor":{"dashboard.view","accounting.view","reports.view","reports.export","audit.view"}}
 
 def _permission_cache():
