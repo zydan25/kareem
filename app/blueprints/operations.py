@@ -113,24 +113,33 @@ def manual_journal():
     accounts=[a for a,_ in account_options if not a.is_group and a.allow_manual_posting]
     if request.method=="POST":
         try:
-            indices=[k.rsplit("_",1)[-1] for k in request.form if k.startswith("account_id_")]
-            lines=[]
-            for idx in sorted(set(indices),key=lambda x:int(x)):
-                aid=request.form.get(f"account_id_{idx}")
-                if not aid: continue
-                lines.append({"account":db.session.get(Account,int(aid)),
-                              "debit":request.form.get(f"debit_{idx}","0"),
-                              "credit":request.form.get(f"credit_{idx}","0"),
-                              "description":request.form.get(f"line_description_{idx}",request.form.get("description","قيد يدوي"))})
-            entry=create_posted_entry(description=request.form.get("description","قيد يدوي"),
-                entry_date=date.fromisoformat(request.form.get("entry_date") or date.today().isoformat()),
-                created_by_id=current_user.id,lines=lines,prefix="MAN",
-                audit="قيد يدوي من شاشة المحاسبة")
-            db.session.commit(); flash(f"تم ترحيل القيد {entry.number}","success")
+            from_account=db.session.get(Account,request.form.get("from_account_id",type=int))
+            to_account=db.session.get(Account,request.form.get("to_account_id",type=int))
+            if not from_account or not to_account:
+                raise ValueError("اختر الحساب الدائن والحساب المدين")
+            if from_account.id==to_account.id:
+                raise ValueError("لا يمكن أن يكون الحساب المدين والدائن نفس الحساب")
+            amount=D(request.form.get("amount","0"))
+            if amount<=0:
+                raise ValueError("المبلغ يجب أن يكون أكبر من صفر")
+            description=request.form.get("description","").strip() or "قيد يومية"
+            entry_date=date.fromisoformat(request.form.get("entry_date") or date.today().isoformat())
+            entry=create_posted_entry(
+                description=description,entry_date=entry_date,created_by_id=current_user.id,
+                lines=[
+                    {"account":to_account,"debit":amount,"credit":0,"description":description},
+                    {"account":from_account,"debit":0,"credit":amount,"description":description},
+                ],
+                prefix="MAN",audit="قيد يومية من حساب إلى حساب")
+            db.session.commit()
+            flash(f"تم ترحيل القيد {entry.number}: من {from_account.name} إلى {to_account.name}","success")
             return redirect(url_for("accounting.journal"))
         except Exception as exc:
-            db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/manual_journal.html",accounts=accounts,account_options=account_options,rows=range(1,9),today=date.today())
+            db.session.rollback()
+            flash(str(exc),"danger")
+    return render_template("operations/manual_journal.html",accounts=accounts,account_options=account_options,today=date.today())
+
+
 
 @bp.route("/settlements",methods=["GET","POST"])
 @permission_required("collector.settle")
