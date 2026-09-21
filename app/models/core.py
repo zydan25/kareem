@@ -59,6 +59,7 @@ class Employee(TimestampMixin,db.Model):
     account=db.relationship("Account",foreign_keys=[account_id])
     payroll_account=db.relationship("Account",foreign_keys=[payroll_account_id])
     schedules=db.relationship("EmployeeSchedule",back_populates="employee",cascade="all, delete-orphan",order_by="EmployeeSchedule.weekday")
+    fines=db.relationship("EmployeeFine",back_populates="employee",order_by="EmployeeFine.fine_date.desc(), EmployeeFine.id.desc()")
 
 class Agent(TimestampMixin,db.Model):
     __tablename__="agents"
@@ -309,6 +310,20 @@ class PayrollLine(db.Model):
     net_amount=db.Column(db.Numeric(18,2),nullable=False)
     employee=db.relationship("Employee",foreign_keys=[employee_id])
     payroll_run=db.relationship("PayrollRun",back_populates="lines")
+
+class EmployeeFine(TimestampMixin,db.Model):
+    __tablename__="employee_fines"
+    id=db.Column(db.Integer,primary_key=True)
+    employee_id=db.Column(db.Integer,db.ForeignKey("employees.id",ondelete="RESTRICT"),nullable=False,index=True)
+    fine_date=db.Column(db.Date,nullable=False,default=date.today,index=True)
+    amount=db.Column(db.Numeric(18,2),nullable=False)
+    reason=db.Column(db.String(500),nullable=False)
+    journal_entry_id=db.Column(db.Integer,db.ForeignKey("journal_entries.id",ondelete="RESTRICT"),nullable=False)
+    created_by_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="RESTRICT"),nullable=False)
+    employee=db.relationship("Employee",back_populates="fines")
+    journal_entry=db.relationship("JournalEntry")
+    created_by=db.relationship("User",foreign_keys=[created_by_id])
+
 
 class EmployeeSchedule(TimestampMixin,db.Model):
     __tablename__="employee_schedules"
