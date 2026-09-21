@@ -328,6 +328,7 @@ def vehicles():
         ))
     rows=query.order_by(Vehicle.active.desc(),Vehicle.updated_at.desc()).all()
     types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
+    all_vehicle_types=VehicleType.query.order_by(VehicleType.active.desc(),VehicleType.name).all()
     clients=Client.query.filter_by(active=True).order_by(Client.name).all()
     agents=Agent.query.filter_by(active=True).order_by(Agent.name).all()
     if request.method=="POST":
@@ -348,7 +349,7 @@ def vehicles():
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     selected_client_id=request.args.get("client_id",type=int)
-    return render_template("master_data/vehicles.html",vehicles=rows,vehicle_types=types,clients=clients,agents=agents,can_manage=can("vehicles.manage"),q=q,selected_client_id=selected_client_id)
+    return render_template("master_data/vehicles.html",vehicles=rows,vehicle_types=types,all_vehicle_types=all_vehicle_types,clients=clients,agents=agents,can_manage=can("vehicles.manage"),q=q,selected_client_id=selected_client_id)
 
 @bp.get("/vehicles/<int:vehicle_id>")
 @permission_required("vehicles.view")
