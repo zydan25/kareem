@@ -10,6 +10,7 @@ from ..permissions import can, permission_required
 from ..services.accounting import account_balance
 from ..services.audit import audit
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_payroll_account
+from ..services.setup import ensure_employees_for_users
 
 bp=Blueprint("master_data",__name__)
 
@@ -290,6 +291,7 @@ def toggle_vehicle(vehicle_id):
 @bp.route("/employees",methods=["GET","POST"])
 @permission_required("employees.view")
 def employees():
+    ensure_employees_for_users()
     q=request.args.get("q","").strip()
     query=Employee.query
     if q: query=query.filter(or_(Employee.full_name.ilike(f"%{q}%"),Employee.code.ilike(f"%{q}%"),Employee.phone.ilike(f"%{q}%"),Employee.job_title.ilike(f"%{q}%")))
