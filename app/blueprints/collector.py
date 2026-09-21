@@ -215,6 +215,7 @@ def search_clients():
                 "id":v.id,
                 "plate":v.plate_number,
                 "separator":v.plate_separator,
+                "letters":v.plate_letters,
                 "registration_status":v.registration_status,
                 "vehicle_type_id":v.vehicle_type_id,
                 "vehicle_type":v.vehicle_type.name if v.vehicle_type else None,
@@ -247,6 +248,7 @@ def search_clients():
             "vehicle_type_id":vehicle.vehicle_type_id,
             "vehicle_type":vehicle.vehicle_type.name if vehicle.vehicle_type else None,
             "vehicle_separator":vehicle.plate_separator,
+            "vehicle_letters":vehicle.plate_letters,
             "registration_status":vehicle.registration_status,
         })
 
