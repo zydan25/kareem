@@ -44,8 +44,8 @@
     <section class="employee-section">
       <div class="employee-section-head"><div><h2>الحسابات والدخول</h2><small>الربط المالي والحساب الوظيفي</small></div></div>
       <div class="employee-account-grid">
-        <div><span>حساب العهدة</span><strong>{{employee.account.code if employee.account else '—'}}</strong>{% if employee.account %}<a href="{{url_for('reports.account_statement',account_id=employee.account.id)}}">كشف الحساب</a>{% endif %}</div>
-        <div><span>حساب مستحق الراتب</span><strong>{{employee.payroll_account.code if employee.payroll_account else '—'}}</strong>{% if employee.payroll_account %}<a href="{{url_for('reports.account_statement',account_id=employee.payroll_account.id)}}">كشف الحساب</a>{% endif %}</div>
+        <div><span>حساب العهدة</span><strong>{{employee.account.name if employee.account else '—'}}</strong>{% if employee.account %}<a href="{{url_for('reports.account_statement',account_id=employee.account.id)}}">كشف الحساب</a>{% endif %}</div>
+        <div><span>حساب مستحق الراتب</span><strong>{{employee.payroll_account.name if employee.payroll_account else '—'}}</strong>{% if employee.payroll_account %}<a href="{{url_for('reports.account_statement',account_id=employee.payroll_account.id)}}">كشف الحساب</a>{% endif %}</div>
         <div><span>رقم الدخول</span><strong>{{employee.user.phone if employee.user else '—'}}</strong>{% if employee.user %}<small>{{role_labels.get(employee.user.role,employee.user.role)}}</small>{% endif %}</div>
       </div>
       {% if employee.user and employee.user.role in ['admin','manager'] %}<div class="role-lock-note"><i class="bi bi-shield-check"></i><span>هذا النوع لديه جميع صلاحيات النظام تلقائيًا.</span></div>{% endif %}
