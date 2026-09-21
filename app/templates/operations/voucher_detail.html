@@ -1,16 +1,49 @@
 {% extends 'base.html' %}
 {% block title %}{{voucher.number}} - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head print-hide"><div><span class="eyebrow">سند مالي</span><h1>{{voucher.number}}</h1><p>{{{'receipt':'سند قبض','payment':'سند صرف','transfer':'سند تحويل','adjustment':'تسوية'}.get(voucher.voucher_type,voucher.voucher_type)}} — {{voucher.voucher_date}}</p></div><button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة السند</button></div>
-<div class="card-soft print-paper">
-  <div class="document-heading"><div><strong>{{app_name}}</strong><small>سوق الجملة</small></div><div><span>{{{'receipt':'سند قبض','payment':'سند صرف','transfer':'سند تحويل','adjustment':'تسوية'}.get(voucher.voucher_type,voucher.voucher_type)}}</span><b>{{voucher.number}}</b></div></div>
-  <div class="document-fields">
-    <div><span>التاريخ</span><strong>{{voucher.voucher_date}}</strong></div>
-    <div><span>المستفيد / الطرف</span><strong>{{voucher.beneficiary or '—'}}</strong></div>
-    <div><span>المبلغ</span><strong>{{'{:,.2f}'.format(voucher.amount)}} {{currency}}</strong></div>
+<div class="page-head print-hide">
+  <div><span class="eyebrow">مستند مالي رسمي</span><h1>{{voucher.number}}</h1><p>{{{'receipt':'سند قبض','payment':'سند صرف','transfer':'سند تحويل','adjustment':'تسوية'}.get(voucher.voucher_type,voucher.voucher_type)}} — {{voucher.voucher_date}}</p></div>
+  <div class="document-actions">
+    <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة / PDF</button>
+    <button class="btn btn-outline-primary" onclick="shareVoucher()"><i class="bi bi-share"></i> مشاركة</button>
+    <button class="btn btn-outline-primary" onclick="saveVoucherImage()"><i class="bi bi-image"></i> حفظ كصورة</button>
   </div>
-  <div class="statement-box"><span>البيان</span><strong>{{voucher.description}}</strong></div>
-  <div class="table-wrap mt-3"><table class="table"><thead><tr><th>من حساب</th><th>إلى حساب</th><th>القيد المرتبط</th></tr></thead><tbody><tr><td>{{voucher.from_account.code}} — {{voucher.from_account.name}}</td><td>{{voucher.to_account.code}} — {{voucher.to_account.name}}</td><td>{{entry.number if entry else '—'}}</td></tr></tbody></table></div>
-  <div class="signature-grid"><div>المستلم / المستفيد<br><br>________________</div><div>المحاسب<br><br>________________</div><div>اعتماد الإدارة<br><br>________________</div></div>
 </div>
+<div id="voucher-paper" class="card-soft print-paper official-voucher">
+  <div class="official-voucher-border">
+    <div class="document-heading">
+      <div><strong>{{app_name}}</strong><small>{{project_name}}</small></div>
+      <div><span>{{{'receipt':'سند قبض','payment':'سند صرف','transfer':'سند تحويل','adjustment':'تسوية'}.get(voucher.voucher_type,voucher.voucher_type)}}</span><b>{{voucher.number}}</b></div>
+    </div>
+    <div class="official-voucher-meta">
+      <div><span>التاريخ</span><strong>{{voucher.voucher_date}}</strong></div>
+      <div><span>المستفيد / الطرف</span><strong>{{voucher.beneficiary or '—'}}</strong></div>
+      <div><span>المبلغ</span><strong>{{'{:,.2f}'.format(voucher.amount)}} {{currency}}</strong></div>
+    </div>
+    <div class="official-voucher-statement"><span>البيان</span><strong>{{voucher.description}}</strong></div>
+    <div class="table-wrap mt-3"><table class="table official-table"><thead><tr><th>من حساب</th><th>إلى حساب</th><th>القيد المرتبط</th></tr></thead><tbody><tr><td>{{voucher.from_account.name}}</td><td>{{voucher.to_account.name}}</td><td>{{entry.number if entry else '—'}}</td></tr></tbody></table></div>
+    <div class="official-voucher-signatures"><div><span>المستلم / المستفيد</span><b>________________________</b></div><div><span>المحاسب</span><b>________________________</b></div><div><span>اعتماد الإدارة</span><b>________________________</b></div></div>
+    <div class="official-voucher-foot"><span>هذا المستند صادر من {{app_name}}</span><span>{{voucher.number}}</span></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+async function shareVoucher(){
+ const data={title:'{{voucher.number}} - {{app_name}}',text:'{{voucher.description|e}} — {{voucher.number}}',url:location.href};
+ try{
+   if(navigator.share){await navigator.share(data);}
+   else{await navigator.clipboard.writeText(location.href);alert('تم نسخ رابط السند للمشاركة.');}
+ }catch(e){}
+}
+async function saveVoucherImage(){
+ const paper=document.getElementById('voucher-paper');
+ if(!window.html2canvas){alert('لم يتم تحميل أداة حفظ الصورة. أعد المحاولة.');return;}
+ try{
+   const canvas=await html2canvas(paper,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+   const a=document.createElement('a');a.download='{{voucher.number}}.png';a.href=canvas.toDataURL('image/png');a.click();
+ }catch(e){alert('تعذر حفظ السند كصورة.');}
+}
+</script>
 {% endblock %}
