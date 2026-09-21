@@ -1,1 +1,35 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">العهـد</span><h1>إخلاء العهد</h1><p>طلب الإخلاء لا يغير الحساب حتى يعتمد من المدير.</p></div></div><div class="card-soft mb-4"><form method="post" class="row g-3"><div class="col-md-5"><label class="form-label">حساب المصدر</label><select name="source_account_id" class="form-select" required>{% for a in sources %}<option value="{{a.id}}">{{a.code}} — {{a.name}}</option>{% endfor %}</select></div><div class="col-md-3"><label class="form-label">المبلغ</label><input name="amount" class="form-control" inputmode="decimal" required></div><div class="col-md-4"><label class="form-label">الوردية</label><select name="shift_id" class="form-select"><option value="">بدون ربط</option>{% for s in shifts %}<option value="{{s.id}}">{{s.shift_name}} — {{s.opened_at.strftime('%Y-%m-%d %H:%M')}}</option>{% endfor %}</select></div><div class="col-12"><input name="description" class="form-control" value="إخلاء عهدة إلى الصندوق"></div><div class="col-12"><button class="btn btn-primary">إرسال للاعتماد</button></div></form></div><div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>الطلب</th><th>التاريخ</th><th>المصدر</th><th>إلى</th><th>المبلغ</th><th>الحالة</th><th></th></tr></thead><tbody>{% for s in rows %}<tr><td>{{s.number}}</td><td>{{s.settlement_date}}</td><td>{{s.source_account.name}}</td><td>{{s.target_account.name}}</td><td>{{'{:,.2f}'.format(s.amount)}} {{currency}}</td><td><span class="badge-soft">{{{'pending':'بانتظار الاعتماد','posted':'مرحّل','rejected':'مرفوض'}.get(s.status,s.status)}}</span></td><td>{% if s.status=='pending' and current_user.role in ['admin','manager'] %}<form method="post" action="{{url_for('operations.approve',settlement_id=s.id)}}"><button class="btn btn-sm btn-primary">اعتماد</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}العهد وإخلاء العهدة - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">العهد</span><h1>إدارة العهد وإخلاء العهدة</h1><p>راجع أرصدة العهد، أنشئ طلب إخلاء، ثم اعتمده حسب الصلاحية.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="stat-grid mb-4 print-hide">
+  <div class="stat-card primary"><span>حسابات العهد</span><strong>{{source_balances|length}}</strong><small>حساب أصل قابل للتسوية</small></div>
+  <div class="stat-card"><span>طلبات المعروضة</span><strong>{{rows|length}}</strong><small>آخر الطلبات</small></div>
+  <div class="stat-card"><span>الصندوق المستهدف</span><strong>{{target.code}}</strong><small>{{target.name}}</small></div>
+  <div class="stat-card"><span>الوردية</span><strong>{{shifts|length}}</strong><small>ورديات مفتوحة</small></div>
+</div>
+<div class="card-soft mb-4 print-hide">
+  <div class="section-title"><div><h3>أرصدة حسابات العهدة</h3><small class="text-muted">المبلغ المتاح قبل طلب الإخلاء.</small></div></div>
+  <div class="table-wrap"><table class="table align-middle"><thead><tr><th>الحساب</th><th>الرصيد المتاح</th><th>كشف الحساب</th></tr></thead><tbody>
+  {% for a,b in source_balances %}<tr><td class="fw-bold">{{a.code}} — {{a.name}}</td><td><strong>{{'{:,.2f}'.format(b)}} {{currency}}</strong></td><td><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a></td></tr>
+  {% else %}<tr><td colspan="3" class="text-center py-4 text-muted">لا توجد حسابات عهدة بعد.</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+<div class="card-soft mb-4 print-hide">
+  <div class="section-title"><div><h3>طلب إخلاء عهدة</h3><small class="text-muted">لن يترحل ماليًا حتى يتم اعتماده.</small></div></div>
+  <form method="post" class="row g-3">
+    <div class="col-12 col-lg-5"><label class="form-label">حساب العهدة</label><select name="source_account_id" class="form-select" required>{% for a,b in source_balances %}<option value="{{a.id}}">{{a.code}} — {{a.name}} ({{'{:,.2f}'.format(b)}})</option>{% endfor %}</select></div>
+    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
+    <div class="col-12 col-sm-6 col-lg-3"><label class="form-label">الوردية</label><select name="shift_id" class="form-select"><option value="">بدون ربط</option>{% for s in shifts %}<option value="{{s.id}}">{{s.shift_name}} — {{s.opened_at.strftime('%Y-%m-%d %H:%M')}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-lg-2"><label class="form-label">الهدف</label><input class="form-control" value="{{target.code}} — {{target.name}}" disabled></div>
+    <div class="col-12"><label class="form-label">البيان</label><input name="description" class="form-control" value="إخلاء عهدة إلى الصندوق"></div>
+    <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-safe2"></i> إرسال للاعتماد</button></div>
+  </form>
+</div>
+<div class="card-soft">
+  <div class="section-title"><div><h3>سجل إخلاءات العهد</h3><small class="text-muted">يظهر هنا الطلب وحالته والقيد المرتبط بعد الاعتماد.</small></div></div>
+  <div class="table-wrap"><table class="table align-middle"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>المصدر</th><th>الهدف</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th>الإجراء</th></tr></thead>
+  <tbody>{% for s in rows %}<tr><td><code>{{s.number}}</code></td><td>{{s.settlement_date}}</td><td>{{s.source_account.code}} — {{s.source_account.name}}</td><td>{{s.target_account.code}} — {{s.target_account.name}}</td><td class="fw-bold">{{'{:,.2f}'.format(s.amount)}} {{currency}}</td><td><span class="badge-soft">{{{'pending':'بانتظار الاعتماد','posted':'مرحّل','rejected':'مرفوض'}.get(s.status,s.status)}}</span></td><td>{{s.journal_entry_id or '—'}}</td><td>{% if s.status=='pending' and can("collector.approve_settlement") %}<form method="post" action="{{url_for('operations.approve',settlement_id=s.id)}}"><button class="btn btn-sm btn-primary">اعتماد</button></form>{% elif s.status=='posted' %}<span class="text-muted">تم الاعتماد</span>{% else %}—{% endif %}</td></tr>
+  {% else %}<tr><td colspan="8" class="text-center py-5 text-muted">لا توجد إخلاءات.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}
