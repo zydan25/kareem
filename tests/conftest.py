@@ -1,5 +1,5 @@
 import pytest
-from flask_migrate import upgrade, downgrade
+from flask_migrate import upgrade
 from app import create_app
 from app.extensions import db
 from app.services.setup import seed
@@ -7,12 +7,14 @@ from app.services.setup import seed
 class TestConfig:
     TESTING=True
     SECRET_KEY="test-secret"
-    SQLALCHEMY_DATABASE_URI="sqlite:///:memory:"
     SQLALCHEMY_TRACK_MODIFICATIONS=False
 
 @pytest.fixture()
-def app():
-    app=create_app(TestConfig)
+def app(tmp_path):
+    test_db=tmp_path/"kareem-test.sqlite"
+    class Config(TestConfig):
+        SQLALCHEMY_DATABASE_URI=f"sqlite:///{test_db}"
+    app=create_app(Config)
     with app.app_context():
         upgrade()
         seed()
