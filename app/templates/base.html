@@ -42,7 +42,7 @@
     <section class="nav-section"><h4><i class="bi bi-sign-turn-right"></i> البوابة والتحصيل</h4>
       {% if can("collector.post") %}<a href="{{url_for('collector.index')}}">تسجيل حركة البوابة</a>{% endif %}
       {% if can("collector.view") %}<a href="{{url_for('operations.shifts')}}">الورديات</a>{% endif %}
-      {% if can("collector.settle") %}<a href="{{url_for('operations.settlements')}}">العهد وإخلاء العهدة</a>{% endif %}
+      {% if can("collector.settle") and current_user.role != "collector" %}<a href="{{url_for('operations.settlements')}}">العهد وإخلاء العهدة</a>{% endif %}
     </section>{% endif %}
 
     {% if can("agents.view") or can("clients.view") or can("vehicles.view") %}
