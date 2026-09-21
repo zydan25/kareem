@@ -1,18 +1,24 @@
 {% extends 'base.html' %}
 {% block title %}تحصيل البوابة - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head collector-page-head"><div><span class="eyebrow">الوصول والتشغيل</span><h1>تحصيل البوابة</h1><p>ابحث بالعميل أو الهاتف أو رقم اللوحة ثم سجّل الدخول أو الخروج.</p></div></div>
+<div class="collector-dashboard-head">
+  <div class="collector-welcome">
+    <div class="gate-icon"><i class="bi bi-receipt-cutoff"></i></div>
+    <div><span class="eyebrow">لوحة المتحصل</span><h1>واجهة التحصيل</h1><p>كل ما تحتاجه لتسجيل الدخول والخروج والتحصيل في شاشة واحدة.</p></div>
+  </div>
+  <div class="collector-date"><i class="bi bi-calendar3"></i><span>اليوم</span><strong>{{today if today is defined else ''}}</strong></div>
+</div>
 
 <div class="stat-grid collector-stats mb-3">
   <div class="stat-card primary"><span>تحصيلي اليوم</span><strong>{{'{:,.2f}'.format(daily_total or 0)}}</strong><small>{{currency}}</small></div>
-  <div class="stat-card"><span>العمليات</span><strong>{{daily_count}}</strong><small>اليوم</small></div>
-  <div class="stat-card"><span>الوردية</span><strong>{{current_shift.shift_name if current_shift else 'تلقائية'}}</strong><small>{{current_shift.opened_at.strftime('%H:%M') if current_shift else 'أول عملية'}}</small></div>
-  <div class="stat-card"><span>العهدة</span><strong id="collector-custody">—</strong><small>الحساب الحالي</small></div>
+  <div class="stat-card"><span>دخول</span><strong>{{daily_entries}}</strong><small>عملية اليوم</small></div>
+  <div class="stat-card"><span>خروج</span><strong>{{daily_exits}}</strong><small>عملية اليوم</small></div>
+  <div class="stat-card"><span>عهدتي الحالية</span><strong>{{'{:,.2f}'.format(custody_balance or 0)}}</strong><small>{{currency}} · {{current_shift.shift_name if current_shift else 'وردية تلقائية'}}</small></div>
 </div>
 
 <div class="collector-layout">
 <div class="card-soft collector-card">
-  <div class="collector-hero compact"><div class="gate-icon"><i class="bi bi-truck-front-fill"></i></div><div><strong>حركة بوابة جديدة</strong><p>ابدأ بحقل البحث؛ المركبة المسجلة تُختار مباشرة.</p></div></div>
+  <div class="collector-hero compact"><div><span class="eyebrow">عملية جديدة</span><strong>سجّل حركة البوابة</strong><p>ابدأ بالبحث عن العميل أو الهاتف أو اللوحة، وسيتم اختيار المركبة تلقائيًا.</p></div><div class="collector-hero-action"><i class="bi bi-lightning-charge-fill"></i><span>سريع</span></div></div>
 
 <form method="post" id="collector-form" class="collector-form">
   <input type="hidden" id="plate_number" name="plate_number">
@@ -23,12 +29,12 @@
 
   <div class="client-search-block">
     <div class="client-label-row">
-      <label class="form-label mb-0">العميل أو الهاتف أو رقم اللوحة</label>
+      <label class="form-label mb-0">ابحث عن العميل أو الهاتف أو رقم اللوحة</label>
       <button class="btn btn-sm btn-outline-primary new-client-trigger" type="button" data-new-client-open><i class="bi bi-person-plus"></i> عميل جديد</button>
     </div>
     <div class="smart-client-search">
       <i class="bi bi-search"></i>
-      <input id="client_name" name="client_name" class="form-control form-control-lg" placeholder="اكتب أول حرف..." autocomplete="off">
+      <input id="client_name" name="client_name" class="form-control form-control-lg collector-search-input" placeholder="اكتب الاسم أو الهاتف أو اللوحة..." autocomplete="off">
       <input type="hidden" id="client_id" name="client_id">
       <input type="hidden" id="client_phone" name="client_phone">
       <input type="hidden" id="client_address" name="client_address">
@@ -88,7 +94,7 @@
     <label class="direction-choice exit"><input type="radio" name="direction" value="exit"><span><i class="bi bi-box-arrow-up"></i><b>خروج</b><small>خروج مع تحصيل</small></span></label>
   </div>
 
-  <div class="collector-submit-row"><button class="btn btn-primary btn-lg" id="submit-btn"><i class="bi bi-box-arrow-in-down"></i> تسجيل الدخول</button></div>
+  <div class="collector-submit-row"><button class="btn btn-primary btn-lg collector-submit" id="submit-btn"><i class="bi bi-box-arrow-in-down"></i> تسجيل الدخول</button></div>
 </form>
 </div>
 
