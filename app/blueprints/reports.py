@@ -4,6 +4,7 @@ from io import StringIO
 from zoneinfo import ZoneInfo
 
 from flask import Blueprint, Response, render_template, request
+from flask_login import current_user
 from sqlalchemy import and_, func, or_
 
 from ..extensions import db
@@ -37,7 +38,9 @@ def index():
 def gate():
     start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
     q=GateTransaction.query.filter(GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt)
-    if request.args.get("collector_id"): q=q.filter_by(collector_id=int(request.args["collector_id"]))
+    if current_user.role=="collector":
+        q=q.filter_by(collector_id=current_user.id)
+    elif request.args.get("collector_id"): q=q.filter_by(collector_id=int(request.args["collector_id"]))
     if request.args.get("agent_id"): q=q.filter_by(agent_id=int(request.args["agent_id"]))
     if request.args.get("client_id"): q=q.filter_by(client_id=int(request.args["client_id"]))
     if request.args.get("shift_id"): q=q.filter_by(shift_id=int(request.args["shift_id"]))
@@ -147,6 +150,8 @@ def income_expenses():
 def shift_report(shift_id):
     shift=db.session.get(Shift,shift_id)
     if not shift: return ("الوردية غير موجودة",404)
+    if current_user.role=="collector" and shift.collector_id!=current_user.id:
+        return ("Forbidden",403)
     rows=GateTransaction.query.filter_by(shift_id=shift.id).order_by(GateTransaction.transaction_date).all()
     total=sum((D(x.amount) for x in rows),D(0))
     return render_template("reports/shift.html",shift=shift,rows=rows,total=total)
@@ -156,6 +161,11 @@ def shift_report(shift_id):
 def account_statement(account_id):
     account=db.session.get(Account,account_id)
     if not account: return ("الحساب غير موجود",404)
+    if current_user.role=="collector":
+        from ..services.accounts import ensure_user_collector_account
+        own_account=ensure_user_collector_account(current_user)
+        if not own_account or account.id!=own_account.id:
+            return ("Forbidden",403)
     start,end=parse_dates()
     lines=(db.session.query(JournalLine).join(JournalEntry)
         .filter(JournalLine.account_id==account_id,JournalEntry.status=="posted",JournalEntry.entry_date>=start,JournalEntry.entry_date<=end)
@@ -179,6 +189,10 @@ def custody():
     rows=[]
     if custody_root:
         accounts=Account.query.filter_by(account_type="asset",is_group=False,active=True,parent_id=custody_root.id).order_by(Account.code).all()
+        if current_user.role=="collector":
+            from ..services.accounts import ensure_user_collector_account
+            own_account=ensure_user_collector_account(current_user)
+            accounts=[own_account] if own_account and own_account.parent_id==custody_root.id else []
         for account in accounts:
             period_lines=(db.session.query(JournalLine).join(JournalEntry)
                           .filter(JournalLine.account_id==account.id,JournalEntry.status=="posted",
@@ -192,6 +206,9 @@ def custody():
             })
     from ..models import Settlement
     settlements=Settlement.query.filter(Settlement.settlement_date>=start,Settlement.settlement_date<=end).order_by(Settlement.id.desc()).all()
+    if current_user.role=="collector":
+        settlements=Settlement.query.filter(Settlement.settlement_date>=start,Settlement.settlement_date<=end,
+            Settlement.requested_by_id==current_user.id).order_by(Settlement.id.desc()).all()
     return render_template("reports/custody.html",rows=rows,settlements=settlements,start=start,end=end)
 
 
