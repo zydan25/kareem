@@ -1,1 +1,43 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">الأمن والإدارة</span><h1>المستخدمون</h1><p>الحسابات تحدد الدور، ويمكن منح صلاحيات إضافية/استثنائية لكل مستخدم.</p></div></div><div class="card-soft mb-4"><form method="post" class="row g-3"><div class="col-md-2"><label class="form-label">اسم المستخدم</label><input name="username" class="form-control" required></div><div class="col-md-3"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control" required></div><div class="col-md-2"><label class="form-label">الهاتف</label><input name="phone" class="form-control"></div><div class="col-md-2"><label class="form-label">الدور</label><select name="role" class="form-select">{% for r in roles %}<option value="{{r}}">{{r}}</option>{% endfor %}</select></div><div class="col-md-2"><label class="form-label">الموظف</label><select name="employee_id" class="form-select"><option value="">—</option>{% for e in employees %}<option value="{{e.id}}">{{e.full_name}}</option>{% endfor %}</select></div><div class="col-md-3"><label class="form-label">كلمة المرور</label><input name="password" type="password" class="form-control" required></div><div class="col-12"><button class="btn btn-primary">إنشاء مستخدم</button></div></form></div><div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>الموظف</th><th>الحالة</th><th></th></tr></thead><tbody>{% for u in users %}<tr><td>{{u.username}}</td><td class="fw-bold">{{u.full_name}}</td><td>{{u.role}}</td><td>{{u.employee.full_name if u.employee_record else '—'}}</td><td>{{'نشط' if u.active else 'موقوف'}}</td><td class="text-nowrap"><a class="btn btn-sm btn-light" href="{{url_for('admin.edit_user',user_id=u.id)}}">تعديل</a><a class="btn btn-sm btn-outline-primary" href="{{url_for('admin.permissions',user_id=u.id)}}">الصلاحيات</a><form class="d-inline" method="post" action="{{url_for('admin.toggle_user',user_id=u.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if u.active else 'تفعيل'}}</button></form></td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}المستخدمون والصلاحيات - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">الأمن والإدارة</span><h1>المستخدمون والصلاحيات</h1><p>الحسابات مرتبطة بالموظفين، والدور الافتراضي يمكن تخصيصه بصلاحيات تفصيلية لكل مستخدم.</p></div>
+  <a class="btn btn-outline-primary" href="{{url_for('master_data.employees')}}"><i class="bi bi-people"></i> شؤون الموظفين</a>
+</div>
+
+<div class="card-soft mb-4">
+  <div class="section-title"><div><h3>إضافة حساب دخول</h3><small class="text-muted">يمكن أيضًا إنشاء الحساب مباشرة من بطاقة الموظف.</small></div></div>
+  <form method="post" class="row g-3">
+    <div class="col-6 col-lg-2"><label class="form-label">اسم المستخدم</label><input name="username" class="form-control" required></div>
+    <div class="col-6 col-lg-3"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control" required></div>
+    <div class="col-6 col-lg-2"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
+    <div class="col-6 col-lg-2"><label class="form-label">الدور</label><select name="role" class="form-select">{% for r in roles %}<option value="{{r}}">{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-lg-3"><label class="form-label">الموظف</label><select name="employee_id" class="form-select"><option value="">بدون ربط</option>{% for e in employees %}<option value="{{e.id}}">{{e.code}} — {{e.full_name}}</option>{% endfor %}</select></div>
+    <div class="col-12 col-lg-3"><label class="form-label">كلمة المرور</label><input name="password" type="password" class="form-control" required></div>
+    <div class="col-12 col-lg-3 d-flex align-items-end"><button class="btn btn-primary w-100"><i class="bi bi-person-plus"></i> إنشاء الحساب</button></div>
+  </form>
+</div>
+
+<div class="card-soft">
+  <div class="section-title"><div><h3>الحسابات الحالية</h3><small class="text-muted">{{users|length}} حساب</small></div></div>
+  <div class="table-wrap">
+    <table class="table align-middle">
+      <thead><tr><th>الحساب</th><th>الاسم</th><th>الدور</th><th>الموظف</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+      <tbody>{% for u in users %}
+      <tr>
+        <td class="fw-bold">{{u.username}}</td><td>{{u.full_name}}</td>
+        <td><span class="badge-soft">{{role_labels.get(u.role,u.role)}}</span></td>
+        <td>{% if u.employee %}{{u.employee.code}} — {{u.employee.full_name}}{% else %}<span class="text-muted">غير مرتبط</span>{% endif %}</td>
+        <td>{{'نشط' if u.active else 'موقوف'}}</td>
+        <td class="text-nowrap">
+          <a class="btn btn-sm btn-light" href="{{url_for('admin.edit_user',user_id=u.id)}}">تعديل</a>
+          {% if can("permissions.manage") %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('admin.permissions',user_id=u.id)}}"><i class="bi bi-shield-check"></i> الصلاحيات</a>{% endif %}
+          <form class="d-inline" method="post" action="{{url_for('admin.toggle_user',user_id=u.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if u.active else 'تفعيل'}}</button></form>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="text-center py-5 text-muted">لا توجد حسابات.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
