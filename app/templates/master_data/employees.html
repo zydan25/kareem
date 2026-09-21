@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}شؤون الموظفين - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>شؤون الموظفين</h1><p>ملفات الموظفين والحسابات والرواتب والجداول والصلاحيات.</p></div>{% if can_manage %}<button class="btn btn-primary" data-toggle-panel="add-employee"><i class="bi bi-plus-lg"></i> إضافة موظف</button>{% endif %}</div>
+<div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>شؤون الموظفين</h1><p>ملفات الموظفين والحسابات والرواتب والجداول والصلاحيات.</p></div>{% if can_manage %}<div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary" data-toggle-panel="employee-fine-panel"><i class="bi bi-exclamation-triangle"></i> تسجيل مخالفة</button><button class="btn btn-primary" data-toggle-panel="add-employee"><i class="bi bi-plus-lg"></i> إضافة موظف</button></div>{% endif %}</div>
 <div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الوظيفة"></div><button class="btn btn-outline-primary">بحث</button></form></div>
 {% if can_manage %}<div id="add-employee" class="card-soft add-panel"><form method="post" enctype="multipart/form-data" class="row g-3">
 <div class="col-12"><div class="form-section-title">بيانات الموظف <span>المعرف والصورة اختياريان · الكود ينشأ تلقائيًا</span></div></div>
@@ -22,7 +22,7 @@
 <div class="col-12"><button class="btn btn-primary btn-lg">حفظ الموظف</button></div>
 </form></div>{% endif %}
 {% if can_manage %}
-<div class="card-soft mb-3 fine-panel">
+<div id="employee-fine-panel" class="card-soft mb-3 add-panel fine-panel">
   <div class="section-title"><div><h3><i class="bi bi-exclamation-triangle"></i> إضافة غرامة / مخالفة</h3><small class="text-muted">تُسجل كقيد مالي على حساب الموظف مقابل إيراد الغرامات والمخالفات.</small></div></div>
   <form method="post" action="{{url_for('master_data.add_employee_fine')}}" class="row g-3" id="employee-fine-form">
     <input type="hidden" name="employee_id" id="fine_employee_id">
@@ -32,7 +32,7 @@
       <input id="fine_employee_search" class="form-control form-control-lg" autocomplete="off" placeholder="اكتب اسم الموظف أو رقم الهاتف">
       <div id="fine_employee_selected" class="fine-selected" hidden></div>
       <div id="fine_employee_results" class="fine-employee-results">
-        {% for e in employees if e.active %}
+        {% for e in fine_employees %}
         <button type="button" class="fine-employee-option" data-id="{{e.id}}" data-name="{{e.full_name|e}}" data-phone="{{e.phone or ''}}">
           <span><strong>{{e.full_name}}</strong><small>{{e.phone or 'بدون هاتف'}} · {{e.job_title or 'موظف'}}</small></span><i class="bi bi-person-check"></i>
         </button>
