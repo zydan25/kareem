@@ -81,6 +81,11 @@
   {% endif %}
 
   <section class="employee-section">
+    <div class="employee-section-head"><div><h2>الغرامات والمخالفات</h2><small>المبالغ المرحّلة على حساب الموظف</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('master_data.employees')}}">إدارة الموظفين</a></div>
+    <div class="employee-table"><table class="table"><thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ</th><th>رقم القيد</th></tr></thead><tbody>{% for f in fines %}<tr><td>{{f.fine_date}}</td><td>{{f.reason}}</td><td>{{'{:,.2f}'.format(f.amount)}} {{currency}}</td><td>{{f.journal_entry.number if f.journal_entry else '—'}}</td></tr>{% else %}<tr><td colspan="4" class="text-center py-4 text-muted">لا توجد غرامات أو مخالفات مسجلة.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+
+  <section class="employee-section">
     <div class="employee-section-head"><div><h2>سجل الرواتب</h2><small>المسيرات المرتبطة بالموظف</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.payroll')}}">الرواتب</a></div>
     <div class="employee-table"><table class="table"><thead><tr><th>الشهر</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th></tr></thead><tbody>{% for p in payroll_lines %}<tr><td>{{p.payroll_run.payroll_month if p.payroll_run else p.id}}</td><td>{{p.gross_amount}}</td><td>{{p.deductions}}</td><td>{{p.net_amount}}</td></tr>{% else %}<tr><td colspan="4" class="text-center py-4 text-muted">لا يوجد سجل رواتب.</td></tr>{% endfor %}</tbody></table></div>
   </section>
