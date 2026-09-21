@@ -100,3 +100,21 @@
   .new-client-trigger{font-size:10px}
   .site-footer{font-size:9px}
 }
+
+/* Collector: registered vehicles first, new-vehicle fields on demand */
+.new-vehicle-panel{background:#f7faf8;border:1px dashed #b5d3c6;border-radius:14px;padding:11px}
+.new-vehicle-panel[hidden]{display:none!important}
+.new-vehicle-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.new-vehicle-head strong{display:block;font-size:13px;color:var(--primary)}
+.new-vehicle-head small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.collector-selected-vehicle{display:flex;align-items:center;gap:9px;padding:10px 11px;border:1px solid #cfe1d9;background:#f5faf8;border-radius:13px}
+.collector-selected-vehicle[hidden]{display:none!important}
+.selected-vehicle-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#e4f2ec;color:var(--primary);flex:0 0 auto}
+.collector-selected-vehicle>div:nth-child(2){min-width:0;flex:1}
+.collector-selected-vehicle strong,.collector-selected-vehicle small{display:block}
+.collector-selected-vehicle strong{font-size:12px}
+.collector-selected-vehicle small{font-size:9px;color:var(--muted);margin-top:2px}
+@media(max-width:500px){
+  .new-vehicle-head{align-items:flex-start}
+  .new-vehicle-head .btn{font-size:9px}
+}
