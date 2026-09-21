@@ -307,6 +307,7 @@ class AuditLog(db.Model):
     __tablename__="audit_logs"
     id=db.Column(db.Integer,primary_key=True)
     user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="SET NULL"))
+    user=db.relationship("User",foreign_keys=[user_id])
     action=db.Column(db.String(80),nullable=False)
     entity_type=db.Column(db.String(80),nullable=False)
     entity_id=db.Column(db.Integer)
