@@ -461,7 +461,7 @@ def employees():
             return redirect(url_for("master_data.employee_detail",employee_id=emp.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/employees.html",employees=rows,can_manage=can("employees.manage"),q=q,roles=[r.value for r in Role],role_labels=ROLE_LABELS,weekdays=WEEKDAYS)
+    return render_template("master_data/employees.html",employees=rows,can_manage=can("employees.manage"),q=q,today=date.today(),roles=[r.value for r in Role],role_labels=ROLE_LABELS,weekdays=WEEKDAYS)
 
 @bp.post("/employees/fines")
 @permission_required("employees.manage")
