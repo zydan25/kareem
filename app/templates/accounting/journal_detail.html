@@ -5,7 +5,7 @@
 <div class="card-soft print-paper">
   <div class="document-heading"><strong>{{app_name}}</strong><span>قيد يومية</span><b>{{entry.number}}</b></div>
   <div class="table-wrap"><table class="table align-middle"><thead><tr><th>#</th><th>الحساب</th><th>البيان</th><th>مرجع</th><th>مدين</th><th>دائن</th></tr></thead><tbody>
-  {% for l in entry.lines %}<tr><td>{{loop.index}}</td><td class="fw-bold">{{l.account.code}} — {{l.account.name}}</td><td>{{l.description or ''}}</td><td>{{l.reference or '—'}}</td><td>{{'{:,.2f}'.format(l.debit)}}</td><td>{{'{:,.2f}'.format(l.credit)}}</td></tr>{% endfor %}
+  {% for l in entry.lines %}<tr><td>{{loop.index}}</td><td class="fw-bold">{{l.account.name}}</td><td>{{l.description or ''}}</td><td>{{l.reference or '—'}}</td><td>{{'{:,.2f}'.format(l.debit)}}</td><td>{{'{:,.2f}'.format(l.credit)}}</td></tr>{% endfor %}
   </tbody><tfoot><tr class="fw-bold"><td colspan="4" class="text-start">الإجمالي</td><td>{{'{:,.2f}'.format(entry.totals()[0])}}</td><td>{{'{:,.2f}'.format(entry.totals()[1])}}</td></tr></tfoot></table></div>
 </div>
 {% if can_reverse and entry.status=='posted' and not entry.reversed_entry_id %}
