@@ -12,6 +12,8 @@ def database_url():
     )
 
 class Config:
+    UPLOAD_FOLDER = str(BASE_DIR / "media")
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024
     SECRET_KEY = os.getenv("SECRET_KEY", "change-this-secret-in-production")
     SQLALCHEMY_DATABASE_URI = database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
