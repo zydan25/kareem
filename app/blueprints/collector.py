@@ -26,9 +26,12 @@ def recent_suggestions(vehicle):
         rows.extend([a for a in client_rows if a.id not in existing][:8-len(rows)])
     return rows
 
-def open_shift():
-    shift=(Shift.query.filter_by(collector_id=current_user.id,status="open")
+def current_shift():
+    return (Shift.query.filter_by(collector_id=current_user.id,status="open")
         .order_by(desc(Shift.opened_at)).first())
+
+def open_shift():
+    shift=current_shift()
     if shift:
         return shift
     shift=Shift(collector_id=current_user.id,shift_name="وردية تشغيل",
@@ -126,7 +129,7 @@ def index():
     return render_template("collector/index.html",
         vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all(),
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
-        recent=recent,current_shift=open_shift())
+        recent=recent,current_shift=current_shift())
 
 @bp.get("/search")
 @permission_required("collector.view")
