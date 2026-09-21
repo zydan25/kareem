@@ -1,5 +1,6 @@
 from ..extensions import db
 from ..models import Account, AccountType, User, Role, VehicleType
+from ..permissions import seed_permissions
 
 ROOTS=[
 ("1","الأصول",AccountType.ASSET.value,"root_assets"),
@@ -14,6 +15,9 @@ CHILDREN=[
 ("102","عهد الموظفين والمتحصلين",AccountType.ASSET.value,"root_assets",True,"collector_root"),
 ("103","حسابات العملاء",AccountType.ASSET.value,"root_assets",True,"clients_root"),
 ("104","حسابات الوكلاء",AccountType.ASSET.value,"root_assets",True,"agents_root"),
+("201","مستحقات الرواتب",AccountType.LIABILITY.value,"root_liabilities",True,"payable_root"),
+("20101","مخصص مستحقات الرواتب",AccountType.LIABILITY.value,"payable_root",False,"salary_payable"),
+("20201","التزامات استقطاعات الرواتب",AccountType.LIABILITY.value,"root_liabilities",False,"salary_deduction_liability"),
 ("401","إيرادات دخول السوق",AccountType.REVENUE.value,"root_revenue",False,"entry_revenue"),
 ("402","إيرادات الإيجارات",AccountType.REVENUE.value,"root_revenue",False,"rent_revenue"),
 ("403","إيرادات أخرى",AccountType.REVENUE.value,"root_revenue",False,"other_revenue"),
@@ -31,8 +35,7 @@ def ensure_system_accounts():
     for code,name,typ,parent_key,is_group,key in CHILDREN:
         if not db.session.query(Account).filter_by(system_key=key).first():
             parent=account_by_key(parent_key)
-            db.session.add(Account(code=code,name=name,account_type=typ,parent_id=parent.id,
-                is_group=is_group,allow_manual_posting=not is_group,system_key=key))
+            db.session.add(Account(code=code,name=name,account_type=typ,parent_id=parent.id,is_group=is_group,allow_manual_posting=not is_group,system_key=key))
     db.session.flush()
 
 def ensure_admin(username="admin",password="admin"):
@@ -43,7 +46,9 @@ def ensure_admin(username="admin",password="admin"):
     return user
 
 def seed():
-    ensure_system_accounts(); ensure_admin()
+    ensure_system_accounts()
+    seed_permissions()
+    ensure_admin()
     for name in ["دينه","قلاب","ناقلة","شاص","باص","سوزوكي","أخرى"]:
         if not db.session.query(VehicleType).filter_by(name=name).first():
             db.session.add(VehicleType(name=name,is_system=True))
