@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}مركز التقارير - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">التقارير</span><h1>مركز التقارير</h1><p>تقارير تشغيلية ومالية ومحاسبية وموارد بشرية للفترة التي تختارها.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="page-head"><div><span class="eyebrow">التقارير</span><h1>مركز التقارير</h1><p>تقارير تشغيلية ومالية ومحاسبية وموارد بشرية للفترة التي تختارها.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة / PDF</button></div>
 <div class="card-soft mb-4">
 <form class="row g-3"><div class="col-6 col-md-4"><label class="form-label">من</label><input type="date" name="start" value="{{start}}" class="form-control"></div><div class="col-6 col-md-4"><label class="form-label">إلى</label><input type="date" name="end" value="{{end}}" class="form-control"></div><div class="col-12 col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100">تحديث</button></div></form>
 </div>
