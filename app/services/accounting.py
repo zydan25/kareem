@@ -40,3 +40,29 @@ def create_posted_entry(*, description, entry_date, created_by_id, lines, source
         db.session.add(JournalLine(entry_id=entry.id,account_id=account.id,debit=debit,credit=credit,
             description=line_desc or description,reference=reference))
     return entry
+
+
+def reverse_entry(entry, user_id, reason):
+    if not entry:
+        raise ValueError("القيد غير موجود")
+    if entry.status != EntryStatus.POSTED.value:
+        raise ValueError("يمكن عكس القيد المرحل فقط")
+    if entry.reversed_entry_id:
+        raise ValueError("تم عكس هذا القيد مسبقًا")
+    lines=[]
+    for line in entry.lines:
+        lines.append({
+            "account": line.account,
+            "debit": line.credit,
+            "credit": line.debit,
+            "description": f"عكس: {line.description or entry.description}",
+            "reference": entry.number,
+        })
+    reverse=create_posted_entry(
+        description=f"عكس القيد {entry.number}: {reason}",
+        entry_date=date.today(),created_by_id=user_id,source_type="reverse",source_id=entry.id,
+        lines=lines,prefix="REV",audit=f"عكس القيد {entry.number}",
+    )
+    entry.reversed_entry_id=reverse.id
+    entry.status=EntryStatus.VOID.value
+    return reverse
