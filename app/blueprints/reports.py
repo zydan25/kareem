@@ -208,19 +208,22 @@ def _period_for_shortcut(kind):
 @permission_required("reports.view")
 def daily():
     start,end=_period_for_shortcut("daily")
-    return render_template("reports/period.html",start=start,end=end,kind="يومي")
+    from flask import redirect, url_for
+    return redirect(url_for("reports.period",start=start.isoformat(),end=end.isoformat(),kind="يومي"))
 
 @bp.get("/weekly")
 @permission_required("reports.view")
 def weekly():
     start,end=_period_for_shortcut("weekly")
-    return render_template("reports/period.html",start=start,end=end,kind="أسبوعي")
+    from flask import redirect, url_for
+    return redirect(url_for("reports.period",start=start.isoformat(),end=end.isoformat(),kind="أسبوعي"))
 
 @bp.get("/monthly")
 @permission_required("reports.view")
 def monthly():
     start,end=_period_for_shortcut("monthly")
-    return render_template("reports/period.html",start=start,end=end,kind="شهري")
+    from flask import redirect, url_for
+    return redirect(url_for("reports.period",start=start.isoformat(),end=end.isoformat(),kind="شهري"))
 
 @bp.get("/period")
 @permission_required("reports.view")
@@ -239,7 +242,7 @@ def period():
     exit_total=sum((D(x.amount) for x in gates if x.direction=="exit"),D(0))
     expense_total=sum((D(x.amount) for x in expenses),D(0))
     rent_total=sum((D(x.amount) for x in paid_rents),D(0))
-    return render_template("reports/period.html",start=start,end=end,kind="مخصص",
+    return render_template("reports/period.html",start=start,end=end,kind=request.args.get("kind","مخصص"),
         gate_count=len(gates),entry_total=entry_total,exit_total=exit_total,
         expense_total=expense_total,rent_total=rent_total,total_expenses=len(expenses))
 
