@@ -4,11 +4,14 @@
 <div class="page-head"><div><span class="eyebrow">البيانات الأساسية</span><h1>إدارة العملاء</h1><p>ملف العميل، مركباته، وكلاؤه، كشف حسابه وحركة البوابة.</p></div>{% if can_manage %}<button class="btn btn-primary" type="button" data-toggle-panel="add-client"><i class="bi bi-plus-lg"></i> إضافة عميل</button>{% endif %}</div>
 <div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الكود"></div><button class="btn btn-outline-primary">بحث</button>{% if q %}<a class="btn btn-light" href="{{url_for('master_data.clients')}}">مسح</a>{% endif %}</form></div>
 {% if can_manage %}<div id="add-client" class="card-soft add-panel">
-<form method="post" class="row g-3" id="new-client-form">
+<form method="post" enctype="multipart/form-data" class="row g-3" id="new-client-form">
   <div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب يُنشأ تلقائيًا · يجب إضافة مركبة واحدة على الأقل</span></div></div>
   <div class="col-12 col-lg-4"><label class="form-label">اسم العميل</label><input name="name" class="form-control form-control-lg" required></div>
   <div class="col-6 col-lg-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
-  <div class="col-6 col-lg-5"><label class="form-label">العنوان</label><input name="address" class="form-control"></div>
+  <div class="col-6 col-lg-3"><label class="form-label">نوع الهوية <small>(اختياري)</small></label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
+  <div class="col-6 col-lg-3"><label class="form-label">رقم الهوية <small>(اختياري)</small></label><input name="identity_number" class="form-control"></div>
+  <div class="col-12 col-lg-3"><label class="form-label">صورة الهوية <small>(اختياري)</small></label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div>
+  <div class="col-12 col-lg-6"><label class="form-label">العنوان</label><input name="address" class="form-control"></div>
   <div class="col-12"><label class="form-label">الوكلاء المرتبطون <small>(اختياري)</small></label><select name="agent_ids" class="form-select" multiple size="3">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
 
   <div class="col-12">
