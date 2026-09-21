@@ -72,7 +72,8 @@ def account_new():
             return redirect(url_for("accounting.accounts"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("accounting/account_form.html",parents=parents,selected_parent=selected_parent,auto_code=_next_code(selected_parent) if selected_parent else "—")
+    auto_codes={p.id:_next_code(p) for p in parents}
+    return render_template("accounting/account_form.html",parents=parents,selected_parent=selected_parent,auto_codes=auto_codes)
 
 @bp.route("/accounts/<int:account_id>/edit",methods=["GET","POST"])
 @permission_required("accounting.post")
