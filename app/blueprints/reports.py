@@ -7,7 +7,7 @@ from flask import Blueprint, Response, render_template, request
 from sqlalchemy import and_, func, or_
 
 from ..extensions import db
-from ..models import Account, Agent, GateTransaction, JournalEntry, JournalLine, Shift, User
+from ..models import Account, Agent, Client, Employee, Expense, GateTransaction, JournalEntry, JournalLine, Shift, User
 from ..permissions import permission_required
 from ..services.accounting import account_balance, D
 
@@ -39,6 +39,7 @@ def gate():
     q=GateTransaction.query.filter(GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt)
     if request.args.get("collector_id"): q=q.filter_by(collector_id=int(request.args["collector_id"]))
     if request.args.get("agent_id"): q=q.filter_by(agent_id=int(request.args["agent_id"]))
+    if request.args.get("client_id"): q=q.filter_by(client_id=int(request.args["client_id"]))
     if request.args.get("shift_id"): q=q.filter_by(shift_id=int(request.args["shift_id"]))
     rows=q.order_by(GateTransaction.transaction_date.desc()).all()
     total=sum((D(x.amount) for x in rows),D(0))
@@ -191,6 +192,127 @@ def custody():
     from ..models import Settlement
     settlements=Settlement.query.filter(Settlement.settlement_date>=start,Settlement.settlement_date<=end).order_by(Settlement.id.desc()).all()
     return render_template("reports/custody.html",rows=rows,settlements=settlements,start=start,end=end)
+
+
+
+def _period_for_shortcut(kind):
+    today=datetime.now(LOCAL_TZ).date()
+    if kind=="daily": return today,today
+    if kind=="weekly":
+        return today-timedelta(days=today.weekday()),today
+    if kind=="monthly":
+        return today.replace(day=1),today
+    return today,today
+
+@bp.get("/daily")
+@permission_required("reports.view")
+def daily():
+    start,end=_period_for_shortcut("daily")
+    return render_template("reports/period.html",start=start,end=end,kind="يومي")
+
+@bp.get("/weekly")
+@permission_required("reports.view")
+def weekly():
+    start,end=_period_for_shortcut("weekly")
+    return render_template("reports/period.html",start=start,end=end,kind="أسبوعي")
+
+@bp.get("/monthly")
+@permission_required("reports.view")
+def monthly():
+    start,end=_period_for_shortcut("monthly")
+    return render_template("reports/period.html",start=start,end=end,kind="شهري")
+
+@bp.get("/period")
+@permission_required("reports.view")
+def period():
+    start,end=parse_dates()
+    start_dt,end_dt=period_query(start,end)
+    gates=GateTransaction.query.filter(GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt).all()
+    expenses=Expense.query.filter(Expense.expense_date>=start,Expense.expense_date<=end).all()
+    paid_rents=__import__("app.models",fromlist=["AgentRent"]).AgentRent.query.filter(
+        __import__("app.models",fromlist=["AgentRent"]).AgentRent.status=="paid"
+    ).filter(
+        __import__("app.models",fromlist=["AgentRent"]).AgentRent.rent_month>=start,
+        __import__("app.models",fromlist=["AgentRent"]).AgentRent.rent_month<=end
+    ).all()
+    entry_total=sum((D(x.amount) for x in gates if x.direction=="entry"),D(0))
+    exit_total=sum((D(x.amount) for x in gates if x.direction=="exit"),D(0))
+    expense_total=sum((D(x.amount) for x in expenses),D(0))
+    rent_total=sum((D(x.amount) for x in paid_rents),D(0))
+    return render_template("reports/period.html",start=start,end=end,kind="مخصص",
+        gate_count=len(gates),entry_total=entry_total,exit_total=exit_total,
+        expense_total=expense_total,rent_total=rent_total,total_expenses=len(expenses))
+
+@bp.get("/clients/<int:client_id>")
+@permission_required("reports.view")
+def client_report(client_id):
+    client=db.session.get(Client,client_id)
+    if not client: return ("العميل غير موجود",404)
+    start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
+    rows=GateTransaction.query.filter_by(client_id=client.id).filter(
+        GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt
+    ).order_by(GateTransaction.transaction_date.desc()).all()
+    return render_template("reports/entity_report.html",title="تقرير العميل",entity=client,entity_type="عميل",
+        start=start,end=end,rows=rows,balance=account_balance(client.account_id) if client.account_id else D(0))
+
+@bp.get("/agents/<int:agent_id>")
+@permission_required("reports.view")
+def agent_report(agent_id):
+    agent=db.session.get(Agent,agent_id)
+    if not agent: return ("الوكيل غير موجود",404)
+    start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
+    rows=GateTransaction.query.filter_by(agent_id=agent.id).filter(
+        GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt
+    ).order_by(GateTransaction.transaction_date.desc()).all()
+    from ..models import AgentRent
+    rents=AgentRent.query.filter_by(agent_id=agent.id).filter(AgentRent.rent_month>=start,AgentRent.rent_month<=end).order_by(AgentRent.rent_month.desc()).all()
+    return render_template("reports/agent_report.html",agent=agent,start=start,end=end,rows=rows,rents=rents,
+        balance=account_balance(agent.account_id) if agent.account_id else D(0))
+
+@bp.get("/employees/<int:employee_id>")
+@permission_required("reports.view")
+def employee_report(employee_id):
+    employee=db.session.get(Employee,employee_id)
+    if not employee: return ("الموظف غير موجود",404)
+    start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
+    shifts=Shift.query.filter_by(collector_id=employee.user.id if employee.user else -1).filter(
+        Shift.opened_at<end_dt
+    ).order_by(Shift.opened_at.desc()).all()
+    gates=GateTransaction.query.filter_by(collector_id=employee.user.id if employee.user else -1).filter(
+        GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt
+    ).order_by(GateTransaction.transaction_date.desc()).all()
+    audits=__import__("app.models",fromlist=["AuditLog"]).AuditLog.query.filter_by(user_id=employee.user.id if employee.user else -1).filter(
+        __import__("app.models",fromlist=["AuditLog"]).AuditLog.created_at>=start_dt,
+        __import__("app.models",fromlist=["AuditLog"]).AuditLog.created_at<end_dt
+    ).order_by(__import__("app.models",fromlist=["AuditLog"]).AuditLog.created_at.desc()).limit(100).all()
+    return render_template("reports/employee_report.html",employee=employee,start=start,end=end,shifts=shifts,gates=gates,audits=audits,
+        custody=account_balance(employee.account_id) if employee.account_id else D(0),
+        payroll_due=account_balance(employee.payroll_account_id) if employee.payroll_account_id else D(0))
+
+@bp.get("/employees")
+@permission_required("reports.view")
+def employees_report():
+    start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
+    employees=Employee.query.order_by(Employee.active.desc(),Employee.full_name).all()
+    rows=[]
+    for e in employees:
+        uid=e.user.id if e.user else -1
+        gates=GateTransaction.query.filter_by(collector_id=uid).filter(
+            GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt,
+            GateTransaction.direction.in_(["entry","exit"])).all()
+        shifts=Shift.query.filter_by(collector_id=uid).filter(Shift.opened_at<end_dt).filter(
+            (Shift.closed_at.is_(None)) | (Shift.closed_at>=start_dt)).all()
+        rows.append({"employee":e,"gate_count":len(gates),"total":sum((D(x.amount) for x in gates),D(0)),"shifts":len(shifts),
+                     "custody":account_balance(e.account_id) if e.account_id else D(0)})
+    return render_template("reports/employees.html",rows=rows,start=start,end=end)
+
+@bp.get("/expenses")
+@permission_required("reports.view")
+def expenses_report():
+    start,end=parse_dates()
+    rows=Expense.query.filter(Expense.expense_date>=start,Expense.expense_date<=end).order_by(Expense.expense_date.desc(),Expense.id.desc()).all()
+    total=sum((D(x.amount) for x in rows),D(0))
+    return render_template("reports/expenses.html",rows=rows,start=start,end=end,total=total)
 
 @bp.get("/trial-balance")
 @permission_required("reports.view")
