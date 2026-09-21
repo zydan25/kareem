@@ -1,1 +1,51 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">العملاء</span><h1>تعديل العميل والوكالات المرتبطة</h1></div></div><div class="card-soft"><form method="post" class="row g-3"><div class="col-12"><div class="form-section-title">بيانات العميل <span>الكود يُدار تلقائيًا من النظام</span></div></div><div class="col-md-5"><label class="form-label">الاسم</label><input name="name" class="form-control" value="{{client.name}}" required></div><div class="col-md-5"><label class="form-label">الهاتف</label><input name="phone" class="form-control" value="{{client.phone or ''}}"></div><div class="col-md-6"><label class="form-label">العنوان</label><input name="address" class="form-control" value="{{client.address or ''}}"></div><div class="col-12"><label class="form-label">الوكلاء المرتبطون</label><select name="agent_ids" class="form-select" multiple size="6">{% for a in agents %}<option value="{{a.id}}" {% if a.id in selected %}selected{% endif %}>{{a.name}}</option>{% endfor %}</select></div><div class="col-12"><textarea name="notes" class="form-control">{{client.notes or ''}}</textarea></div><div><button class="btn btn-primary">حفظ</button> <a href="{{url_for('master_data.clients')}}" class="btn btn-light">رجوع</a></div></form></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}تعديل العميل - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">العملاء</span><h1>تعديل العميل ومركباته</h1><p>{{client.name}} · الكود يُدار تلقائيًا من النظام.</p></div><a href="{{url_for('master_data.client_detail',client_id=client.id)}}" class="btn btn-light">ملف العميل</a></div>
+<div class="card-soft">
+<form method="post" class="row g-3" id="edit-client-form">
+  <div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب المالي مرتبط تلقائيًا</span></div></div>
+  <div class="col-12 col-md-5"><label class="form-label">اسم العميل</label><input name="name" class="form-control" value="{{client.name}}" required></div>
+  <div class="col-12 col-md-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" value="{{client.phone or ''}}" inputmode="tel"></div>
+  <div class="col-12 col-md-4"><label class="form-label">العنوان</label><input name="address" class="form-control" value="{{client.address or ''}}"></div>
+  <div class="col-12"><label class="form-label">الوكلاء المرتبطون</label><select name="agent_ids" class="form-select" multiple size="4">{% for a in agents %}<option value="{{a.id}}" {% if a.id in selected %}selected{% endif %}>{{a.name}}</option>{% endfor %}</select></div>
+
+  <div class="col-12">
+    <div class="form-section-title"><strong>مركبات العميل</strong><span>رقم اللوحة اختياري للمركبات بدون جمارك</span></div>
+    <div id="client-vehicles-builder" class="vehicle-builder">
+      {% for v in client.vehicles %}
+      <div class="client-vehicle-row">
+        <input type="hidden" name="vehicle_id" value="{{v.id}}">
+        <div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered" {% if v.registration_status!='without_customs' %}selected{% endif %}>بلوحة جمركية</option><option value="without_customs" {% if v.registration_status=='without_customs' %}selected{% endif %}>بدون جمارك / بدون رقم</option></select></div>
+        <div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" value="{{v.plate_number or ''}}" placeholder="بدون رقم ممكن"></div>
+        <div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}" {% if t.id==v.vehicle_type_id %}selected{% endif %}>{{t.name}}</option>{% endfor %}</select></div>
+        <div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" value="{{v.notes or ''}}" placeholder="وصف مختصر"></div>
+        <button type="button" class="btn btn-sm btn-light vehicle-remove"><i class="bi bi-x"></i></button>
+      </div>
+      {% else %}
+      <div class="empty-state compact"><i class="bi bi-truck"></i><strong>لا توجد مركبات</strong><span>يمكن إضافة مركبة جديدة أدناه.</span></div>
+      {% endfor %}
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-client-vehicle"><i class="bi bi-plus"></i> إضافة مركبة</button>
+  </div>
+
+  <div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات">{{client.notes or ''}}</textarea></div>
+  <div class="col-12 d-flex gap-2 flex-wrap"><button class="btn btn-primary btn-lg">حفظ التعديلات</button><a href="{{url_for('master_data.clients')}}" class="btn btn-light">رجوع</a></div>
+</form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const builder=document.getElementById('client-vehicles-builder');
+function vehicleTemplate(){
+ return '<div class="client-vehicle-row"><input type="hidden" name="vehicle_id" value=""><div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div><div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="بدون رقم ممكن"></div><div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div><div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="وصف مختصر"></div><button type="button" class="btn btn-sm btn-light vehicle-remove"><i class="bi bi-x"></i></button></div>';
+}
+document.getElementById('add-client-vehicle')?.addEventListener('click',()=>{builder.insertAdjacentHTML('beforeend',vehicleTemplate());});
+builder?.addEventListener('click',e=>{const btn=e.target.closest('.vehicle-remove');if(!btn)return;const row=btn.closest('.client-vehicle-row');if(row)row.remove();});
+builder?.addEventListener('change',e=>{if(!e.target.classList.contains('vehicle-status'))return;const row=e.target.closest('.client-vehicle-row');const plate=row?.querySelector('.vehicle-plate');if(!plate)return;plate.required=e.target.value==='registered';});
+document.getElementById('edit-client-form')?.addEventListener('submit',e=>{
+ const rows=builder.querySelectorAll('.client-vehicle-row');
+ if(!rows.length){e.preventDefault();alert('يجب أن يكون للعميل مركبة واحدة على الأقل.');return;}
+});
+</script>
+{% endblock %}
