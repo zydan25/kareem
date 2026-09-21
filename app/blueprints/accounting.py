@@ -20,7 +20,9 @@ def _children_tree(accounts):
     def build(parent_id=None, depth=0):
         result=[]
         for account in by_parent.get(parent_id,[]):
-            result.append({"account":account,"depth":depth,"children":build(account.id,depth+1)})
+            children=build(account.id,depth+1)
+            balance=sum((node["balance"] for node in children),0) if children else (account_balance(account.id) if not account.is_group else 0)
+            result.append({"account":account,"depth":depth,"children":children,"balance":balance})
         return result
     return build(None)
 
