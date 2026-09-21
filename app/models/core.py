@@ -42,6 +42,13 @@ class Employee(TimestampMixin,db.Model):
     code=db.Column(db.String(30),nullable=False,unique=True)
     full_name=db.Column(db.String(160),nullable=False)
     phone=db.Column(db.String(30))
+    identity_number=db.Column(db.String(80))
+    identity_image=db.Column(db.String(255))
+    gender=db.Column(db.String(20))
+    employment_type=db.Column(db.String(40),default="دوام كامل")
+    weekly_hours=db.Column(db.Numeric(6,2),nullable=False,default=48)
+    work_days=db.Column(db.String(120),default="0,1,2,3,4,5")
+    notes=db.Column(db.Text)
     job_title=db.Column(db.String(100),default="موظف")
     monthly_salary=db.Column(db.Numeric(18,2),nullable=False,default=0)
     hire_date=db.Column(db.Date,default=date.today)
@@ -51,6 +58,7 @@ class Employee(TimestampMixin,db.Model):
     user=db.relationship("User",foreign_keys="User.employee_id",back_populates="employee",uselist=False)
     account=db.relationship("Account",foreign_keys=[account_id])
     payroll_account=db.relationship("Account",foreign_keys=[payroll_account_id])
+    schedules=db.relationship("EmployeeSchedule",back_populates="employee",cascade="all, delete-orphan",order_by="EmployeeSchedule.weekday")
 
 class Agent(TimestampMixin,db.Model):
     __tablename__="agents"
@@ -263,6 +271,9 @@ class AgentRent(TimestampMixin,db.Model):
     agent_id=db.Column(db.Integer,db.ForeignKey("agents.id",ondelete="RESTRICT"),nullable=False)
     lease_id=db.Column(db.Integer,db.ForeignKey("agent_leases.id",ondelete="RESTRICT"),nullable=False)
     rent_month=db.Column(db.Date,nullable=False)
+    base_amount=db.Column(db.Numeric(18,2),nullable=False,default=0)
+    discount=db.Column(db.Numeric(18,2),nullable=False,default=0)
+    addition=db.Column(db.Numeric(18,2),nullable=False,default=0)
     amount=db.Column(db.Numeric(18,2),nullable=False)
     status=db.Column(db.String(20),nullable=False,default="unpaid")
     journal_entry_id=db.Column(db.Integer,db.ForeignKey("journal_entries.id",ondelete="SET NULL"))
@@ -286,6 +297,36 @@ class PayrollLine(db.Model):
     deductions=db.Column(db.Numeric(18,2),nullable=False,default=0)
     net_amount=db.Column(db.Numeric(18,2),nullable=False)
     employee=db.relationship("Employee",foreign_keys=[employee_id])
+
+class EmployeeSchedule(TimestampMixin,db.Model):
+    __tablename__="employee_schedules"
+    id=db.Column(db.Integer,primary_key=True)
+    employee_id=db.Column(db.Integer,db.ForeignKey("employees.id",ondelete="CASCADE"),nullable=False)
+    weekday=db.Column(db.Integer,nullable=False,default=0)
+    shift_name=db.Column(db.String(80),nullable=False,default="دوام")
+    start_time=db.Column(db.Time())
+    end_time=db.Column(db.Time())
+    active=db.Column(db.Boolean,nullable=False,default=True)
+    employee=db.relationship("Employee",back_populates="schedules")
+    __table_args__=(UniqueConstraint("employee_id","weekday","shift_name",name="uq_employee_schedule"),)
+
+
+class Expense(TimestampMixin,db.Model):
+    __tablename__="expenses"
+    id=db.Column(db.Integer,primary_key=True)
+    number=db.Column(db.String(40),nullable=False,unique=True,index=True)
+    expense_date=db.Column(db.Date,nullable=False,default=date.today,index=True)
+    amount=db.Column(db.Numeric(18,2),nullable=False)
+    expense_account_id=db.Column(db.Integer,db.ForeignKey("accounts.id",ondelete="RESTRICT"),nullable=False)
+    cash_account_id=db.Column(db.Integer,db.ForeignKey("accounts.id",ondelete="RESTRICT"),nullable=False)
+    beneficiary=db.Column(db.String(180))
+    description=db.Column(db.String(500),nullable=False)
+    status=db.Column(db.String(20),nullable=False,default="posted")
+    journal_entry_id=db.Column(db.Integer,db.ForeignKey("journal_entries.id",ondelete="RESTRICT"))
+    created_by_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="RESTRICT"),nullable=False)
+    expense_account=db.relationship("Account",foreign_keys=[expense_account_id])
+    cash_account=db.relationship("Account",foreign_keys=[cash_account_id])
+
 
 class Permission(TimestampMixin,db.Model):
     __tablename__="permissions"
