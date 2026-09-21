@@ -1,72 +1,158 @@
 {% extends 'base.html' %}
 {% block title %}تحصيل البوابة - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الوصول والتشغيل</span><h1>تحصيل البوابة</h1><p>أدخل اللوحة، اختر العميل والوكيل، ثم اختر دخول أو خروج. كلاهما يحمل مبلغًا ماليًا على عهدة المتحصل.</p></div></div>
+<div class="page-head collector-page-head"><div><span class="eyebrow">الوصول والتشغيل</span><h1>تحصيل البوابة</h1><p>ابحث بالعميل أو الهاتف أو رقم اللوحة ثم سجّل الدخول أو الخروج.</p></div></div>
 
-<div class="stat-grid mb-3">
+<div class="stat-grid collector-stats mb-3">
   <div class="stat-card primary"><span>تحصيلي اليوم</span><strong>{{'{:,.2f}'.format(daily_total or 0)}}</strong><small>{{currency}}</small></div>
-  <div class="stat-card"><span>عدد العمليات</span><strong>{{daily_count}}</strong><small>دخول وخروج</small></div>
-  <div class="stat-card"><span>الوردية</span><strong>{{current_shift.shift_name if current_shift else 'تفتح تلقائيًا'}}</strong><small>{{current_shift.opened_at.strftime('%H:%M') if current_shift else 'عند أول عملية'}}</small></div>
-  <div class="stat-card"><span>العهدة الحالية</span><strong id="collector-custody">—</strong><small>تُحسب من الحساب</small></div>
+  <div class="stat-card"><span>العمليات</span><strong>{{daily_count}}</strong><small>اليوم</small></div>
+  <div class="stat-card"><span>الوردية</span><strong>{{current_shift.shift_name if current_shift else 'تلقائية'}}</strong><small>{{current_shift.opened_at.strftime('%H:%M') if current_shift else 'أول عملية'}}</small></div>
+  <div class="stat-card"><span>العهدة</span><strong id="collector-custody">—</strong><small>الحساب الحالي</small></div>
 </div>
 
 <div class="collector-layout">
 <div class="card-soft collector-card">
-<div class="collector-hero"><div class="gate-icon"><i class="bi bi-truck-front-fill"></i></div><div><strong>حركة بوابة جديدة</strong><p>الوردية تُفتح تلقائيًا عند أول عملية، وتسليم العهدة يتم من شاشة الإخلاء.</p></div></div>
+  <div class="collector-hero compact"><div class="gate-icon"><i class="bi bi-truck-front-fill"></i></div><div><strong>حركة بوابة جديدة</strong><p>اكتب في حقل البحث وسيظهر العملاء والمركبات فورًا.</p></div></div>
 
-<form method="post" id="collector-form" class="row g-3">
-<div class="col-8 col-md-4"><label class="form-label">رقم اللوحة</label><input id="plate_number" name="plate_number" class="form-control form-control-lg" inputmode="numeric" autocomplete="off" autofocus required></div>
-<div class="col-4 col-md-2"><label class="form-label">الفاصل</label><input id="plate_separator" name="plate_separator" class="form-control form-control-lg"></div>
-<div class="col-12 col-md-6"><label class="form-label">نوع المركبة</label><select id="vehicle_type_id" name="vehicle_type_id" class="form-select form-select-lg" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
+<form method="post" id="collector-form" class="collector-form">
+  <input type="hidden" id="plate_separator" name="plate_separator">
 
-<div class="col-12"><div id="search-hint" class="search-hint">اكتب اللوحة أو اسم العميل لعرض المقترحات.</div></div>
-
-<div class="col-12">
-<div class="direction-buttons">
-<label class="direction-choice entry"><input type="radio" name="direction" value="entry" checked><span><i class="bi bi-box-arrow-in-down"></i><b>دخول</b><small>تحصيل وإثبات إيراد</small></span></label>
-<label class="direction-choice exit"><input type="radio" name="direction" value="exit"><span><i class="bi bi-box-arrow-up"></i><b>خروج</b><small>خروج مع تحصيل</small></span></label>
-</div>
-</div>
-
-<div class="col-12 col-lg-5"><label class="form-label">العميل</label>
-<input id="client_name" name="client_name" class="form-control form-control-lg" placeholder="اكتب اسم العميل">
-<input type="hidden" id="client_id" name="client_id">
-<div id="client-suggestions" class="suggestions-box"></div>
-<div id="new-client-panel" class="new-client-panel">
-  <div class="form-section-title">إضافة عميل جديد <span>بدون وكيل</span></div>
-  <div class="row g-2 mt-1">
-    <div class="col-12 col-md-4"><input id="client_phone" name="client_phone" class="form-control" placeholder="الهاتف" inputmode="tel"></div>
-    <div class="col-12 col-md-4"><input id="client_address" name="client_address" class="form-control" placeholder="العنوان"></div>
-    <div class="col-12 col-md-4"><input id="client_notes" name="client_notes" class="form-control" placeholder="ملاحظات"></div>
+  <div class="collector-main-fields">
+    <div class="field-block plate-field">
+      <label class="form-label">رقم اللوحة</label>
+      <input id="plate_number" name="plate_number" class="form-control form-control-lg" inputmode="numeric" autocomplete="off" autofocus required placeholder="مثال: 12345">
+    </div>
+    <div class="field-block">
+      <label class="form-label">نوع المركبة</label>
+      <select id="vehicle_type_id" name="vehicle_type_id" class="form-select form-select-lg" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select>
+    </div>
   </div>
-</div>
-</div>
 
-<div class="col-12 col-lg-4"><label class="form-label">الوكيل</label><select id="agent_id" name="agent_id" class="form-select form-select-lg"><option value="">غير مربوط — على عهدة المتحصل</option>{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
-<div class="col-12 col-lg-3"><label class="form-label">المبلغ</label><div class="input-group input-group-lg"><input name="amount" id="amount" class="form-control text-center fw-bold" inputmode="decimal" required><span class="input-group-text">{{currency}}</span></div></div>
+  <div class="client-search-block">
+    <div class="client-label-row">
+      <label class="form-label mb-0">العميل أو الهاتف أو رقم اللوحة</label>
+      <button class="btn btn-sm btn-outline-primary new-client-trigger" type="button" data-new-client-open><i class="bi bi-person-plus"></i> عميل جديد</button>
+    </div>
+    <div class="smart-client-search">
+      <i class="bi bi-search"></i>
+      <input id="client_name" name="client_name" class="form-control form-control-lg" placeholder="ابدأ الكتابة الآن..." autocomplete="off">
+      <input type="hidden" id="client_id" name="client_id">
+      <input type="hidden" id="client_phone" name="client_phone">
+      <input type="hidden" id="client_address" name="client_address">
+      <input type="hidden" id="client_notes" name="client_notes">
+    </div>
+    <div id="client-suggestions" class="client-suggestion-list" hidden></div>
+  </div>
 
-<div class="col-12"><button class="btn btn-primary btn-lg w-100" id="submit-btn"><i class="bi bi-check2-circle"></i> تسجيل الحركة</button></div>
+  <div class="collector-optional-fields">
+    <div><label class="form-label">الوكيل <small>(اختياري)</small></label><select id="agent_id" name="agent_id" class="form-select form-select-lg"><option value="">غير مربوط — على عهدة المتحصل</option>{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
+    <div><label class="form-label">المبلغ</label><div class="input-group input-group-lg"><input name="amount" id="amount" class="form-control text-center fw-bold" inputmode="decimal" required><span class="input-group-text">{{currency}}</span></div></div>
+  </div>
+
+  <div class="direction-buttons">
+    <label class="direction-choice entry"><input type="radio" name="direction" value="entry" checked><span><i class="bi bi-box-arrow-in-down"></i><b>دخول</b><small>تحصيل وإثبات إيراد</small></span></label>
+    <label class="direction-choice exit"><input type="radio" name="direction" value="exit"><span><i class="bi bi-box-arrow-up"></i><b>خروج</b><small>خروج مع تحصيل</small></span></label>
+  </div>
+
+  <div class="collector-submit-row"><button class="btn btn-primary btn-lg" id="submit-btn"><i class="bi bi-box-arrow-in-down"></i> تسجيل الدخول</button></div>
 </form>
 </div>
 
 <div class="card-soft side-info">
-<div class="section-title"><h3>تقرير اليوم</h3><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.gate')}}">تفصيل</a></div>
-<div class="daily-mini"><div><span>التحصيل</span><strong>{{'{:,.2f}'.format(daily_total or 0)}}</strong></div><div><span>العمليات</span><strong>{{daily_count}}</strong></div></div>
-<div class="flow mt-3"><div><b>01</b><span>اللوحة</span><small>يسترجع المركبة والعميل والوكيل المقترح</small></div><div><b>02</b><span>العميل</span><small>اكتب الاسم وسيظهر العملاء، أو أضف جديدًا</small></div><div><b>03</b><span>الحركة</span><small>دخول أو خروج، والمبلغ مطلوب للاثنين</small></div><div><b>04</b><span>العهدة</span><small>الحركة تقيد على عهدة المتحصل ثم تسلّم للصندوق</small></div></div>
+  <div class="section-title"><h3>تقرير اليوم</h3><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.gate')}}">تفصيل</a></div>
+  <div class="daily-mini"><div><span>التحصيل</span><strong>{{'{:,.2f}'.format(daily_total or 0)}}</strong></div><div><span>العمليات</span><strong>{{daily_count}}</strong></div></div>
+  <div class="flow mt-3"><div><b>01</b><span>البحث</span><small>عميل أو هاتف أو لوحة</small></div><div><b>02</b><span>اختيار</span><small>تظهر النتائج فورًا</small></div><div><b>03</b><span>الحركة</span><small>دخول أو خروج مع مبلغ</small></div><div><b>04</b><span>العهدة</span><small>التسليم يتم للمراجعة والاعتماد</small></div></div>
 </div>
 </div>
 
 <div class="card-soft mt-3"><div class="section-title"><div><h3>آخر حركاتي اليوم</h3><small class="text-muted">{{recent|length}} حركة</small></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.collectors')}}">تقارير المتحصلين</a></div><div class="table-wrap"><table class="table"><thead><tr><th>الوقت</th><th>اللوحة</th><th>العميل</th><th>الوكيل</th><th>الحركة</th><th>المبلغ</th></tr></thead><tbody>{% for x in recent %}<tr><td>{{x.transaction_date.strftime('%H:%M')}}</td><td class="fw-bold">{{x.vehicle.plate_number}}</td><td>{{x.client.name if x.client else '—'}}</td><td>{{x.agent.name if x.agent else 'العهدة'}}</td><td><span class="badge-soft">{{'دخول' if x.direction=='entry' else 'خروج'}}</span></td><td>{{'{:,.2f}'.format(x.amount)}} {{currency}}</td></tr>{% else %}<tr><td colspan="6" class="text-center text-muted py-4">لا توجد عمليات اليوم.</td></tr>{% endfor %}</tbody></table></div></div>
+
+<div id="new-client-modal" class="collector-modal" hidden>
+  <div class="collector-modal-backdrop" data-new-client-close></div>
+  <div class="collector-modal-card" role="dialog" aria-modal="true">
+    <div class="collector-modal-head"><div><strong>إضافة عميل جديد</strong><small>سيُضاف بدون وكيل، ويمكن ربطه لاحقًا.</small></div><button type="button" class="menu-close" data-new-client-close><i class="bi bi-x-lg"></i></button></div>
+    <div class="row g-3">
+      <div class="col-12"><label class="form-label">اسم العميل</label><input id="new_client_name" class="form-control form-control-lg"></div>
+      <div class="col-12 col-sm-6"><label class="form-label">الهاتف</label><input id="new_client_phone" class="form-control" inputmode="tel"></div>
+      <div class="col-12 col-sm-6"><label class="form-label">العنوان</label><input id="new_client_address" class="form-control"></div>
+      <div class="col-12"><label class="form-label">ملاحظات</label><textarea id="new_client_notes" class="form-control"></textarea></div>
+      <div class="col-12 d-flex gap-2 justify-content-end"><button type="button" class="btn btn-light" data-new-client-close>إلغاء</button><button type="button" class="btn btn-primary" id="new-client-apply"><i class="bi bi-check2"></i> استخدام العميل</button></div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-const p=document.getElementById('plate_number'),sep=document.getElementById('plate_separator'),hint=document.getElementById('search-hint'),agent=document.getElementById('agent_id'),client=document.getElementById('client_name'),clientId=document.getElementById('client_id'),type=document.getElementById('vehicle_type_id'),clientSug=document.getElementById('client-suggestions'),newPanel=document.getElementById('new-client-panel');
-let timer,clientTimer,vehicleRows=[];
-function applyVehicle(v){p.value=v.plate.split(' / ')[0];if(v.plate.includes(' / '))sep.value=v.plate.split(' / ')[1];if(v.client)client.value=v.client;if(v.client_id)clientId.value=v.client_id;if(v.vehicle_type_id)type.value=v.vehicle_type_id;if(v.suggested_agents?.length)agent.value=v.suggested_agents[0].id;hint.innerHTML='<strong>'+((v.vehicle_type)||'مركبة')+'</strong> — '+(v.client||'بدون عميل')+' — تم اقتراح البيانات.';newPanel.classList.remove('is-visible');}
-p?.addEventListener('input',()=>{clearTimeout(timer);if(p.value.length<2){hint.textContent='اكتب اللوحة أو اسم العميل لعرض المقترحات.';return;}timer=setTimeout(()=>fetch('{{url_for("collector.search")}}?q='+encodeURIComponent(p.value)).then(r=>r.json()).then(rows=>{vehicleRows=rows;if(!rows.length){hint.textContent='لا توجد مركبة سابقة. أكمل البيانات يدويًا.';return;}hint.innerHTML=rows.map((v,i)=>'<button type="button" class="suggestion" data-i="'+i+'">'+v.plate+' — '+(v.client||'بدون عميل')+' — '+(v.vehicle_type||'بدون نوع')+'</button>').join('');document.querySelectorAll('.suggestion').forEach(b=>b.onclick=()=>applyVehicle(rows[Number(b.dataset.i)]));}),250)});
-client?.addEventListener('input',()=>{clearTimeout(clientTimer);clientId.value='';if(client.value.trim().length<1){clientSug.innerHTML='';return;}clientTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(client.value.trim())).then(r=>r.json()).then(rows=>{if(!rows.length){clientSug.innerHTML='<button type="button" class="suggestion" id="add-new-client">+ إضافة العميل: '+client.value+'</button>';newPanel.classList.add('is-visible');document.getElementById('add-new-client')?.addEventListener('click',()=>newPanel.classList.add('is-visible'));return;}clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="suggestion client-choice" data-i="'+i+'">'+x.name+(x.phone?' — '+x.phone:'')+'</button>').join('');document.querySelectorAll('.client-choice').forEach(b=>b.onclick=()=>{const x=rows[Number(b.dataset.i)];client.value=x.name;clientId.value=x.id;document.getElementById('client_phone').value=x.phone||'';document.getElementById('client_address').value=x.address||'';newPanel.classList.remove('is-visible');clientSug.innerHTML='';});}),180)});
-document.querySelectorAll('input[name="direction"]').forEach(x=>x.addEventListener('change',()=>{document.getElementById('submit-btn').innerHTML=x.checked?(x.value==='entry'?'<i class="bi bi-box-arrow-in-down"></i> تسجيل الدخول':'<i class="bi bi-box-arrow-up"></i> تسجيل الخروج والتحصيل'):'تسجيل الحركة'}));
-document.getElementById('collector-form')?.addEventListener('submit',()=>{document.getElementById('submit-btn').disabled=true;});
+const p=document.getElementById('plate_number'),sep=document.getElementById('plate_separator'),agent=document.getElementById('agent_id'),client=document.getElementById('client_name'),clientId=document.getElementById('client_id'),type=document.getElementById('vehicle_type_id'),clientPhone=document.getElementById('client_phone'),clientAddress=document.getElementById('client_address'),clientNotes=document.getElementById('client_notes'),clientSug=document.getElementById('client-suggestions'),modal=document.getElementById('new-client-modal'),submitBtn=document.getElementById('submit-btn');
+let searchTimer;
+
+function esc(value){return String(value??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function openNewClient(){modal.hidden=false;setTimeout(()=>document.getElementById('new_client_name')?.focus(),40);}
+function closeNewClient(){modal.hidden=true;}
+function clearSuggestions(){clientSug.innerHTML='';clientSug.hidden=true;}
+
+function applyResult(x){
+  client.value=x.name||'';
+  clientId.value=x.kind==='client' ? (x.id||'') : '';
+  clientPhone.value=x.phone||'';
+  clientAddress.value=x.address||'';
+  clientNotes.value='';
+  if(x.kind==='vehicle'){
+    p.value=x.plate||'';
+    sep.value=x.vehicle_separator||'';
+    if(x.vehicle_type_id)type.value=x.vehicle_type_id;
+  }
+  clearSuggestions();
+}
+
+function applyNewClient(){
+  const n=document.getElementById('new_client_name').value.trim();
+  if(!n){document.getElementById('new_client_name').focus();return;}
+  client.value=n;clientId.value='';
+  clientPhone.value=document.getElementById('new_client_phone').value.trim();
+  clientAddress.value=document.getElementById('new_client_address').value.trim();
+  clientNotes.value=document.getElementById('new_client_notes').value.trim();
+  clearSuggestions();closeNewClient();
+}
+
+document.querySelectorAll('[data-new-client-open]').forEach(x=>x.addEventListener('click',openNewClient));
+document.querySelectorAll('[data-new-client-close]').forEach(x=>x.addEventListener('click',closeNewClient));
+document.getElementById('new-client-apply')?.addEventListener('click',applyNewClient);
+
+client?.addEventListener('input',()=>{
+  clientId.value='';
+  clearTimeout(searchTimer);
+  const q=client.value.trim();
+  if(!q)return;
+  clientSug.hidden=false;
+  clientSug.innerHTML='<div class="suggestion-loading"><i class="bi bi-arrow-repeat"></i><span>البحث...</span></div>';
+  searchTimer=setTimeout(()=>{
+    fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(q))
+      .then(r=>r.json())
+      .then(rows=>{
+        if(!rows.length){
+          clientSug.innerHTML='<div class="no-client-result"><span>لا توجد مطابقة بالاسم أو الهاتف أو اللوحة.</span><button type="button" class="btn btn-sm btn-outline-primary" data-empty-new-client>+ عميل جديد</button></div>';
+          document.querySelector('[data-empty-new-client]')?.addEventListener('click',openNewClient);
+          return;
+        }
+        clientSug.innerHTML=rows.map((x,i)=>{
+          const title=x.name||'مركبة بدون عميل';
+          const meta=x.kind==='vehicle' ? ('لوحة '+(x.plate||'—')+(x.vehicle_type?' · '+x.vehicle_type:'')) : ((x.phone||'بدون هاتف')+(x.address?' · '+x.address:''));
+          return '<button type="button" class="client-suggestion" data-i="'+i+'"><span class="client-suggestion-icon"><i class="bi '+(x.kind==='vehicle'?'bi-truck-front':'bi-person')+'"></i></span><span><strong>'+esc(title)+'</strong><small>'+esc(meta)+'</small></span><i class="bi bi-chevron-left"></i></button>';
+        }).join('');
+        document.querySelectorAll('.client-suggestion').forEach(b=>b.onclick=()=>applyResult(rows[Number(b.dataset.i)]));
+      })
+      .catch(()=>{clientSug.innerHTML='<div class="no-client-result">تعذر البحث مؤقتًا.</div>';});
+  },60);
+});
+
+document.querySelectorAll('input[name="direction"]').forEach(x=>x.addEventListener('change',()=>{
+  submitBtn.innerHTML=x.checked&&x.value==='exit'
+    ? '<i class="bi bi-box-arrow-up"></i> تسجيل الخروج والتحصيل'
+    : '<i class="bi bi-box-arrow-in-down"></i> تسجيل الدخول';
+}));
+document.getElementById('collector-form')?.addEventListener('submit',()=>{submitBtn.disabled=true;});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeNewClient();});
 </script>
 {% endblock %}
