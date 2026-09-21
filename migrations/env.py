@@ -16,7 +16,7 @@ def run_migrations_offline():
     with context.begin_transaction(): context.run_migrations()
 
 def run_migrations_online():
-    section=config.get_section(config.config_ini_section,{})
+    section=config.get_section(config.config_ini_section,{}) or {}
     section["sqlalchemy.url"]=app.config["SQLALCHEMY_DATABASE_URI"]
     connectable=engine_from_config(section,prefix="sqlalchemy.",poolclass=pool.NullPool)
     with connectable.connect() as connection:
