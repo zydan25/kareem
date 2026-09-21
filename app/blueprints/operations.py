@@ -21,7 +21,7 @@ bp=Blueprint("operations",__name__,url_prefix="/operations")
 @permission_required("vouchers.post")
 def vouchers():
     accounts=Account.query.filter_by(is_group=False,active=True,allow_manual_posting=True).order_by(Account.code).all()
-    rows=Voucher.query.order_by(Voucher.id.desc()).limit(100).all()
+    rows=Voucher.query.order_by(Voucher.id.desc()).limit(200).all()
     if request.method=="POST":
         try:
             from_account=db.session.get(Account,int(request.form["from_account_id"]))
@@ -39,9 +39,18 @@ def vouchers():
             return redirect(url_for("operations.vouchers"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/vouchers.html",accounts=accounts,vouchers=rows,types=[
+    selected_type=request.args.get("type","receipt")
+    return render_template("operations/vouchers.html",accounts=accounts,vouchers=rows,selected_type=selected_type,types=[
         (VoucherType.RECEIPT.value,"سند قبض"),(VoucherType.PAYMENT.value,"سند صرف"),
         (VoucherType.TRANSFER.value,"سند تحويل")])
+
+@bp.get("/vouchers/<int:voucher_id>")
+@permission_required("vouchers.post")
+def voucher_detail(voucher_id):
+    voucher=db.session.get(Voucher,voucher_id)
+    if not voucher: return ("السند غير موجود",404)
+    entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,voucher.journal_entry_id) if voucher.journal_entry_id else None
+    return render_template("operations/voucher_detail.html",voucher=voucher,entry=entry)
 
 @bp.route("/manual-journal",methods=["GET","POST"])
 @permission_required("accounting.post")
@@ -73,7 +82,7 @@ def manual_journal():
 def settlements():
     sources=Account.query.filter_by(is_group=False,active=True).order_by(Account.code).all()
     target=get_system_account("main_cash")
-    rows=Settlement.query.order_by(Settlement.id.desc()).limit(150).all()
+    rows=Settlement.query.order_by(Settlement.id.desc()).limit(200).all()
     shifts=Shift.query.filter_by(status="open").order_by(Shift.opened_at.desc()).all()
     if request.method=="POST":
         try:
