@@ -190,7 +190,7 @@ def shifts():
     return render_template("operations/shifts.html",shifts=own)
 
 @bp.post("/shifts/<int:shift_id>/close")
-@permission_required("collector.settle")
+@permission_required("collector.post")
 def close_shift(shift_id):
     shift=db.session.get(Shift,shift_id)
     try:
