@@ -30,6 +30,7 @@ class User(UserMixin, TimestampMixin, db.Model):
     role = db.Column(db.String(30), nullable=False, default=Role.COLLECTOR.value, index=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
     employee_id = db.Column(db.Integer, db.ForeignKey("employees.id", ondelete="SET NULL"))
+    employee = db.relationship("Employee", foreign_keys=[employee_id], back_populates="user", uselist=False)
 
     def set_password(self, value):
         self.password_hash = generate_password_hash(value)
@@ -261,6 +262,9 @@ class AgentRent(TimestampMixin, db.Model):
     amount = db.Column(db.Numeric(18, 2), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="unpaid")
     journal_entry_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="SET NULL"))
+    payment_journal_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="SET NULL"))
+    agent = db.relationship("Agent", foreign_keys=[agent_id])
+    lease = db.relationship("AgentLease", foreign_keys=[lease_id])
     __table_args__ = (UniqueConstraint("agent_id", "rent_month", name="uq_agent_rent_month"),)
 
 class PayrollRun(TimestampMixin, db.Model):
