@@ -1,0 +1,30 @@
+{# Reusable Arabic account tree picker. Names only; account codes stay internal. #}
+{% macro picker(name, title, account_options, selected_id=None, placeholder='اختر الحساب') %}
+<div class="account-tree-picker" data-account-picker data-name="{{name}}" data-title="{{title}}">
+  <input type="hidden" name="{{name}}" value="{{selected_id or ''}}" required data-account-value>
+  <button type="button" class="account-picker-trigger" data-account-trigger>
+    <span data-account-label>{{placeholder}}</span>
+    <i class="bi bi-chevron-down"></i>
+  </button>
+  <div class="account-picker-panel" hidden data-account-panel>
+    <div class="account-picker-search">
+      <i class="bi bi-search"></i>
+      <input type="search" class="form-control" placeholder="بحث فوري باسم الحساب..." autocomplete="off" data-account-search>
+    </div>
+    <div class="account-picker-tree" data-account-tree>
+      {% for a,depth in account_options %}
+        {% if a.is_group %}
+          <div class="account-picker-group" data-account-label-text="{{a.name|lower}}" style="padding-right:{{depth*18}}px" data-account-group>
+            <i class="bi bi-folder2-open"></i><span>{{a.name}}</span>
+          </div>
+        {% elif a.allow_manual_posting %}
+          <button type="button" class="account-picker-leaf" data-account-id="{{a.id}}" data-account-label-text="{{a.name|lower}}" style="padding-right:{{depth*18}}px" data-account-leaf>
+            <span class="account-picker-branch">↳</span><span>{{a.name}}</span>
+          </button>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="account-picker-empty" hidden data-account-empty>لا توجد حسابات مطابقة.</div>
+  </div>
+</div>
+{% endmacro %}
