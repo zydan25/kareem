@@ -40,7 +40,7 @@
       </div>
     </div>
     <div class="col-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required placeholder="0.00"></div>
-    <div class="col-6 col-lg-3"><label class="form-label">التاريخ</label><input type="date" name="fine_date" class="form-control form-control-lg" value="{{current_date if current_date else ''}}" required></div>
+    <div class="col-6 col-lg-3"><label class="form-label">التاريخ</label><input type="date" name="fine_date" class="form-control form-control-lg" value="{{today.isoformat()}}" required></div>
     <div class="col-12"><label class="form-label">البيان</label><input name="reason" class="form-control" required placeholder="مثال: مخالفة تعليمات العمل"></div>
     <div class="col-12"><button class="btn btn-primary btn-lg" id="fine-submit" disabled><i class="bi bi-check2-circle"></i> تسجيل الغرامة وترحيل القيد</button></div>
   </form>
