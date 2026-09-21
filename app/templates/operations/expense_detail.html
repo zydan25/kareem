@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}{{expense.number}} - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">مصروف</span><h1>{{expense.number}}</h1><p>{{expense.description}} · {{expense.expense_date}}</p></div><button class="btn btn-primary" onclick="window.print()">طباعة</button></div>
+<div class="card-soft print-paper"><div class="document-heading"><div><strong>{{app_name}}</strong><small>مستند مصروف</small></div><div><span>{{expense.number}}</span><b>{{'{:,.2f}'.format(expense.amount)}} {{currency}}</b></div></div>
+<div class="document-fields"><div><span>التاريخ</span><strong>{{expense.expense_date}}</strong></div><div><span>المستفيد</span><strong>{{expense.beneficiary or '—'}}</strong></div><div><span>الحالة</span><strong>{{'مرحل' if expense.status=='posted' else expense.status}}</strong></div></div>
+<div class="statement-box"><span>البيان</span><strong>{{expense.description}}</strong></div><div class="table-wrap mt-3"><table class="table"><thead><tr><th>حساب المصروف</th><th>الحساب النقدي</th><th>القيد</th></tr></thead><tbody><tr><td>{{expense.expense_account.code}} — {{expense.expense_account.name}}</td><td>{{expense.cash_account.code}} — {{expense.cash_account.name}}</td><td>{{entry.number if entry else '—'}}</td></tr></tbody></table></div></div>
+{% endblock %}
