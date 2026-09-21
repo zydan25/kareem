@@ -1,23 +1,17 @@
-from datetime import date, datetime, timezone
+from datetime import datetime, date
 from decimal import Decimal
 from enum import Enum
 
 from flask_login import UserMixin
-from sqlalchemy import CheckConstraint, Index, UniqueConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint, Index
 from sqlalchemy.orm import validates
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from ..extensions import db
 
-
-def utcnow():
-    return datetime.now(timezone.utc)
-
-
 class TimestampMixin:
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
-    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
-
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Role(str, Enum):
     ADMIN = "admin"
@@ -25,7 +19,6 @@ class Role(str, Enum):
     ACCOUNTANT = "accountant"
     COLLECTOR = "collector"
     AUDITOR = "auditor"
-
 
 class User(UserMixin, TimestampMixin, db.Model):
     __tablename__ = "users"
@@ -40,14 +33,11 @@ class User(UserMixin, TimestampMixin, db.Model):
 
     def set_password(self, value):
         self.password_hash = generate_password_hash(value)
-
     def check_password(self, value):
         return check_password_hash(self.password_hash, value)
-
     def has_role(self, *roles):
         values = {r.value if isinstance(r, Role) else r for r in roles}
         return self.role in values
-
 
 class Employee(TimestampMixin, db.Model):
     __tablename__ = "employees"
@@ -60,10 +50,8 @@ class Employee(TimestampMixin, db.Model):
     hire_date = db.Column(db.Date, default=date.today)
     active = db.Column(db.Boolean, nullable=False, default=True)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="SET NULL"), unique=True)
-    payroll_account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="SET NULL"), unique=True)
+    user = db.relationship("User", backref="employee_record", uselist=False, foreign_keys=[User.employee_id])
     account = db.relationship("Account", foreign_keys=[account_id])
-    payroll_account = db.relationship("Account", foreign_keys=[payroll_account_id])
-
 
 class Agent(TimestampMixin, db.Model):
     __tablename__ = "agents"
@@ -75,7 +63,6 @@ class Agent(TimestampMixin, db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="SET NULL"), unique=True)
     account = db.relationship("Account", foreign_keys=[account_id])
-
 
 class Client(TimestampMixin, db.Model):
     __tablename__ = "clients"
@@ -89,7 +76,6 @@ class Client(TimestampMixin, db.Model):
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="SET NULL"), unique=True)
     account = db.relationship("Account", foreign_keys=[account_id])
 
-
 class ClientAgent(TimestampMixin, db.Model):
     __tablename__ = "client_agents"
     id = db.Column(db.Integer, primary_key=True)
@@ -99,14 +85,12 @@ class ClientAgent(TimestampMixin, db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     __table_args__ = (UniqueConstraint("client_id", "agent_id", name="uq_client_agent"),)
 
-
 class VehicleType(TimestampMixin, db.Model):
     __tablename__ = "vehicle_types"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False, unique=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
     is_system = db.Column(db.Boolean, nullable=False, default=False)
-
 
 class Vehicle(TimestampMixin, db.Model):
     __tablename__ = "vehicles"
@@ -116,15 +100,14 @@ class Vehicle(TimestampMixin, db.Model):
     plate_letters = db.Column(db.String(40))
     vehicle_type_id = db.Column(db.Integer, db.ForeignKey("vehicle_types.id", ondelete="RESTRICT"), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey("clients.id", ondelete="SET NULL"))
-    notes = db.Column(db.Text)
-    active = db.Column(db.Boolean, nullable=False, default=True)
     vehicle_type = db.relationship("VehicleType")
     client = db.relationship("Client")
+    notes = db.Column(db.Text)
+    active = db.Column(db.Boolean, nullable=False, default=True)
     __table_args__ = (
         UniqueConstraint("plate_number", "plate_separator", name="uq_vehicle_plate"),
         Index("ix_vehicle_plate_search", "plate_number", "plate_separator"),
     )
-
 
 class VehicleAgent(TimestampMixin, db.Model):
     __tablename__ = "vehicle_agents"
@@ -135,7 +118,6 @@ class VehicleAgent(TimestampMixin, db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     __table_args__ = (UniqueConstraint("vehicle_id", "agent_id", name="uq_vehicle_agent"),)
 
-
 class AccountType(str, Enum):
     ASSET = "asset"
     LIABILITY = "liability"
@@ -143,7 +125,6 @@ class AccountType(str, Enum):
     REVENUE = "revenue"
     EXPENSE = "expense"
     MEMO = "memo"
-
 
 class Account(TimestampMixin, db.Model):
     __tablename__ = "accounts"
@@ -157,9 +138,7 @@ class Account(TimestampMixin, db.Model):
     allow_manual_posting = db.Column(db.Boolean, nullable=False, default=True)
     system_key = db.Column(db.String(80), unique=True)
     parent = db.relationship("Account", remote_side=[id], backref="children")
-    __table_args__ = (
-        CheckConstraint("NOT (is_group = TRUE AND allow_manual_posting = TRUE)", name="ck_group_not_postable"),
-    )
+    __table_args__ = (CheckConstraint("NOT (is_group = TRUE AND allow_manual_posting = TRUE)", name="ck_group_not_postable"),)
 
     @validates("account_type")
     def validate_type(self, key, value):
@@ -168,12 +147,10 @@ class Account(TimestampMixin, db.Model):
             raise ValueError(f"نوع حساب غير صالح: {value}")
         return value
 
-
 class EntryStatus(str, Enum):
     DRAFT = "draft"
     POSTED = "posted"
     VOID = "void"
-
 
 class JournalEntry(TimestampMixin, db.Model):
     __tablename__ = "journal_entries"
@@ -188,13 +165,12 @@ class JournalEntry(TimestampMixin, db.Model):
     posted_at = db.Column(db.DateTime(timezone=True))
     reversed_entry_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="SET NULL"))
     lines = db.relationship("JournalLine", back_populates="entry", cascade="all, delete-orphan", order_by="JournalLine.id")
-    __table_args__ = (CheckConstraint("status IN ('posted','draft','void')", name="ck_journal_status"),)
+    __table_args__ = (CheckConstraint("status IN ('draft','posted','void')", name="ck_journal_status"),)
 
     def totals(self):
         debit = sum((line.debit or Decimal("0") for line in self.lines), Decimal("0"))
         credit = sum((line.credit or Decimal("0") for line in self.lines), Decimal("0"))
         return debit, credit
-
 
 class JournalLine(db.Model):
     __tablename__ = "journal_lines"
@@ -212,18 +188,11 @@ class JournalLine(db.Model):
         CheckConstraint("(debit = 0) <> (credit = 0)", name="ck_line_one_side"),
     )
 
-
 class VoucherType(str, Enum):
     RECEIPT = "receipt"
     PAYMENT = "payment"
     TRANSFER = "transfer"
     ADJUSTMENT = "adjustment"
-
-
-class VoucherStatus(str, Enum):
-    POSTED = "posted"
-    VOID = "void"
-
 
 class Voucher(TimestampMixin, db.Model):
     __tablename__ = "vouchers"
@@ -235,31 +204,27 @@ class Voucher(TimestampMixin, db.Model):
     from_account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="RESTRICT"))
     to_account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="RESTRICT"))
     beneficiary = db.Column(db.String(180))
-    description = db.Column(db.String(500), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default=VoucherStatus.POSTED.value)
+    description = db.Column(db.String(500))
     journal_entry_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="RESTRICT"))
     created_by_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
-
 
 class Shift(TimestampMixin, db.Model):
     __tablename__ = "shifts"
     id = db.Column(db.Integer, primary_key=True)
     collector_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
     shift_name = db.Column(db.String(50), nullable=False, default="وردية")
-    opened_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    opened_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     closed_at = db.Column(db.DateTime(timezone=True))
     opening_balance = db.Column(db.Numeric(18, 2), nullable=False, default=0)
     closing_balance = db.Column(db.Numeric(18, 2))
     settlement_journal_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="SET NULL"))
     status = db.Column(db.String(20), nullable=False, default="open")
-    __table_args__ = (CheckConstraint("status IN ('open','pending','closed')", name="ck_shift_status"),)
-
 
 class GateTransaction(TimestampMixin, db.Model):
     __tablename__ = "gate_transactions"
     id = db.Column(db.Integer, primary_key=True)
     receipt_number = db.Column(db.String(50), nullable=False, unique=True, index=True)
-    transaction_date = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, index=True)
+    transaction_date = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
     direction = db.Column(db.String(10), nullable=False, default="entry")
     vehicle_id = db.Column(db.Integer, db.ForeignKey("vehicles.id", ondelete="RESTRICT"), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey("clients.id", ondelete="SET NULL"))
@@ -271,42 +236,10 @@ class GateTransaction(TimestampMixin, db.Model):
     notes = db.Column(db.String(500))
     journal_entry_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="RESTRICT"))
     counted_for_work = db.Column(db.Boolean, nullable=False, default=True)
-    vehicle = db.relationship("Vehicle")
-    client = db.relationship("Client")
-    agent = db.relationship("Agent")
-    collector = db.relationship("User", foreign_keys=[collector_id])
-    shift = db.relationship("Shift")
     __table_args__ = (
         CheckConstraint("amount >= 0", name="ck_gate_amount_nonnegative"),
-        CheckConstraint("direction IN ('entry','exit')", name="ck_gate_direction"),
         Index("ix_gate_collector_date", "collector_id", "transaction_date"),
     )
-
-
-class SettlementStatus(str, Enum):
-    PENDING = "pending"
-    POSTED = "posted"
-    REJECTED = "rejected"
-
-
-class Settlement(TimestampMixin, db.Model):
-    __tablename__ = "settlements"
-    id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.String(50), nullable=False, unique=True, index=True)
-    settlement_date = db.Column(db.Date, nullable=False, default=date.today)
-    source_account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="RESTRICT"), nullable=False)
-    target_account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="RESTRICT"), nullable=False)
-    amount = db.Column(db.Numeric(18, 2), nullable=False)
-    description = db.Column(db.String(500), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default=SettlementStatus.PENDING.value)
-    requested_by_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
-    approved_by_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"))
-    approved_at = db.Column(db.DateTime(timezone=True))
-    journal_entry_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="RESTRICT"))
-    shift_id = db.Column(db.Integer, db.ForeignKey("shifts.id", ondelete="SET NULL"))
-    source_account = db.relationship("Account", foreign_keys=[source_account_id])
-    target_account = db.relationship("Account", foreign_keys=[target_account_id])
-
 
 class AgentLease(TimestampMixin, db.Model):
     __tablename__ = "agent_leases"
@@ -319,7 +252,6 @@ class AgentLease(TimestampMixin, db.Model):
     due_day = db.Column(db.Integer, nullable=False, default=1)
     active = db.Column(db.Boolean, nullable=False, default=True)
 
-
 class AgentRent(TimestampMixin, db.Model):
     __tablename__ = "agent_rents"
     id = db.Column(db.Integer, primary_key=True)
@@ -331,14 +263,12 @@ class AgentRent(TimestampMixin, db.Model):
     journal_entry_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="SET NULL"))
     __table_args__ = (UniqueConstraint("agent_id", "rent_month", name="uq_agent_rent_month"),)
 
-
 class PayrollRun(TimestampMixin, db.Model):
     __tablename__ = "payroll_runs"
     id = db.Column(db.Integer, primary_key=True)
     payroll_month = db.Column(db.Date, nullable=False, unique=True)
     status = db.Column(db.String(20), nullable=False, default="draft")
     journal_entry_id = db.Column(db.Integer, db.ForeignKey("journal_entries.id", ondelete="SET NULL"))
-
 
 class PayrollLine(db.Model):
     __tablename__ = "payroll_lines"
@@ -348,37 +278,6 @@ class PayrollLine(db.Model):
     gross_amount = db.Column(db.Numeric(18, 2), nullable=False)
     deductions = db.Column(db.Numeric(18, 2), nullable=False, default=0)
     net_amount = db.Column(db.Numeric(18, 2), nullable=False)
-
-
-class Permission(TimestampMixin, db.Model):
-    __tablename__ = "permissions"
-    id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(120), nullable=False, unique=True, index=True)
-    name = db.Column(db.String(180), nullable=False)
-    group_name = db.Column(db.String(80), nullable=False, default="عام")
-    active = db.Column(db.Boolean, nullable=False, default=True)
-
-
-class UserPermission(db.Model):
-    __tablename__ = "user_permissions"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    permission_id = db.Column(db.Integer, db.ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False)
-    granted = db.Column(db.Boolean, nullable=False, default=True)
-    __table_args__ = (UniqueConstraint("user_id", "permission_id", name="uq_user_permission"),)
-
-
-class AuditLog(TimestampMixin, db.Model):
-    __tablename__ = "audit_logs"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"))
-    action = db.Column(db.String(80), nullable=False)
-    entity_type = db.Column(db.String(80), nullable=False)
-    entity_id = db.Column(db.Integer)
-    details = db.Column(db.Text)
-    ip_address = db.Column(db.String(64))
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, index=True)
-
 
 class Setting(TimestampMixin, db.Model):
     __tablename__ = "settings"
