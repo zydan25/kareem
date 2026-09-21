@@ -1,1 +1,14 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head print-hide"><div><span class="eyebrow">قيد محاسبي</span><h1>{{entry.number}}</h1><p>{{entry.description}} — {{entry.entry_date}}</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div><div class="card-soft table-wrap"><table class="table"><thead><tr><th>الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead><tbody>{% for l in entry.lines %}<tr><td>{{l.account.code}} — {{l.account.name}}</td><td>{{l.description}}</td><td>{{'{:,.2f}'.format(l.debit)}}</td><td>{{'{:,.2f}'.format(l.credit)}}</td></tr>{% endfor %}</tbody></table></div>{% if entry.status=='posted' and not entry.reversed_entry_id %}<form method="post" action="{{url_for('accounting.reverse',entry_id=entry.id)}}" class="card-soft mt-3 print-hide"><label class="form-label">سبب التصحيح</label><input name="reason" class="form-control mb-2" required><button class="btn btn-outline-danger">إنشاء قيد عكسي</button></form>{% endif %}{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{entry.number}} - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">قيد محاسبي</span><h1>{{entry.number}}</h1><p>{{entry.description}} — {{entry.entry_date}} — {{'مرحّل' if entry.status=='posted' else 'ملغى'}}</p></div><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button></div>
+<div class="card-soft print-paper">
+  <div class="document-heading"><strong>{{app_name}}</strong><span>قيد يومية</span><b>{{entry.number}}</b></div>
+  <div class="table-wrap"><table class="table align-middle"><thead><tr><th>#</th><th>الحساب</th><th>البيان</th><th>مرجع</th><th>مدين</th><th>دائن</th></tr></thead><tbody>
+  {% for l in entry.lines %}<tr><td>{{loop.index}}</td><td class="fw-bold">{{l.account.code}} — {{l.account.name}}</td><td>{{l.description or ''}}</td><td>{{l.reference or '—'}}</td><td>{{'{:,.2f}'.format(l.debit)}}</td><td>{{'{:,.2f}'.format(l.credit)}}</td></tr>{% endfor %}
+  </tbody><tfoot><tr class="fw-bold"><td colspan="4" class="text-start">الإجمالي</td><td>{{'{:,.2f}'.format(entry.totals()[0])}}</td><td>{{'{:,.2f}'.format(entry.totals()[1])}}</td></tr></tfoot></table></div>
+</div>
+{% if can_reverse and entry.status=='posted' and not entry.reversed_entry_id %}
+<form method="post" action="{{url_for('accounting.reverse',entry_id=entry.id)}}" class="card-soft mt-3 print-hide"><label class="form-label">سبب التصحيح</label><input name="reason" class="form-control mb-2" required><button class="btn btn-outline-danger">إنشاء قيد عكسي</button></form>
+{% elif entry.reversed_entry_id %}<div class="alert alert-warning mt-3 print-hide">تم إنشاء قيد عكسي لهذا القيد.</div>{% endif %}
+{% endblock %}
