@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, func, or_
 
 from ..extensions import db
 from ..models import Agent, Client, ClientAgent, GateTransaction, Shift, Vehicle, VehicleAgent, VehicleType
@@ -173,26 +173,50 @@ def search_clients():
         return jsonify([])
 
     compact=q.replace(" ","").replace("-","").replace("/","")
+    phone_compact=q.replace(" ","").replace("-","").replace("(","").replace(")","")
     results=[]
 
     client_rows=(Client.query
         .filter(Client.active.is_(True),
-            or_(Client.name.ilike(f"%{q}%"),Client.phone.ilike(f"%{q}%")))
+            or_(
+                Client.name.ilike(f"%{q}%"),
+                Client.phone.ilike(f"%{q}%"),
+                func.replace(func.replace(func.replace(Client.phone," ",""),"-",""),"+","").ilike(f"%{phone_compact}%"),
+            ))
         .order_by(Client.name)
         .limit(10).all())
 
     for client in client_rows:
+        vehicles=(Vehicle.query
+            .filter(Vehicle.client_id==client.id,Vehicle.active.is_(True))
+            .order_by(Vehicle.id).all())
         results.append({
-            "kind":"client","id":client.id,"name":client.name,
-            "phone":client.phone,"address":client.address,
-            "plate":None,"vehicle_id":None,
+            "kind":"client",
+            "id":client.id,
+            "name":client.name,
+            "phone":client.phone,
+            "address":client.address,
+            "vehicles":[{
+                "id":v.id,
+                "plate":v.plate_number,
+                "separator":v.plate_separator,
+                "registration_status":v.registration_status,
+                "vehicle_type_id":v.vehicle_type_id,
+                "vehicle_type":v.vehicle_type.name if v.vehicle_type else None,
+                "notes":v.notes,
+            } for v in vehicles],
         })
 
+    # A plate may be typed without spaces/slashes/dashes; compare against a
+    # compacted database value as well.
     vehicle_rows=(Vehicle.query
         .filter(Vehicle.active.is_(True),
-            or_(Vehicle.plate_number.ilike(f"%{compact}%"),
-                Vehicle.plate_letters.ilike(f"%{compact}%"),
-                Vehicle.plate_separator.ilike(f"%{q}%")))
+            or_(
+                Vehicle.plate_number.ilike(f"%{q}%"),
+                Vehicle.plate_separator.ilike(f"%{q}%"),
+                Vehicle.plate_letters.ilike(f"%{q}%"),
+                func.replace(func.replace(func.replace(Vehicle.plate_number," ",""),"-",""),"/","").ilike(f"%{compact}%"),
+            ))
         .order_by(Vehicle.updated_at.desc()).limit(10).all())
 
     for vehicle in vehicle_rows:
@@ -208,12 +232,15 @@ def search_clients():
             "vehicle_type_id":vehicle.vehicle_type_id,
             "vehicle_type":vehicle.vehicle_type.name if vehicle.vehicle_type else None,
             "vehicle_separator":vehicle.plate_separator,
+            "registration_status":vehicle.registration_status,
         })
 
     vehicle_client_ids={x["id"] for x in results if x["kind"]=="vehicle" and x.get("id")}
     final=[]
     for item in results:
         if item["kind"]=="client" and item["id"] in vehicle_client_ids:
+            # Keep the vehicle-search result more specific, but retain the
+            # customer's vehicle list when the UI explicitly searched a plate.
             continue
         final.append(item)
     return jsonify(final[:15])
