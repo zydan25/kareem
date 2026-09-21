@@ -7,7 +7,7 @@ from ..models import (
     Settlement, SettlementStatus, Shift, Voucher, VoucherType,
 )
 from ..permissions import can, permission_required
-from ..services.accounting import D, get_system_account, create_posted_entry
+from ..services.accounting import D, account_balance, get_system_account, create_posted_entry
 from ..services.accounts import ensure_agent_account, ensure_employee_payroll_account, ensure_user_collector_account
 from ..services.audit import audit
 from ..services.operations import (
@@ -80,7 +80,8 @@ def manual_journal():
 @bp.route("/settlements",methods=["GET","POST"])
 @permission_required("collector.settle")
 def settlements():
-    sources=Account.query.filter_by(is_group=False,active=True).order_by(Account.code).all()
+    sources=Account.query.filter_by(account_type="asset",is_group=False,active=True,allow_manual_posting=True).order_by(Account.code).all()
+    source_balances=[(a,account_balance(a.id)) for a in sources]
     target=get_system_account("main_cash")
     rows=Settlement.query.order_by(Settlement.id.desc()).limit(200).all()
     shifts=Shift.query.filter_by(status="open").order_by(Shift.opened_at.desc()).all()
@@ -97,7 +98,7 @@ def settlements():
             db.session.commit(); flash(f"تم إنشاء طلب الإخلاء {settlement.number}","success")
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/settlements.html",sources=sources,target=target,rows=rows,shifts=shifts)
+    return render_template("operations/settlements.html",sources=sources,source_balances=source_balances,target=target,rows=rows,shifts=shifts)
 
 @bp.post("/settlements/<int:settlement_id>/approve")
 @permission_required("collector.approve_settlement")
