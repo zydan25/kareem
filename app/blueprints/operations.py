@@ -66,7 +66,7 @@ def manual_journal():
             return redirect(url_for("accounting.journal"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/manual_journal.html",accounts=accounts,rows=range(1,9))
+    return render_template("operations/manual_journal.html",accounts=accounts,rows=range(1,9),today=date.today())
 
 @bp.route("/settlements",methods=["GET","POST"])
 @permission_required("collector.settle")
@@ -210,11 +210,24 @@ def payroll_post(run_id):
         db.session.rollback(); flash(str(exc),"danger")
     return redirect(url_for("operations.payroll"))
 
-@bp.get("/payroll/<int:run_id>")
+@bp.route("/payroll/<int:run_id>",methods=["GET","POST"])
 @permission_required("payroll.view")
 def payroll_detail(run_id):
     run=db.session.get(PayrollRun,run_id)
-    lines=PayrollLine.query.filter_by(payroll_run_id=run.id).all()
+    lines=PayrollLine.query.filter_by(payroll_run_id=run.id).order_by(PayrollLine.id).all()
+    if request.method=="POST":
+        try:
+            if run.status!="draft": raise ValueError("لا يمكن تعديل مسير مرحل")
+            for line in lines:
+                gross=D(request.form.get(f"gross_{line.id}",line.gross_amount))
+                deductions=D(request.form.get(f"deductions_{line.id}",line.deductions))
+                if gross<0 or deductions<0 or deductions>gross: raise ValueError("بيانات الراتب غير صالحة")
+                line.gross_amount=gross; line.deductions=deductions; line.net_amount=gross-deductions
+            audit("update_payroll_lines","payroll_run",run.id,run.payroll_month.isoformat())
+            db.session.commit(); flash("تم تحديث بنود المسير","success")
+            return redirect(url_for("operations.payroll_detail",run_id=run.id))
+        except Exception as exc:
+            db.session.rollback(); flash(str(exc),"danger")
     return render_template("operations/payroll_detail.html",run=run,lines=lines)
 
 @bp.post("/payroll/employee/<int:employee_id>/pay")
