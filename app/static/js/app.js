@@ -1,1 +1,4 @@
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/static/sw.js').catch(()=>{}));}
+function openAppMenu(){document.getElementById("app-menu")?.classList.add("open");document.getElementById("app-menu-backdrop")?.classList.add("open");document.body.classList.add("menu-open")}
+function closeAppMenu(){document.getElementById("app-menu")?.classList.remove("open");document.getElementById("app-menu-backdrop")?.classList.remove("open");document.body.classList.remove("menu-open")}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAppMenu()})
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/static/sw.js").catch(()=>{}))}
