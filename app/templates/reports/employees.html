@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}تقرير الموظفين - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">الموارد البشرية</span><h1>تقرير الموظفين</h1><p>الحركة والورديات والعهد خلال {{start}} إلى {{end}}.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="card-soft print-hide mb-4"><form class="row g-2"><div class="col-6 col-md-4"><input type="date" name="start" value="{{start}}" class="form-control"></div><div class="col-6 col-md-4"><input type="date" name="end" value="{{end}}" class="form-control"></div><div class="col-12 col-md-4"><button class="btn btn-primary w-100">عرض التقرير</button></div></form></div>
+<div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>الموظف</th><th>الوظيفة</th><th>حركات</th><th>التحصيل</th><th>الورديات</th><th>العهدة</th><th>تفاصيل</th></tr></thead><tbody>{% for r in rows %}<tr><td class="fw-bold">{{r.employee.full_name}}</td><td>{{r.employee.job_title}}</td><td>{{r.gate_count}}</td><td>{{'{:,.2f}'.format(r.total)}} {{currency}}</td><td>{{r.shifts}}</td><td>{{'{:,.2f}'.format(r.custody)}} {{currency}}</td><td><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=r.employee.id,start=start,end=end)}}">تقرير الموظف</a></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
