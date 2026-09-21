@@ -1,7 +1,7 @@
-const CACHE='wholesale-market-v6';
+const CACHE='wholesale-market-v7';
 const STATIC_ASSETS=[
   '/login',
-  '/static/css/app.css?v=20260921-7',
+  '/static/css/app.css?v=20260921-8',
   '/static/js/app.js?v=20260921-6',
   '/static/icons/icon.svg',
   '/static/manifest.webmanifest'
