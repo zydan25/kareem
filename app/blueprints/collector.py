@@ -7,7 +7,7 @@ from sqlalchemy import desc, func, or_
 from ..extensions import db
 from ..models import Agent, Client, ClientAgent, GateTransaction, Shift, Vehicle, VehicleAgent, VehicleType
 from ..permissions import permission_required
-from ..services.accounting import D, create_posted_entry, get_system_account
+from ..services.accounting import D, account_balance, create_posted_entry, get_system_account
 from ..services.accounts import ensure_client_account, ensure_user_collector_account
 from ..services.audit import audit
 from ..services.operations import ensure_user_shift
@@ -141,14 +141,20 @@ def index():
     day_rows=(GateTransaction.query.filter(GateTransaction.collector_id==current_user.id,
         GateTransaction.transaction_date>=local_start,GateTransaction.transaction_date<local_end)
         .order_by(GateTransaction.transaction_date.desc()).all())
-    daily_total=sum((D(x.amount) for x in day_rows if x.counted_for_work),D(0))
-    daily_count=len([x for x in day_rows if x.counted_for_work])
+    counted_rows=[x for x in day_rows if x.counted_for_work]
+    daily_total=sum((D(x.amount) for x in counted_rows),D(0))
+    daily_count=len(counted_rows)
+    daily_entries=len([x for x in counted_rows if x.direction=="entry"])
+    daily_exits=len([x for x in counted_rows if x.direction=="exit"])
+    employee=current_user.employee
+    custody_balance=account_balance(employee.account_id) if employee and employee.account_id else D(0)
 
     return render_template("collector/index.html",
         vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all(),
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
         recent=day_rows[:20],current_shift=current_shift(),
-        daily_total=daily_total,daily_count=daily_count)
+        daily_total=daily_total,daily_count=daily_count,daily_entries=daily_entries,
+        daily_exits=daily_exits,custody_balance=custody_balance)
 
 @bp.get("/transactions/<int:transaction_id>")
 @permission_required("collector.view")
