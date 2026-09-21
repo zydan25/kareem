@@ -181,7 +181,10 @@ def shifts():
             flash("تم فتح الوردية","success")
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    own=Shift.query.filter_by(collector_id=current_user.id).order_by(Shift.opened_at.desc()).limit(50).all()
+    if can("collector.approve_settlement") or current_user.role in ["admin","manager"]:
+        own=Shift.query.order_by(Shift.opened_at.desc()).limit(100).all()
+    else:
+        own=Shift.query.filter_by(collector_id=current_user.id).order_by(Shift.opened_at.desc()).limit(50).all()
     return render_template("operations/shifts.html",shifts=own)
 
 @bp.post("/shifts/<int:shift_id>/close")
