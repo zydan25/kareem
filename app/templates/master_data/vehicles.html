@@ -7,7 +7,7 @@
 <div class="col-12 col-md-3"><label class="form-label">حالة المركبة</label><select name="registration_status" id="vehicle-registration-status" class="form-select"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div>
 <div class="col-12 col-md-3"><label class="form-label">رقم اللوحة</label><input name="plate_number" id="vehicle-plate-number" class="form-control" placeholder="اتركه فارغًا لبدون جمارك"></div>
 <div class="col-6 col-md-2"><label class="form-label">الفاصل</label><input name="plate_separator" class="form-control"></div>
-<div class="col-6 col-md-2"><label class="form-label">الحروف</label><input name="plate_letters" class="form-control"></div>
+
 <div class="col-12 col-md-2"><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
 <div class="col-12 col-lg-6"><label class="form-label">العميل</label><select name="client_id" class="form-select">{% set sel=selected_client_id %}<option value="">غير مربوط</option>{% for c in clients %}<option value="{{c.id}}" {% if c.id==sel %}selected{% endif %}>{{c.name}}</option>{% endfor %}</select></div>
 <div class="col-12 col-lg-6"><label class="form-label">الوكلاء المحتملون</label><select name="agent_ids" class="form-select" multiple size="3">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
