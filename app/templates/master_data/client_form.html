@@ -3,10 +3,13 @@
 {% block content %}
 <div class="page-head"><div><span class="eyebrow">العملاء</span><h1>تعديل العميل ومركباته</h1><p>{{client.name}} · الكود يُدار تلقائيًا من النظام.</p></div><a href="{{url_for('master_data.client_detail',client_id=client.id)}}" class="btn btn-light">ملف العميل</a></div>
 <div class="card-soft">
-<form method="post" class="row g-3" id="edit-client-form">
+<form method="post" enctype="multipart/form-data" class="row g-3" id="edit-client-form">
   <div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب المالي مرتبط تلقائيًا</span></div></div>
   <div class="col-12 col-md-5"><label class="form-label">اسم العميل</label><input name="name" class="form-control" value="{{client.name}}" required></div>
   <div class="col-12 col-md-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" value="{{client.phone or ''}}" inputmode="tel"></div>
+  <div class="col-12 col-md-3"><label class="form-label">نوع الهوية <small>(اختياري)</small></label><select name="identity_type" class="form-select"><option value="">بدون</option><option {% if client.identity_type=='بطاقة شخصية' %}selected{% endif %}>بطاقة شخصية</option><option {% if client.identity_type=='هوية' %}selected{% endif %}>هوية</option><option {% if client.identity_type=='جواز سفر' %}selected{% endif %}>جواز سفر</option></select></div>
+  <div class="col-12 col-md-3"><label class="form-label">رقم الهوية</label><input name="identity_number" class="form-control" value="{{client.identity_number or ''}}"></div>
+  <div class="col-12"><label class="form-label">صورة الهوية <small>(اختياري)</small></label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div>
   <div class="col-12 col-md-4"><label class="form-label">العنوان</label><input name="address" class="form-control" value="{{client.address or ''}}"></div>
   <div class="col-12"><label class="form-label">الوكلاء المرتبطون</label><select name="agent_ids" class="form-select" multiple size="4">{% for a in agents %}<option value="{{a.id}}" {% if a.id in selected %}selected{% endif %}>{{a.name}}</option>{% endfor %}</select></div>
 
