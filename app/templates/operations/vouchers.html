@@ -1,11 +1,12 @@
+{% from 'components/account_picker.html' import picker %}
 {% extends 'base.html' %}
 {% block title %}السندات المالية - {{app_name}}{% endblock %}
 {% block content %}
 <div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>السندات المالية</h1><p>اختر «من» و«إلى» فقط؛ النظام يحدد نوع السند تلقائيًا ويمنع الحسابات الرئيسية.</p></div><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة القائمة</button></div>
 <div class="card-soft mb-4">
 <form method="post" class="row g-3">
-<div class="col-12 col-lg-5"><label class="form-label">من حساب</label><select name="from_account_id" class="form-select form-select-lg" required>{% for a,depth in account_options %}{% if a.is_group %}<option disabled>📁 {{'—' * depth}} {{a.code}} — {{a.name}}</option>{% elif a.allow_manual_posting %}<option value="{{a.id}}">{{'↳ ' * depth}}{{a.code}} — {{a.name}}</option>{% endif %}{% endfor %}</select></div>
-<div class="col-12 col-lg-5"><label class="form-label">إلى حساب</label><select name="to_account_id" class="form-select form-select-lg" required>{% for a,depth in account_options %}{% if a.is_group %}<option disabled>📁 {{'—' * depth}} {{a.code}} — {{a.name}}</option>{% elif a.allow_manual_posting %}<option value="{{a.id}}">{{'↳ ' * depth}}{{a.code}} — {{a.name}}</option>{% endif %}{% endfor %}</select></div>
+<div class="col-12 col-lg-5">{{picker('from_account_id','من حساب',account_options,accounts|map(attribute='id')|list,None,'اختر الحساب الدائن')}}</div>
+<div class="col-12 col-lg-5">{{picker('to_account_id','إلى حساب',account_options,accounts|map(attribute='id')|list,None,'اختر الحساب المدين')}}</div>
 <div class="col-12 col-md-3"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
 <div class="col-12 col-md-4"><label class="form-label">المستفيد / الطرف</label><input name="beneficiary" class="form-control"></div>
 <div class="col-12 col-md-5"><label class="form-label">البيان</label><input name="description" class="form-control" required></div>
