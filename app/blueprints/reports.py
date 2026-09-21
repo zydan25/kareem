@@ -7,7 +7,7 @@ from flask import Blueprint, Response, render_template, request
 from sqlalchemy import and_, func, or_
 
 from ..extensions import db
-from ..models import Account, Agent, Client, Employee, Expense, GateTransaction, JournalEntry, JournalLine, Shift, User
+from ..models import Account, Agent, Client, Employee, Expense, GateTransaction, JournalEntry, JournalLine, Shift, User, Vehicle
 from ..permissions import permission_required
 from ..services.accounting import account_balance, D
 
@@ -257,6 +257,61 @@ def client_report(client_id):
     ).order_by(GateTransaction.transaction_date.desc()).all()
     return render_template("reports/entity_report.html",title="تقرير العميل",entity=client,entity_type="عميل",
         start=start,end=end,rows=rows,balance=account_balance(client.account_id) if client.account_id else D(0))
+
+@bp.get("/clients")
+@permission_required("reports.view")
+def clients_report():
+    start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
+    rows=[]
+    clients=Client.query.filter_by(active=True).order_by(Client.name).all()
+    for client in clients:
+        gates=GateTransaction.query.filter_by(client_id=client.id).filter(
+            GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt
+        ).all()
+        rows.append({
+            "client":client,
+            "vehicles":Vehicle.query.filter_by(client_id=client.id,active=True).count(),
+            "count":len(gates),
+            "entry_total":sum((D(x.amount) for x in gates if x.direction=="entry"),D(0)),
+            "exit_total":sum((D(x.amount) for x in gates if x.direction=="exit"),D(0)),
+            "total":sum((D(x.amount) for x in gates),D(0)),
+            "balance":account_balance(client.account_id) if client.account_id else D(0),
+        })
+    return render_template("reports/clients.html",rows=rows,start=start,end=end)
+
+@bp.get("/vehicles")
+@permission_required("reports.view")
+def vehicles_report():
+    start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
+    rows=[]
+    vehicles=Vehicle.query.filter_by(active=True).order_by(Vehicle.id.desc()).all()
+    for vehicle in vehicles:
+        gates=GateTransaction.query.filter_by(vehicle_id=vehicle.id).filter(
+            GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt
+        ).order_by(GateTransaction.transaction_date.desc()).all()
+        rows.append({
+            "vehicle":vehicle,
+            "count":len(gates),
+            "entry_count":sum(1 for x in gates if x.direction=="entry"),
+            "exit_count":sum(1 for x in gates if x.direction=="exit"),
+            "entry_total":sum((D(x.amount) for x in gates if x.direction=="entry"),D(0)),
+            "exit_total":sum((D(x.amount) for x in gates if x.direction=="exit"),D(0)),
+            "last":gates[0] if gates else None,
+        })
+    return render_template("reports/vehicles.html",rows=rows,start=start,end=end)
+
+@bp.get("/vehicles/<int:vehicle_id>")
+@permission_required("reports.view")
+def vehicle_report(vehicle_id):
+    vehicle=db.session.get(Vehicle,vehicle_id)
+    if not vehicle: return ("المركبة غير موجودة",404)
+    start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
+    rows=GateTransaction.query.filter_by(vehicle_id=vehicle.id).filter(
+        GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt
+    ).order_by(GateTransaction.transaction_date.desc()).all()
+    return render_template("reports/vehicle_report.html",vehicle=vehicle,start=start,end=end,rows=rows,
+        entry_total=sum((D(x.amount) for x in rows if x.direction=="entry"),D(0)),
+        exit_total=sum((D(x.amount) for x in rows if x.direction=="exit"),D(0)))
 
 @bp.get("/agents/<int:agent_id>")
 @permission_required("reports.view")
