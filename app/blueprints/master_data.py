@@ -2,7 +2,7 @@ from datetime import date, time
 from pathlib import Path
 
 from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, url_for
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 from ..extensions import db
 from ..models import Agent, AgentLease, AgentRent, AuditLog, Client, ClientAgent, Employee, EmployeeSchedule, GateTransaction, PayrollLine, Role, Shift, User, Vehicle, VehicleAgent, VehicleType
@@ -157,10 +157,40 @@ def clients():
             client=Client(code=next_code("CL",Client),name=request.form["name"].strip(),
                 phone=request.form.get("phone"),address=request.form.get("address"),notes=request.form.get("notes"),active=True)
             db.session.add(client); db.session.flush(); ensure_client_account(client)
+
+            # Every newly created customer must have at least one vehicle.
+            plates=request.form.getlist("vehicle_plate_number")
+            statuses=request.form.getlist("vehicle_registration_status")
+            type_ids=request.form.getlist("vehicle_type_id")
+            vehicle_notes=request.form.getlist("vehicle_notes")
+            created=0
+            for i,type_id in enumerate(type_ids):
+                plate=(plates[i] if i<len(plates) else "").strip() or None
+                status=(statuses[i] if i<len(statuses) else "registered").strip() or "registered"
+                note=(vehicle_notes[i] if i<len(vehicle_notes) else "").strip() or None
+                if not type_id:
+                    continue
+                if status=="registered" and not plate:
+                    raise ValueError("المركبة ذات اللوحة الجمركية يجب أن تحتوي على رقم لوحة")
+                vehicle=Vehicle(
+                    plate_number=plate,
+                    plate_separator=None,
+                    plate_letters=None,
+                    registration_status=status,
+                    vehicle_type_id=int(type_id),
+                    client_id=client.id,
+                    notes=note,
+                    active=True,
+                )
+                db.session.add(vehicle); db.session.flush()
+                created+=1
+
+            if created<1:
+                raise ValueError("يجب إضافة مركبة واحدة على الأقل للعميل")
             for aid in {int(x) for x in request.form.getlist("agent_ids")}:
                 db.session.add(ClientAgent(client_id=client.id,agent_id=aid,priority=1))
-            audit("create","client",client.id,client.name); db.session.commit(); flash("تم إضافة العميل وحسابه","success")
-            return redirect(url_for("master_data.clients"))
+            audit("create","client",client.id,client.name); db.session.commit(); flash(f"تم إضافة العميل وحسابه وتسجيل {created} مركبة","success")
+            return redirect(url_for("master_data.client_detail",client_id=client.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     return render_template("master_data/clients.html",clients=rows,agents=agents,can_manage=can("clients.manage"),q=q)
@@ -194,11 +224,42 @@ def edit_client(client_id):
             current={x.agent_id:x for x in links}; target={int(x) for x in request.form.getlist("agent_ids")}
             for aid,row in current.items(): row.active=aid in target
             for aid in target-current.keys(): db.session.add(ClientAgent(client_id=client.id,agent_id=aid,priority=1,active=True))
-            audit("update","client",client.id,client.name); db.session.commit(); flash("تم تحديث العميل والوكلاء","success")
+
+            existing_by_id={v.id:v for v in client.vehicles}
+            submitted_ids={int(x) for x in request.form.getlist("vehicle_id") if x.isdigit()}
+            submitted_plates=request.form.getlist("vehicle_plate_number")
+            submitted_statuses=request.form.getlist("vehicle_registration_status")
+            submitted_types=request.form.getlist("vehicle_type_id")
+            submitted_notes=request.form.getlist("vehicle_notes")
+
+            for i,type_id in enumerate(submitted_types):
+                plate=(submitted_plates[i] if i<len(submitted_plates) else "").strip() or None
+                status=(submitted_statuses[i] if i<len(submitted_statuses) else "registered").strip() or "registered"
+                note=(submitted_notes[i] if i<len(submitted_notes) else "").strip() or None
+                vid=request.form.getlist("vehicle_id")[i] if i<len(request.form.getlist("vehicle_id")) else ""
+                if not type_id:
+                    continue
+                if status=="registered" and not plate:
+                    raise ValueError("المركبة ذات اللوحة الجمركية يجب أن تحتوي على رقم لوحة")
+                if vid.isdigit() and int(vid) in existing_by_id:
+                    vehicle=existing_by_id[int(vid)]
+                    if int(vehicle.client_id or 0)!=client.id:
+                        raise ValueError("مركبة غير مرتبطة بالعميل")
+                    vehicle.plate_number=plate
+                    vehicle.registration_status=status
+                    vehicle.vehicle_type_id=int(type_id)
+                    vehicle.notes=note
+                else:
+                    vehicle=Vehicle(plate_number=plate,registration_status=status,vehicle_type_id=int(type_id),
+                        client_id=client.id,notes=note,active=True)
+                    db.session.add(vehicle)
+
+            audit("update","client",client.id,client.name); db.session.commit(); flash("تم تحديث العميل والمركبات والوكلاء","success")
             return redirect(url_for("master_data.client_detail",client_id=client.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/client_form.html",client=client,agents=agents,selected=selected)
+    vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
+    return render_template("master_data/client_form.html",client=client,agents=agents,selected=selected,vehicle_types=vehicle_types)
 
 @bp.post("/clients/<int:client_id>/delete")
 @permission_required("clients.manage")
@@ -230,12 +291,17 @@ def vehicles():
     if request.method=="POST":
         if not can("vehicles.manage"): return ("Forbidden",403)
         try:
-            v=Vehicle(plate_number=request.form["plate_number"].strip(),plate_separator=request.form.get("plate_separator") or None,
-                plate_letters=request.form.get("plate_letters") or None,vehicle_type_id=int(request.form["vehicle_type_id"]),
+            plate=request.form.get("plate_number","").strip() or None
+            status=request.form.get("registration_status","registered").strip() or "registered"
+            if status=="registered" and not plate:
+                raise ValueError("أدخل رقم اللوحة أو اختر «بدون جمارك»")
+            v=Vehicle(plate_number=plate,plate_separator=request.form.get("plate_separator") or None,
+                plate_letters=request.form.get("plate_letters") or None,registration_status=status,
+                vehicle_type_id=int(request.form["vehicle_type_id"]),
                 client_id=int(request.form["client_id"]) if request.form.get("client_id") else None,notes=request.form.get("notes"))
             db.session.add(v); db.session.flush()
             for aid in {int(x) for x in request.form.getlist("agent_ids")}: db.session.add(VehicleAgent(vehicle_id=v.id,agent_id=aid,active=True))
-            audit("create","vehicle",v.id,v.plate_number); db.session.commit(); flash("تم إضافة المركبة","success")
+            audit("create","vehicle",v.id,v.plate_number or "بدون جمارك"); db.session.commit(); flash("تم إضافة المركبة","success")
             return redirect(url_for("master_data.vehicles"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
@@ -261,13 +327,18 @@ def edit_vehicle(vehicle_id):
     links=VehicleAgent.query.filter_by(vehicle_id=v.id).all(); selected={x.agent_id for x in links}
     if request.method=="POST":
         try:
-            v.plate_number=request.form["plate_number"].strip(); v.plate_separator=request.form.get("plate_separator") or None
-            v.plate_letters=request.form.get("plate_letters") or None; v.vehicle_type_id=int(request.form["vehicle_type_id"])
+            plate=request.form.get("plate_number","").strip() or None
+            status=request.form.get("registration_status","registered").strip() or "registered"
+            if status=="registered" and not plate:
+                raise ValueError("أدخل رقم اللوحة أو اختر «بدون جمارك»")
+            v.plate_number=plate; v.plate_separator=request.form.get("plate_separator") or None
+            v.plate_letters=request.form.get("plate_letters") or None; v.registration_status=status
+            v.vehicle_type_id=int(request.form["vehicle_type_id"])
             v.client_id=int(request.form["client_id"]) if request.form.get("client_id") else None; v.notes=request.form.get("notes")
             current={x.agent_id:x for x in links}; target={int(x) for x in request.form.getlist("agent_ids")}
             for aid,row in current.items(): row.active=aid in target
             for aid in target-current.keys(): db.session.add(VehicleAgent(vehicle_id=v.id,agent_id=aid,active=True))
-            audit("update","vehicle",v.id,v.plate_number); db.session.commit(); flash("تم تحديث المركبة","success")
+            audit("update","vehicle",v.id,v.plate_number or "بدون جمارك"); db.session.commit(); flash("تم تحديث المركبة","success")
             return redirect(url_for("master_data.vehicle_detail",vehicle_id=v.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
