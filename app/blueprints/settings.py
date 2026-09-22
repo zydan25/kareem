@@ -117,7 +117,9 @@ def manifest():
     name=_setting("organization_name",current_app.config["PWA_NAME"])
     description=_setting("project_name","إدارة السوق والمحاسبة")
     color=_setting("brand_color","#0b6e4f")
-    icon=url_for("settings.brand_asset",kind="icon",_external=True)
+    icon_url=url_for("settings.brand_asset",kind="icon",_external=True)
+    icon_filename=_setting("brand_icon","")
+    icon_type="image/png" if icon_filename else "image/svg+xml"
     return jsonify({
         "name":name,
         "short_name":(name[:18] or current_app.config["PWA_SHORT_NAME"]),
@@ -128,7 +130,7 @@ def manifest():
         "theme_color":color,
         "dir":"rtl",
         "lang":"ar",
-        "icons":[{"src":icon,"sizes":"any","type":"image/png","purpose":"any maskable"}]
+        "icons":[{"src":icon_url,"sizes":"any","type":icon_type,"purpose":"any maskable"}]
     })
 
 @bp.post("/vehicle-types/<int:type_id>/toggle")
