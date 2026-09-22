@@ -10,6 +10,7 @@ from ..services.audit import audit
 
 bp=Blueprint("settings",__name__,url_prefix="/settings")
 ALLOWED_IMAGE_EXTENSIONS={"png","jpg","jpeg","webp"}
+BUILTIN_ICON="__builtin__:souq-aljumla.svg"
 
 def _setting(key, default=""):
     row=Setting.query.filter_by(key=key).first()
@@ -126,6 +127,10 @@ def brand_asset(kind):
     filename=_setting("brand_"+kind,"")
     if not filename:
         return redirect(url_for("static",filename="icons/icon.svg"))
+    if kind=="icon" and filename==BUILTIN_ICON:
+        response=send_file(Path(current_app.static_folder)/"icons"/"souq-aljumla.svg",mimetype="image/svg+xml",max_age=3600)
+        response.headers["Cache-Control"]="public, max-age=3600, immutable"
+        return response
     path=Path(current_app.config["UPLOAD_FOLDER"])/"site_brand"/filename
     if not path.exists():
         return redirect(url_for("static",filename="icons/icon.svg"))
@@ -140,7 +145,7 @@ def manifest():
     color=_setting("brand_color","#0b6e4f")
     icon_url=url_for("settings.brand_asset",kind="icon",_external=True)
     icon_filename=_setting("brand_icon","")
-    icon_type="image/png" if icon_filename else "image/svg+xml"
+    icon_type="image/svg+xml" if not icon_filename or icon_filename==BUILTIN_ICON else "image/png"
     return jsonify({
         "name":name,
         "short_name":(name[:18] or current_app.config["PWA_SHORT_NAME"]),
@@ -154,11 +159,28 @@ def manifest():
         "icons":[{"src":icon_url,"sizes":"any","type":icon_type,"purpose":"any maskable"}]
     })
 
+@bp.post("/brand/icon/use-default")
+@permission_required("settings.manage")
+def use_default_brand_icon():
+    old=_setting("brand_icon","")
+    if old and not old.startswith("__builtin__:"):
+        path=Path(current_app.config["UPLOAD_FOLDER"])/"site_brand"/old
+        if path.exists():
+            try:
+                path.unlink()
+            except OSError:
+                pass
+    _save_setting("brand_icon",BUILTIN_ICON,"string","الأيقونة المقترحة")
+    _save_setting("brand_version",str(int(time.time())),"string","نسخة الهوية")
+    db.session.commit()
+    flash("تم اعتماد أيقونة «سوق الجملة»","success")
+    return redirect(url_for("settings.index"))
+
 @bp.post("/brand/icon/reset")
 @permission_required("settings.manage")
 def reset_brand_icon():
     old=_setting("brand_icon","")
-    if old:
+    if old and old!=BUILTIN_ICON:
         path=Path(current_app.config["UPLOAD_FOLDER"])/"site_brand"/old
         if path.exists():
             try:
