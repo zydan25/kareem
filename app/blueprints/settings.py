@@ -90,6 +90,7 @@ def index():
             _save_setting("brand_color",brand_color,"string","اللون الرئيسي")
             _save_setting("ui_theme",request.form.get("setting_ui_theme","light"),"string","المظهر")
             _save_setting("customer_portal",request.form.get("setting_customer_portal","0"),"boolean","إتاحة لوحة العميل")
+            _save_setting("brand_icon_enabled","1" if request.form.get("setting_brand_icon_enabled")=="1" else "0","boolean","تفعيل أيقونة التطبيق")
             _save_brand_image(request.files.get("brand_logo"),"brand_logo")
             _save_brand_image(request.files.get("brand_icon"),"brand_icon")
             _save_setting("brand_version",str(int(time.time())),"string","نسخة الهوية")
@@ -143,7 +144,9 @@ def manifest():
     name=_setting("organization_name",current_app.config["PWA_NAME"])
     description=_setting("project_name","إدارة السوق والمحاسبة")
     color=_setting("brand_color","#0b6e4f")
-    icon_url=url_for("settings.brand_asset",kind="icon",_external=True)
+    version=_setting("brand_version","1")
+    icon_enabled=_setting("brand_icon_enabled","1")=="1"
+    icon_url=url_for("settings.brand_asset",kind="icon",_external=True) + f"?v={version}"
     icon_filename=_setting("brand_icon","")
     icon_type="image/svg+xml" if not icon_filename or icon_filename==BUILTIN_ICON else "image/png"
     return jsonify({
@@ -156,7 +159,7 @@ def manifest():
         "theme_color":color,
         "dir":"rtl",
         "lang":"ar",
-        "icons":[{"src":icon_url,"sizes":"any","type":icon_type,"purpose":"any maskable"}]
+        "icons":[] if not icon_enabled else [{"src":icon_url,"sizes":"any","type":icon_type,"purpose":"any maskable"}]
     })
 
 @bp.post("/brand/icon/use-default")
@@ -171,6 +174,7 @@ def use_default_brand_icon():
             except OSError:
                 pass
     _save_setting("brand_icon",BUILTIN_ICON,"string","الأيقونة المقترحة")
+    _save_setting("brand_icon_enabled","1","boolean","تفعيل أيقونة التطبيق")
     _save_setting("brand_version",str(int(time.time())),"string","نسخة الهوية")
     db.session.commit()
     flash("تم اعتماد أيقونة «سوق الجملة»","success")
@@ -188,6 +192,7 @@ def reset_brand_icon():
             except OSError:
                 pass
     _save_setting("brand_icon","")
+    _save_setting("brand_icon_enabled","1","boolean","تفعيل أيقونة التطبيق")
     _save_setting("brand_version",str(int(time.time())),"string","نسخة الهوية")
     db.session.commit()
     flash("تمت استعادة الأيقونة التقليدية للنظام","success")
