@@ -85,7 +85,9 @@
   window.addEventListener("appinstalled",()=>{fab?.setAttribute("hidden","");deferredPrompt=null;});
 
   if("serviceWorker" in navigator){
-    window.addEventListener("load",()=>navigator.serviceWorker.register("/static/sw.js").catch(()=>{}));
+    window.addEventListener("load",()=>{
+      navigator.serviceWorker.register("/static/sw.js?v=20260922-2",{updateViaCache:"none"}).catch(()=>{});
+    });
   }
 
   // Searchable tree-based account selectors.
