@@ -19,7 +19,7 @@
   <div class="topbar-start">
     <button class="menu-toggle" type="button" data-menu-open aria-label="فتح القائمة"><i class="bi bi-list"></i></button>
     <a class="brand" href="{{url_for('dashboard.index')}}">
-      {% if brand_logo %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></span>{% elif brand_icon_enabled and brand_icon %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></span>{% else %}<span class="brand-mark">س</span>{% endif %}
+      {% if brand_icon_enabled and brand_icon %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></span>{% elif brand_logo %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></span>{% else %}<span class="brand-mark">س</span>{% endif %}
       <span class="brand-copy"><strong>{{app_name}}</strong><small>{{project_name}}</small></span>
     </a>
   </div>
