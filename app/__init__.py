@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from config import Config
 from .extensions import db, migrate, login_manager
 from .permissions import can
@@ -49,11 +49,17 @@ def create_app(config_class=Config):
 
     @app.after_request
     def disable_browser_cache(response):
-        # Deployments should be visible immediately; do not retain stale
-        # HTML, CSS, JS, manifests, or uploaded branding in browser caches.
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+        # HTML/API/manifests stay uncached so settings changes appear immediately.
+        # Versioned static/branding assets may be cached safely because their
+        # URLs change when the branding version changes.
+        if request.path.startswith("/settings/brand/"):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            response.headers.pop("Pragma", None)
+            response.headers.pop("Expires", None)
+        else:
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
         return response
 
     @app.context_processor
@@ -71,6 +77,7 @@ def create_app(config_class=Config):
             "brand_color":brand_color,
             "brand_logo":_read_setting("brand_logo",""),
             "brand_icon":_read_setting("brand_icon",""),
+            "brand_icon_enabled":_read_setting("brand_icon_enabled","1") == "1",
             "brand_version":_read_setting("brand_version","1"),
             "can":can,
             "role_labels": ROLE_LABELS,
