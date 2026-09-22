@@ -12,7 +12,7 @@
       <div class="col-12 col-md-6"><label class="form-label">العملة</label><input name="setting_currency_name" class="form-control" value="{{currency_name}}"></div>
       <div class="col-12 col-md-6"><label class="form-label">اللون الرئيسي للموقع</label><div class="brand-color-input"><input type="color" id="brand-color-picker" value="{{brand_color}}" aria-label="اختيار اللون"><input id="brand-color-text" name="setting_brand_color" class="form-control" value="{{brand_color}}" maxlength="7" oninput="syncColorFromText()"></div></div>
       <div class="col-12 col-md-6"><label class="form-label">الشعار الرئيسي</label><input type="file" name="brand_logo" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted">اختياري — PNG/JPG/WEBP</small></div>
-      <div class="col-12 col-md-6"><label class="form-label">أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted">اختياري — تُضغط وتُصغّر تلقائيًا إلى PNG خفيف (حتى 256px) لتسريع التحميل.</small>{% if brand_icon and can_manage %}<div class="mt-2"><button class="btn btn-sm btn-outline-danger" type="submit" formaction="{{url_for('settings.reset_brand_icon')}}" formmethod="post" onclick="return confirm('استعادة الأيقونة التقليدية للنظام؟')"><i class="bi bi-arrow-counterclockwise"></i> استعادة الأيقونة التقليدية</button></div>{% endif %}</div>
+      <div class="col-12 col-md-6"><label class="form-label">أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted">اختياري — تُضغط وتُصغّر تلقائيًا إلى PNG خفيف لتسريع التحميل.</small></div>
       <div class="col-12 col-md-6"><label class="form-label">المظهر</label><select name="setting_ui_theme" class="form-select">{% set theme = settings|selectattr('key','equalto','ui_theme')|map(attribute='value')|first %}<option value="light" {% if theme!='dark' %}selected{% endif %}>فاتح</option><option value="dark" {% if theme=='dark' %}selected{% endif %}>داكن</option></select></div>
       <div class="col-12 col-md-6"><label class="form-label">لوحة العميل</label><select name="setting_customer_portal" class="form-select">{% set portal = settings|selectattr('key','equalto','customer_portal')|map(attribute='value')|first %}<option value="1" {% if portal=='1' %}selected{% endif %}>مفعلة</option><option value="0" {% if portal!='1' %}selected{% endif %}>غير مفعلة</option></select></div>
       <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-palette"></i> حفظ الهوية والإعدادات</button></div>
@@ -27,6 +27,20 @@
     </div>
     {% if brand_logo %}<div class="brand-current"><span>الشعار الحالي</span><img src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></div>{% endif %}
     {% if brand_icon %}<div class="brand-current"><span>الأيقونة الحالية</span><img class="brand-icon-preview" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></div>{% endif %}
+    {% if can_manage %}
+    <div class="brand-option-card mt-3">
+      <div class="brand-option-preview"><img src="{{url_for('static',filename='icons/souq-aljumla.svg')}}" alt="أيقونة سوق الجملة"></div>
+      <div class="brand-option-info"><strong>أيقونة مقترحة: سوق الجملة</strong><span>أيقونة SVG خفيفة جدًا، مناسبة للموقع وPWA ولا تعتمد على صورة مرفوعة كبيرة.</span></div>
+      <div class="d-flex gap-2 flex-wrap">
+        <form method="post" action="{{url_for('settings.use_default_brand_icon')}}">
+          <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle"></i> اعتماد الأيقونة المقترحة</button>
+        </form>
+        {% if brand_icon %}<form method="post" action="{{url_for('settings.reset_brand_icon')}}">
+          <button class="btn btn-outline-danger" type="submit" onclick="return confirm('استعادة الأيقونة التقليدية للنظام؟')"><i class="bi bi-arrow-counterclockwise"></i> استعادة التقليدية</button>
+        </form>{% endif %}
+      </div>
+    </div>
+    {% endif %}
     <div class="policy-item mt-3"><i class="bi bi-brush"></i><strong>الهوية موحدة</strong><span>الاسم واللون والأيقونة تتغير في رأس الموقع وملف PWA والهوية العامة بعد الحفظ.</span></div>
   </div>
 </div>
@@ -41,6 +55,7 @@
 <div class="policy-item"><i class="bi bi-lock"></i><strong>الحسابات</strong><span>الرئيسية للتجميع والفروع للقيد.</span></div><div class="policy-item"><i class="bi bi-receipt"></i><strong>السندات</strong><span>نوع السند يستنتج من «من» و«إلى».</span></div><div class="policy-item"><i class="bi bi-clock"></i><strong>الوردية</strong><span>تفتح تلقائيًا مع أول عملية مالية.</span></div><div class="policy-item"><i class="bi bi-safe2"></i><strong>العهدة</strong><span>المتحصل لا يقدم طلب إخلاء يدويًا؛ التسليم يمر بالمراجعة.</span></div><div class="policy-item"><i class="bi bi-phone"></i><strong>PWA</strong><span>الاسم والأيقونة ولون التطبيق قابلة للتغيير من الهوية البصرية.</span></div><div class="policy-item"><i class="bi bi-code-slash"></i><strong>برمجة وتصميم</strong><span>يمن كود للتقنيات الذكية · 774952665</span></div>
 </div></div>
 {% endblock %}
+<style>.brand-option-card{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border:1px solid var(--border);border-radius:16px;background:#fbfcfc}.brand-option-preview{width:76px;height:76px;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#fff}.brand-option-preview img{width:100%;height:100%;object-fit:cover}.brand-option-info{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}.brand-option-info strong{font-size:13px}.brand-option-info span{font-size:11px;color:var(--muted);line-height:1.5}</style>
 {% block scripts %}
 <script>
 const picker=document.getElementById('brand-color-picker');
