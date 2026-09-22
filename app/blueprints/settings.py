@@ -33,6 +33,26 @@ def _save_brand_image(file_storage, key_prefix):
     ext=Path(file_storage.filename).suffix.lower().lstrip(".")
     if ext not in ALLOWED_IMAGE_EXTENSIONS:
         raise ValueError("الشعار والأيقونة: PNG أو JPG أو WEBP فقط")
+    try:
+        from PIL import Image, UnidentifiedImageError
+    except ImportError as exc:
+        raise ValueError("ضغط الصور غير متاح حاليًا؛ ثبّت Pillow من المتطلبات أولًا") from exc
+
+    file_storage.stream.seek(0, 2)
+    size=file_storage.stream.tell()
+    file_storage.stream.seek(0)
+    if size > 5 * 1024 * 1024:
+        raise ValueError("الصورة كبيرة جدًا؛ الحد الأقصى 5 ميجابايت")
+    try:
+        image=Image.open(file_storage.stream)
+        image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ValueError("الملف المرفوع ليس صورة صالحة") from exc
+
+    image=image.convert("RGBA")
+    max_side=256 if key_prefix=="brand_icon" else 1400
+    image.thumbnail((max_side,max_side),Image.Resampling.LANCZOS)
+
     folder=Path(current_app.config["UPLOAD_FOLDER"])/"site_brand"
     folder.mkdir(parents=True,exist_ok=True)
     old=_setting(key_prefix,"")
@@ -43,8 +63,9 @@ def _save_brand_image(file_storage, key_prefix):
                 old_path.unlink()
             except OSError:
                 pass
-    filename=f"{key_prefix}-{int(time.time())}.{ext}"
-    file_storage.save(folder/filename)
+
+    filename=f"{key_prefix}-{int(time.time())}-{int(time.time_ns()) % 1000000}.png"
+    image.save(folder/filename,format="PNG",optimize=True)
     _save_setting(key_prefix,filename,"string",key_prefix)
 
 @bp.route("",methods=["GET","POST"])
@@ -132,6 +153,23 @@ def manifest():
         "lang":"ar",
         "icons":[{"src":icon_url,"sizes":"any","type":icon_type,"purpose":"any maskable"}]
     })
+
+@bp.post("/brand/icon/reset")
+@permission_required("settings.manage")
+def reset_brand_icon():
+    old=_setting("brand_icon","")
+    if old:
+        path=Path(current_app.config["UPLOAD_FOLDER"])/"site_brand"/old
+        if path.exists():
+            try:
+                path.unlink()
+            except OSError:
+                pass
+    _save_setting("brand_icon","")
+    _save_setting("brand_version",str(int(time.time())),"string","نسخة الهوية")
+    db.session.commit()
+    flash("تمت استعادة الأيقونة التقليدية للنظام","success")
+    return redirect(url_for("settings.index"))
 
 @bp.post("/vehicle-types/<int:type_id>/toggle")
 @permission_required("settings.manage")
