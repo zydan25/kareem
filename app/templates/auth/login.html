@@ -4,7 +4,7 @@
 <div class="login-shell">
   <div class="login-card">
     <div class="brand big mb-4">
-  {% if brand_logo %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></span>{% elif brand_icon_enabled and brand_icon %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></span>{% else %}<span class="brand-mark">س</span>{% endif %}
+  {% if brand_icon_enabled and brand_icon %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></span>{% elif brand_logo %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></span>{% else %}<span class="brand-mark">س</span>{% endif %}
   <div><strong>{{app_name}}</strong><small>{{project_name or 'دخول الموظفين والإدارة'}}</small></div>
 </div>
     {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="alert alert-{{category}}">{{message}}</div>{% endfor %}{% endwith %}
