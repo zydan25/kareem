@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fbff"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+  <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#073b82"/><stop offset="1" stop-color="#0b63b6"/></linearGradient>
+  <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffad22"/><stop offset="1" stop-color="#f47b12"/></linearGradient>
+</defs>
+<rect x="8" y="8" width="496" height="496" rx="104" fill="url(#bg)" stroke="#e4ebf2" stroke-width="8"/>
+<path d="M92 174h328l-18-51H110z" fill="url(#navy)"/>
+<path d="M88 174h336v42H88z" fill="url(#orange)"/>
+<path d="M104 216h36v52h-36zm67 0h36v52h-36zm67 0h36v52h-36zm67 0h36v52h-36zm67 0h36v52h-36z" fill="#fff"/>
+<path d="M132 268h248v104H132z" fill="#f6f8fb" stroke="#dfe6ef" stroke-width="6"/>
+<path d="M146 286h84v62h-84zm97 0h84v62h-84zm-48-17h70v52h-70z" fill="url(#orange)"/>
+<path d="M326 297h54v48h-54z" fill="url(#navy)"/>
+<path d="M318 282h72l28 18H346z" fill="#0b63b6"/>
+<circle cx="338" cy="365" r="15" fill="#073b82"/><circle cx="386" cy="365" r="15" fill="#073b82"/>
+<path d="M315 302h91l-13 58h-61z" fill="none" stroke="#073b82" stroke-width="10" stroke-linejoin="round"/>
+<path d="M392 300l20-18h24" fill="none" stroke="#073b82" stroke-width="10" stroke-linecap="round"/>
+<path d="M110 389c48 34 88 46 146 46 60 0 107-15 146-44" fill="none" stroke="url(#orange)" stroke-width="12" stroke-linecap="round"/>
+<path d="M132 409c46 22 91 32 131 32 43 0 83-8 119-25" fill="none" stroke="url(#navy)" stroke-width="7" stroke-linecap="round"/>
+<text x="256" y="476" text-anchor="middle" direction="rtl" font-family="Tajawal, Arial, sans-serif" font-size="42" font-weight="800" fill="#073b82">سوق الجملة</text>
+</svg>
