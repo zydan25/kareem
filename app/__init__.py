@@ -47,6 +47,15 @@ def create_app(config_class=Config):
                       admin_bp,reports_bp,settings_bp):
         app.register_blueprint(blueprint)
 
+    @app.after_request
+    def disable_browser_cache(response):
+        # Deployments should be visible immediately; do not retain stale
+        # HTML, CSS, JS, manifests, or uploaded branding in browser caches.
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
     @app.context_processor
     def inject_globals():
         organization_name=_read_setting("organization_name",app.config["PWA_NAME"])
