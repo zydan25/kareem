@@ -1,5 +1,5 @@
 {# Reusable Arabic account tree picker. Names only; account codes stay internal. #}
-{% macro picker(name, title, account_options, selected_id=None, placeholder='اختر الحساب') %}
+{% macro picker(name, title, account_options, selected_id=None, placeholder='اختر الحساب', allowed_ids=None) %}
 <div class="account-tree-picker" data-account-picker data-name="{{name}}" data-title="{{title}}">
   <input type="hidden" name="{{name}}" value="{{selected_id or ''}}" required data-account-value>
   <button type="button" class="account-picker-trigger" data-account-trigger>
@@ -17,7 +17,7 @@
           <div class="account-picker-group" data-account-label-text="{{a.name|lower}}" style="padding-right:{{depth*18}}px" data-account-group>
             <i class="bi bi-folder2-open"></i><span>{{a.name}}</span>
           </div>
-        {% elif a.allow_manual_posting %}
+        {% elif a.allow_manual_posting and (allowed_ids is none or a.id in allowed_ids) %}
           <button type="button" class="account-picker-leaf" data-account-id="{{a.id}}" data-account-label-text="{{a.name|lower}}" style="padding-right:{{depth*18}}px" data-account-leaf>
             <span class="account-picker-branch">↳</span><span>{{a.name}}</span>
           </button>
