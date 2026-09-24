@@ -8,7 +8,7 @@ from ..extensions import db
 from ..models import Agent, Client, ClientAgent, GateTransaction, Shift, Vehicle, VehicleAgent, VehicleType
 from ..permissions import permission_required
 from ..services.accounting import D, account_balance, create_posted_entry, get_system_account
-from ..services.accounts import ensure_client_account, ensure_user_collector_account
+from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_user_collector_account
 from ..services.audit import audit
 from ..services.operations import ensure_user_shift
 
@@ -104,11 +104,14 @@ def index():
             shift=ensure_user_shift(current_user.id,"وردية البوابة")
             custody=ensure_user_collector_account(current_user)
             revenue=get_system_account("entry_revenue" if direction=="entry" else "exit_revenue")
+            # Entry fees assigned to an agent are receivables on that agent's
+            # account; only unassigned gate cash becomes collector custody.
+            debit_account=ensure_agent_account(agent) if direction=="entry" and agent else custody
             now=datetime.now(timezone.utc)
             entry=create_posted_entry(
                 description=f"{'إيراد دخول' if direction=='entry' else 'إيراد خروج'} المركبة {plate_number}",
                 entry_date=now.date(),created_by_id=current_user.id,source_type="gate",source_id=None,
-                lines=[{"account":custody,"debit":amount},{"account":revenue,"credit":amount}],
+                lines=[{"account":debit_account,"debit":amount},{"account":revenue,"credit":amount}],
                 prefix="GIN" if direction=="entry" else "GOUT")
             tx=GateTransaction(
                 receipt_number=f"GP-{now.strftime('%Y%m%d%H%M%S%f')}",

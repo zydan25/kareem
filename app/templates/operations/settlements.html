@@ -2,35 +2,128 @@
 {% extends 'base.html' %}
 {% block title %}العهد وإخلاء العهدة - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head print-hide"><div><span class="eyebrow">العهد</span><h1>إدارة العهد وإخلاء العهدة</h1><p>راجع أرصدة العهد، أنشئ طلب إخلاء، ثم اعتمده حسب الصلاحية.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="page-head print-hide">
+  <div>
+    <span class="eyebrow">الرقابة المالية</span>
+    <h1>العهد وإخلاء العهدة</h1>
+    <p>هذه الصفحة مخصصة للإدارة لمراجعة ما يحمله كل متحصل وتسليم المبلغ فعليًا إلى الصندوق.</p>
+  </div>
+  <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
+</div>
+
+<div class="custody-explainer card-soft mb-4 print-hide">
+  <div class="custody-explainer-head">
+    <div class="custody-explainer-icon"><i class="bi bi-safe2-fill"></i></div>
+    <div>
+      <span class="eyebrow">كيف تعمل العهدة؟</span>
+      <h2>المبلغ الذي بيد المتحصل ينتقل إلى صندوق السوق</h2>
+      <p>الحساب هنا ليس إيرادًا جديدًا؛ هو حساب أصل مؤقت يمثل النقد الموجود فعليًا لدى المتحصل قبل تسليمه للصندوق.</p>
+    </div>
+  </div>
+  <div class="custody-flow">
+    <div class="custody-flow-step"><span>1</span><strong>تحصيل نقدي</strong><small>المبالغ غير المرتبطة بوكيل تُسجل في عهدة المتحصل.</small></div>
+    <div class="custody-flow-arrow"><i class="bi bi-arrow-left"></i></div>
+    <div class="custody-flow-step"><span>2</span><strong>مراجعة العهدة</strong><small>الإدارة تطابق الرصيد مع تقرير الوردية والمبلغ الفعلي.</small></div>
+    <div class="custody-flow-arrow"><i class="bi bi-arrow-left"></i></div>
+    <div class="custody-flow-step emphasis"><span>3</span><strong>إخلاء إلى الصندوق الرئيسي</strong><small>مدين: الصندوق الرئيسي — دائن: عهدة المتحصل.</small></div>
+  </div>
+  <div class="custody-note"><i class="bi bi-info-circle"></i><div>لا تستخدم هذه الشاشة لتحويل مبالغ العملاء أو الوكلاء. المصدر يجب أن يكون حساب عهدة متحصل، والهدف ثابت على الصندوق الرئيسي.</div></div>
+</div>
+
 <div class="stat-grid mb-4 print-hide">
-  <div class="stat-card primary"><span>حسابات العهد</span><strong>{{source_balances|length}}</strong><small>حساب أصل قابل للتسوية</small></div>
-  <div class="stat-card"><span>طلبات المعروضة</span><strong>{{rows|length}}</strong><small>آخر الطلبات</small></div>
-  <div class="stat-card"><span>الصندوق المستهدف</span><strong>{{target.name}}</strong><small>{{target.name}}</small></div>
-  <div class="stat-card"><span>الوردية</span><strong>{{shifts|length}}</strong><small>ورديات مفتوحة</small></div>
+  <div class="stat-card primary"><span>حسابات العهد</span><strong>{{source_balances|length}}</strong><small>حسابات متحصلين قابلة للتسوية</small></div>
+  <div class="stat-card"><span>طلبات الإخلاء</span><strong>{{rows|length}}</strong><small>آخر الطلبات المسجلة</small></div>
+  <div class="stat-card"><span>الصندوق المستهدف</span><strong>{{target.name}}</strong><small>هدف كل إخلاء عهدة</small></div>
+  <div class="stat-card"><span>ورديات مفتوحة</span><strong>{{shifts|length}}</strong><small>يمكن ربط الإخلاء بوردية</small></div>
 </div>
+
 <div class="card-soft mb-4 print-hide">
-  <div class="section-title"><div><h3>أرصدة حسابات العهدة</h3><small class="text-muted">المبلغ المتاح قبل طلب الإخلاء.</small></div></div>
-  <div class="table-wrap"><table class="table align-middle"><thead><tr><th>الحساب</th><th>الرصيد المتاح</th><th>كشف الحساب</th></tr></thead><tbody>
-  {% for a,b in source_balances %}<tr><td class="fw-bold">{{a.name}}</td><td><strong>{{'{:,.2f}'.format(b)}} {{currency}}</strong></td><td><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}">كشف</a></td></tr>
-  {% else %}<tr><td colspan="3" class="text-center py-4 text-muted">لا توجد حسابات عهدة بعد.</td></tr>{% endfor %}
-  </tbody></table></div>
+  <div class="section-title">
+    <div><h3>أرصدة عهد المتحصلين</h3><small class="text-muted">الرصيد المتاح حاليًا في الحساب المالي للعهدة.</small></div>
+  </div>
+  <div class="table-wrap">
+    <table class="table align-middle custody-table">
+      <thead><tr><th>المتحصل / حساب العهدة</th><th>الرصيد المتاح</th><th>كشف الحساب</th></tr></thead>
+      <tbody>
+      {% for a,b in source_balances %}
+        <tr>
+          <td><strong>{{a.name}}</strong></td>
+          <td><span class="custody-balance {{'has-balance' if b > 0 else 'zero-balance'}}">{{'{:,.2f}'.format(b)}} {{currency}}</span></td>
+          <td><a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.account_statement',account_id=a.id)}}"><i class="bi bi-journal-text"></i> كشف</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="text-center py-4 text-muted">لا توجد حسابات عهدة بعد.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
-<div class="card-soft mb-4 print-hide">
-  <div class="section-title"><div><h3>طلب إخلاء عهدة</h3><small class="text-muted">لن يترحل ماليًا حتى يتم اعتماده.</small></div></div>
+
+<div class="card-soft mb-4 print-hide custody-settlement-card">
+  <div class="section-title">
+    <div>
+      <span class="eyebrow">عملية التسليم</span>
+      <h3>إخلاء عهدة المتحصل إلى الصندوق الرئيسي</h3>
+      <small class="text-muted">اختر عهدة المتحصل فقط، ثم أدخل المبلغ الذي تم استلامه فعليًا في الصندوق.</small>
+    </div>
+    <span class="custody-target-pill"><i class="bi bi-safe"></i> {{target.name}}</span>
+  </div>
+
   <form method="post" class="row g-3">
-    <div class="col-12 col-lg-5"><label class="form-label">حساب العهدة</label>{{picker('source_account_id','حساب العهدة',account_options,None,'اختر حساب العهدة',source_account_ids)}}</div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
-    <div class="col-12 col-sm-6 col-lg-3"><label class="form-label">الوردية</label><select name="shift_id" class="form-select"><option value="">بدون ربط</option>{% for s in shifts %}<option value="{{s.id}}">{{s.shift_name}} — {{s.opened_at.strftime('%Y-%m-%d %H:%M')}}</option>{% endfor %}</select></div>
-    <div class="col-12 col-lg-2"><label class="form-label">الهدف</label><input class="form-control" value="{{target.name}}" disabled></div>
-    <div class="col-12"><label class="form-label">البيان</label><input name="description" class="form-control" value="إخلاء عهدة إلى الصندوق"></div>
-    <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-safe2"></i> إرسال للاعتماد</button></div>
+    <div class="col-12 col-lg-5">
+      <label class="form-label">حساب عهدة المتحصل</label>
+      {{picker('source_account_id','حساب العهدة',account_options,None,'اختر عهدة المتحصل',source_account_ids)}}
+    </div>
+    <div class="col-12 col-sm-6 col-lg-2">
+      <label class="form-label">مبلغ التسليم</label>
+      <input name="amount" class="form-control form-control-lg custody-amount" inputmode="decimal" placeholder="0.00" required>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <label class="form-label">الوردية المرتبطة</label>
+      <select name="shift_id" class="form-select">
+        <option value="">بدون ربط بوردية</option>
+        {% for s in shifts %}<option value="{{s.id}}">{{s.shift_name}} — {{s.collector.full_name if s.collector else '—'}} — {{s.opened_at.strftime('%Y-%m-%d %H:%M')}}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-lg-2">
+      <label class="form-label">إلى</label>
+      <div class="custody-fixed-target"><i class="bi bi-bank2"></i><strong>{{target.name}}</strong><small>ثابت</small></div>
+    </div>
+    <div class="col-12">
+      <label class="form-label">البيان</label>
+      <input name="description" class="form-control" value="إخلاء عهدة متحصل إلى الصندوق الرئيسي">
+    </div>
+    <div class="col-12 d-flex align-items-center gap-2">
+      <button class="btn btn-primary btn-lg"><i class="bi bi-check2-circle"></i> إنشاء طلب إخلاء</button>
+      <span class="text-muted small">بعد إنشاء الطلب لا يترحل القيد حتى يتم اعتماده.</span>
+    </div>
   </form>
 </div>
+
 <div class="card-soft">
-  <div class="section-title"><div><h3>سجل إخلاءات العهد</h3><small class="text-muted">يظهر هنا الطلب وحالته والقيد المرتبط بعد الاعتماد.</small></div></div>
-  <div class="table-wrap"><table class="table align-middle"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>المصدر</th><th>الهدف</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th>الإجراء</th></tr></thead>
-  <tbody>{% for s in rows %}<tr><td><code>{{s.number}}</code></td><td>{{s.settlement_date}}</td><td>{{s.source_account.name}}</td><td>{{s.target_account.name}}</td><td class="fw-bold">{{'{:,.2f}'.format(s.amount)}} {{currency}}</td><td><span class="badge-soft">{{{'pending':'بانتظار الاعتماد','posted':'مرحّل','rejected':'مرفوض'}.get(s.status,s.status)}}</span></td><td>{{s.journal_entry_id or '—'}}</td><td>{% if s.status=='pending' and can("collector.approve_settlement") %}<form method="post" action="{{url_for('operations.approve',settlement_id=s.id)}}"><button class="btn btn-sm btn-primary">اعتماد</button></form>{% elif s.status=='posted' %}<span class="text-muted">تم الاعتماد</span>{% else %}—{% endif %}</td></tr>
-  {% else %}<tr><td colspan="8" class="text-center py-5 text-muted">لا توجد إخلاءات.</td></tr>{% endfor %}</tbody></table></div>
+  <div class="section-title">
+    <div><h3>سجل إخلاءات العهد</h3><small class="text-muted">الطلب يصبح قيدًا ماليًا بعد الاعتماد فقط.</small></div>
+  </div>
+  <div class="table-wrap">
+    <table class="table align-middle custody-log-table">
+      <thead><tr><th>الطلب</th><th>التاريخ</th><th>عهدة المتحصل</th><th>إلى</th><th>المبلغ</th><th>الحالة</th><th>القيد</th><th>الإجراء</th></tr></thead>
+      <tbody>
+      {% for s in rows %}
+        <tr>
+          <td><code>{{s.number}}</code></td>
+          <td>{{s.settlement_date}}</td>
+          <td><strong>{{s.source_account.name}}</strong></td>
+          <td><span class="custody-target-pill small-pill"><i class="bi bi-bank2"></i> {{s.target_account.name}}</span></td>
+          <td class="fw-bold">{{'{:,.2f}'.format(s.amount)}} {{currency}}</td>
+          <td><span class="badge-soft">{{{'pending':'بانتظار الاعتماد','posted':'مرحّل','rejected':'مرفوض'}.get(s.status,s.status)}}</span></td>
+          <td>{{s.journal_entry_id or '—'}}</td>
+          <td>{% if s.status=='pending' and can("collector.approve_settlement") %}<form method="post" action="{{url_for('operations.approve',settlement_id=s.id)}}"><button class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> اعتماد</button></form>{% elif s.status=='posted' %}<span class="text-muted">تم الاعتماد</span>{% else %}—{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="text-center py-5 text-muted">لا توجد إخلاءات مسجلة.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

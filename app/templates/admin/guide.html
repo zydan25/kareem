@@ -26,8 +26,19 @@
     <a href="{{url_for('reports.index')}}"><i class="bi bi-bar-chart-line"></i><div><strong>التقارير</strong><small>تشغيلية ومحاسبية وطباعة</small></div></a>
   </section>
   <div id="guide-no-results" class="guide-no-results">لا توجد نتائج مطابقة لعبارة البحث.</div>
+  <section class="guide-map">
+    <div class="guide-map-head"><div><span class="eyebrow">طريقة استخدام الدليل</span><h2>ابدأ من القسم المناسب بدل البحث في كل الصفحات</h2></div><span class="guide-map-tip"><i class="bi bi-lightbulb"></i> ابحث بكلمة واحدة مثل «عهدة» أو «راتب»</span></div>
+    <div class="guide-map-grid">
+      <a href="#guide-section-1"><i class="bi bi-play-circle"></i><span><strong>التشغيل اليومي</strong><small>من بداية الوردية إلى نهاية اليوم</small></span></a>
+      <a href="#guide-section-4"><i class="bi bi-sign-turn-right"></i><span><strong>البوابة والتحصيل</strong><small>العمل الذي يقوم به المتحصل</small></span></a>
+      <a href="#guide-section-8"><i class="bi bi-safe2-fill"></i><span><strong>العهد وإخلاؤها</strong><small>كيف تنتقل الأموال من المتحصل للصندوق</small></span></a>
+      <a href="#guide-section-11"><i class="bi bi-bar-chart-line"></i><span><strong>التقارير</strong><small>المراجعة والطباعة والتصدير</small></span></a>
+      <a href="#guide-section-13"><i class="bi bi-shield-check"></i><span><strong>الأمان والرقابة</strong><small>الصلاحيات والتدقيق والقيود</small></span></a>
+      <a href="#guide-section-14"><i class="bi bi-server"></i><span><strong>تحديث السيرفر</strong><small>PM2 وMigration والنسخ الاحتياطي</small></span></a>
+    </div>
+  </section>
 
-  <details class="guide-section guide-item" open data-guide-text="ابدأ هنا البدء السريع الإدارة التشغيل اليومية">
+  <details class="guide-section guide-item" open data-guide-text="ابدأ هنا البدء السريع الإدارة التشغيل اليومية" id="guide-section-1">
     <summary><div class="guide-summary-main"><i class="bi bi-rocket-takeoff"></i><span>1. ابدأ هنا: دورة العمل اليومية</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>قبل بدء اليوم</h4><div class="guide-step"><span class="guide-num">1</span><div>تأكد من وجود الموظفين النشطين، وأن لكل متحصل حساب دخول مرتبطًا بملف موظف.</div></div><div class="guide-step"><span class="guide-num">2</span><div>راجع شجرة الحسابات والحسابات النظامية، ولا تعدّل الحسابات النظامية.</div></div><div class="guide-step"><span class="guide-num">3</span><div>راجع الإعدادات والعملة واسم المنشأة وأنواع المركبات قبل التشغيل.</div></div></div>
@@ -37,7 +48,7 @@
     </div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="الأدوار الصلاحيات مدير مدير النظام محاسب متحصل مراجع مستخدم">
+  <details class="guide-section guide-item" data-guide-text="الأدوار الصلاحيات مدير مدير النظام محاسب متحصل مراجع مستخدم" id="guide-section-2">
     <summary><div class="guide-summary-main"><i class="bi bi-shield-check"></i><span>2. الأدوار والصلاحيات</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body">
       <p class="guide-muted">الأدوار الحالية محددة في النظام، ويمكن تخصيص صلاحيات المستخدم للحسابات التي تسمح بذلك. مدير النظام والمدير يحصلان على الصلاحيات الكاملة تلقائيًا.</p>
@@ -52,7 +63,7 @@
     </div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="الموظفون المستخدمون ملف الموظف دخول هاتف كلمة مرور دوام جدول غرامة">
+  <details class="guide-section guide-item" data-guide-text="الموظفون المستخدمون ملف الموظف دخول هاتف كلمة مرور دوام جدول غرامة" id="guide-section-3">
     <summary><div class="guide-summary-main"><i class="bi bi-person-workspace"></i><span>3. الموظفون وحسابات الدخول</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>إنشاء موظف</h4><p>أدخل الاسم والهاتف والوظيفة والراتب والبيانات الاختيارية. النظام ينشئ الحسابات المالية الخاصة بالموظف تلقائيًا.</p></div>
@@ -62,7 +73,7 @@
     </div><div class="guide-callout"><i class="bi bi-lock"></i><div>تعطيل الموظف أو حساب الدخول يحافظ على السجل التاريخي. لا تعتمد على حذف البيانات المرتبطة ماليًا لإزالة أثرها من التشغيل.</div></div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="البوابة التحصيل دخول خروج عميل مركبة لوحة فاصل بدون جمارك وكيل مبلغ وردية">
+  <details class="guide-section guide-item" data-guide-text="البوابة التحصيل دخول خروج عميل مركبة لوحة فاصل بدون جمارك وكيل مبلغ وردية" id="guide-section-4">
     <summary><div class="guide-summary-main"><i class="bi bi-sign-turn-right"></i><span>4. البوابة والتحصيل</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>البحث الموحد</h4><p>يمكن البحث من شاشة المتحصل عن العميل بالاسم أو الهاتف أو اللوحة. البحث باللوحة يراعي الكتابة بدون المسافات والشرطات والفواصل قدر الإمكان.</p></div>
@@ -72,7 +83,7 @@
     </div><div class="guide-callout"><i class="bi bi-exclamation-triangle"></i><div><strong>مراجعة محاسبية:</strong> README يذكر أن حركة الخروج لا تنشئ إيرادًا وهميًا، لكن الكود الحالي ينشئ قيدًا ويستخدم الحساب النظامي <code>exit_revenue</code> عند الخروج. يجب حسم هذا التعارض وفق سياسة الرسوم المعتمدة قبل اعتبار السلوك المحاسبي نهائيًا.</div></div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="الوكلاء العملاء المركبات البيانات الأساسية ربط عميل وكيل أكثر من مركبة">
+  <details class="guide-section guide-item" data-guide-text="الوكلاء العملاء المركبات البيانات الأساسية ربط عميل وكيل أكثر من مركبة" id="guide-section-5">
     <summary><div class="guide-summary-main"><i class="bi bi-database"></i><span>5. العملاء والوكلاء والمركبات</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>العملاء</h4><p>العميل له حساب مالي مستقل، ويمكن ربطه بأكثر من وكيل، ويجب أن يحتوي عند الإنشاء على مركبة واحدة على الأقل.</p></div>
@@ -82,7 +93,7 @@
     </div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="المحاسبة شجرة الحسابات قيد يومية مدين دائن سند قبض صرف تحويل عكس">
+  <details class="guide-section guide-item" data-guide-text="المحاسبة شجرة الحسابات قيد يومية مدين دائن سند قبض صرف تحويل عكس" id="guide-section-6">
     <summary><div class="guide-summary-main"><i class="bi bi-calculator"></i><span>6. المحاسبة والقيود</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>شجرة الحسابات</h4><p>الحسابات الرئيسية للتجميع، والحسابات الفرعية هي القابلة للقيد. النظام يمنع الترحيل على الحسابات الرئيسية.</p></div>
@@ -92,7 +103,7 @@
     </div><div class="guide-callout"><i class="bi bi-diagram-3"></i><div>الحسابات النظامية تشمل الصندوق الرئيسي، عهد الموظفين والمتحصلين، حسابات العملاء والوكلاء، مستحقات الرواتب، وإيرادات الدخول والإيجارات والخروج والغرامات، إضافة إلى الرواتب والمصروفات التشغيلية.</div></div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="السندات قبض صرف تحويل مصروفات قيد يدوي">
+  <details class="guide-section guide-item" data-guide-text="السندات قبض صرف تحويل مصروفات قيد يدوي" id="guide-section-7">
     <summary><div class="guide-summary-main"><i class="bi bi-cash-stack"></i><span>7. السندات والمصروفات</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>سند قبض</h4><p>استخدم سندًا عندما يدخل مبلغ إلى الصندوق من حساب طرف آخر. النظام يستنتج نوع السند من الحساب المصدر والهدف بالنسبة للصندوق الرئيسي.</p></div>
@@ -102,17 +113,19 @@
     </div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="العهد التسليم الإخلاء اعتماد المتحصل وردية صندوق">
+  <details class="guide-section guide-item" data-guide-text="العهد التسليم الإخلاء اعتماد المتحصل وردية صندوق" id="guide-section-8">
     <summary><div class="guide-summary-main"><i class="bi bi-safe2"></i><span>8. العهد والورديات والتسوية</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>فتح الوردية</h4><p>يفتح النظام وردية تلقائية للمتحصل عند أول حركة مالية إذا لم توجد وردية مفتوحة له.</p></div>
       <div class="guide-card"><h4>مراجعة العهدة</h4><p>يمكن للإدارة متابعة أرصدة حسابات العهدة وتقارير الوردية والحركات المرتبطة بكل متحصل.</p></div>
-      <div class="guide-card"><h4>طلب التسوية</h4><p>الإدارة تختار حساب العهدة وحساب الهدف والمبلغ، مع التحقق من أن الرصيد يكفي.</p></div>
-      <div class="guide-card"><h4>اعتماد التسوية</h4><p>عند الاعتماد ينشأ قيد مدين للصندوق/الهدف ودائن للعهدة، ويُحفظ المستخدم والوقت وحالة الطلب.</p></div>
-    </div><div class="guide-callout"><i class="bi bi-shield-check"></i><div>دور المتحصل لا يملك <code>collector.settle</code> أو <code>collector.approve_settlement</code> حتى لو كان لديه شاشة التحصيل.</div></div></div>
+      <div class="guide-card"><h4>ما هي العهدة؟</h4><p>العهدة حساب أصل يمثل نقدًا موجودًا فعليًا مع المتحصل. ليست إيرادًا جديدًا، وليست حساب عميل أو وكيل.</p></div>
+      <div class="guide-card"><h4>متى تزيد العهدة؟</h4><p>تزيد عندما يستلم المتحصل مبلغًا نقديًا غير مربوط بوكيل في حركة البوابة. أما الحركة المربوطة بوكيل فتذهب محاسبيًا إلى حساب الوكيل وفق منطق النظام.</p></div>
+      <div class="guide-card"><h4>كيف يتم الإخلاء؟</h4><p>الإدارة تراجع الرصيد وتطابقه مع تقرير الوردية والمبلغ الفعلي، ثم تنشئ طلب إخلاء من <strong>عهدة المتحصل</strong> إلى <strong>الصندوق الرئيسي</strong> فقط.</p></div>
+      <div class="guide-card"><h4>ما هو القيد الناتج؟</h4><p><strong>مدين: الصندوق الرئيسي</strong> مقابل <strong>دائن: عهدة المتحصل</strong> بالمبلغ المسلم. الاعتماد هو الذي ينشئ القيد المرحّل.</p></div>
+    </div><div class="guide-callout custody-guide-callout"><i class="bi bi-shield-check"></i><div><strong>قاعدة مهمة:</strong> لا يتم اختيار حساب عميل أو وكيل أو مصروف في شاشة إخلاء العهدة. المتحصل لا يعتمد إخلاء عهدته بنفسه؛ الاعتماد من صاحب الصلاحية.</div></div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="الإيجارات عقود إيجار وكيل استحقاق شهر تحصيل">
+  <details class="guide-section guide-item" data-guide-text="الإيجارات عقود إيجار وكيل استحقاق شهر تحصيل" id="guide-section-9">
     <summary><div class="guide-summary-main"><i class="bi bi-building"></i><span>9. الإيجارات</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>العقد</h4><p>أنشئ عقد إيجار للوكيل بالمبلغ الشهري وتاريخ البداية والنهاية الاختياري ويوم الاستحقاق.</p></div>
@@ -122,7 +135,7 @@
     </div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="الرواتب مسير راتب موظف صرف استقطاع">
+  <details class="guide-section guide-item" data-guide-text="الرواتب مسير راتب موظف صرف استقطاع" id="guide-section-10">
     <summary><div class="guide-summary-main"><i class="bi bi-wallet2"></i><span>10. الرواتب</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>إنشاء مسير</h4><p>أنشئ مسيرًا للشهر. لكل موظف إجمالي واستقطاعات وصافي مستحق، ويمكن تعديل المسودة قبل الترحيل.</p></div>
@@ -132,7 +145,7 @@
     </div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="التقارير تقرير بوابة متحصلين عملاء مركبات عهدة أستاذ ميزان مراجعة إيرادات مصروفات">
+  <details class="guide-section guide-item" data-guide-text="التقارير تقرير بوابة متحصلين عملاء مركبات عهدة أستاذ ميزان مراجعة إيرادات مصروفات" id="guide-section-11">
     <summary><div class="guide-summary-main"><i class="bi bi-bar-chart-line"></i><span>11. مركز التقارير</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>التقارير التشغيلية</h4><p>اليومي، الأسبوعي، الشهري، الفترة، البوابة، المتحصلون، العملاء، المركبات، الموظفون، والمصروفات.</p></div>
@@ -142,7 +155,7 @@
     </div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="الإعدادات الاسم اللون الشعار الأيقونة PWA أنواع المركبات">
+  <details class="guide-section guide-item" data-guide-text="الإعدادات الاسم اللون الشعار الأيقونة PWA أنواع المركبات" id="guide-section-12">
     <summary><div class="guide-summary-main"><i class="bi bi-sliders2"></i><span>12. الإعدادات والهوية وPWA</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>هوية المنشأة</h4><p>يمكن تغيير الاسم والوصف والعملة واللون الرئيسي من صفحة الإعدادات.</p></div>
@@ -152,7 +165,7 @@
     </div><div class="guide-callout"><i class="bi bi-phone"></i><div>النظام يدعم PWA باسم واتجاه ولون متزامن مع إعدادات الهوية، مع رقم نسخة للهوية لإجبار المتصفح على التقاط الأصول المحدثة.</div></div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="الرقابة سجل التدقيق audit أمان حذف تعطيل قيد مرحل">
+  <details class="guide-section guide-item" data-guide-text="الرقابة سجل التدقيق audit أمان حذف تعطيل قيد مرحل" id="guide-section-13">
     <summary><div class="guide-summary-main"><i class="bi bi-fingerprint"></i><span>13. الرقابة والأمان المحاسبي</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>سجل التدقيق</h4><p>العمليات الحساسة تسجل المستخدم والوقت والكيان والتفاصيل وعنوان IP عندما تتوفر البيانات.</p></div>
@@ -162,7 +175,7 @@
     </div><div class="guide-callout"><i class="bi bi-exclamation-octagon"></i><div><strong>أمان الإنتاج:</strong> ضع <code>SECRET_KEY</code> عشوائيًا طويلًا في <code>.env</code>، ولا تستخدم القيمة الافتراضية الموجودة في ملف الإعدادات.</div></div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="النشر السيرفر PM2 nginx 4040 migration backup تحديث">
+  <details class="guide-section guide-item" data-guide-text="النشر السيرفر PM2 nginx 4040 migration backup تحديث" id="guide-section-14">
     <summary><div class="guide-summary-main"><i class="bi bi-server"></i><span>14. التحديث والنشر</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>تحديث الخادم</h4><div class="guide-commands">cd /home/root/projects/kareem
@@ -177,7 +190,7 @@ bash scripts/backup_database.sh</div><p class="mt-2">يتم حفظ النسخ ا
     </div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="مشاكل شائعة خطأ تسجيل الدخول تقرير 404 migration multi heads">
+  <details class="guide-section guide-item" data-guide-text="مشاكل شائعة خطأ تسجيل الدخول تقرير 404 migration multi heads" id="guide-section-15">
     <summary><div class="guide-summary-main"><i class="bi bi-tools"></i><span>15. مشاكل شائعة وطريقة التعامل</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="guide-grid">
       <div class="guide-card"><h4>لا تظهر التعديلات</h4><p>المشروع يتعمد تعطيل كاش HTML/الواجهات، ويستخدم نسخًا للأصول. نفّذ تحديث الخادم ثم تحقق من PM2 وNginx.</p></div>
@@ -187,7 +200,7 @@ bash scripts/backup_database.sh</div><p class="mt-2">يتم حفظ النسخ ا
     </div><div class="guide-callout"><i class="bi bi-terminal"></i><div>للتشخيص على الخادم، ابدأ عادةً بـ <code>pm2 logs kareem-market --lines 200</code> و <code>sudo nginx -t</code>.</div></div></div>
   </details>
 
-  <details class="guide-section guide-item" data-guide-text="روابط الإدارة اختصارات">
+  <details class="guide-section guide-item" data-guide-text="روابط الإدارة اختصارات" id="guide-section-16">
     <summary><div class="guide-summary-main"><i class="bi bi-link-45deg"></i><span>16. اختصارات الإدارة</span></div><i class="bi bi-chevron-down guide-chevron"></i></summary>
     <div class="guide-section-body"><div class="d-flex flex-wrap gap-2">
       <a class="btn btn-outline-primary" href="{{url_for('admin.users')}}"><i class="bi bi-people"></i> المستخدمون</a>

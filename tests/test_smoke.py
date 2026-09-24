@@ -50,6 +50,6 @@ def test_settlements_page_and_admin_guide(client):
     settlement=client.get("/operations/settlements")
     assert settlement.status_code==200
     body=settlement.get_data(as_text=True)
-    assert "إدارة العهد وإخلاء العهدة" in body
+    assert "العهد وإخلاء العهدة" in body
     assert "حساب العهدة" in body
     assert body.count("دليل الإدارة") >= 1

@@ -205,9 +205,17 @@ def close_shift(shift_id):
     try:
         if shift.collector_id != current_user.id and not can("collector.approve_settlement"):
             raise ValueError("لا يمكنك إغلاق وردية مستخدم آخر")
-        txs=__import__("app.models",fromlist=["GateTransaction"]).GateTransaction.query.filter_by(shift_id=shift.id,direction="entry").all()
+        txs=(__import__("app.models",fromlist=["GateTransaction"]).GateTransaction.query
+             .filter_by(shift_id=shift.id,direction="entry")
+             .filter(__import__("app.models",fromlist=["GateTransaction"]).GateTransaction.agent_id.is_(None))
+             .filter(__import__("app.models",fromlist=["GateTransaction"]).GateTransaction.counted_for_work.is_(True))
+             .all())
+        # Only unassigned gate collections are physically held by the collector.
         total=sum((D(x.amount) for x in txs),D(0))
-        collector_account=ensure_user_collector_account(current_user)
+        shift_owner=shift.collector
+        if not shift_owner:
+            raise ValueError("لا يمكن إغلاق وردية بدون متحصل مرتبط")
+        collector_account=ensure_user_collector_account(shift_owner)
         if total>0:
             existing=Settlement.query.filter_by(shift_id=shift.id).filter(Settlement.status.in_(["pending","posted"])).first()
             if not existing:
