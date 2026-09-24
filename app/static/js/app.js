@@ -19,7 +19,7 @@
     const close=event.target.closest("[data-menu-close]");
     if(open){event.preventDefault();openMenu();return;}
     if(close){event.preventDefault();closeMenu();return;}
-    if(event.target.closest(".sidebar-nav a")) closeMenu();
+    if(event.target.closest(".sidebar-nav a") && window.matchMedia("(max-width:1100px)").matches) closeMenu();
 
     const toggle=event.target.closest("[data-toggle-panel]");
     if(toggle){
@@ -28,6 +28,32 @@
       if(panel) panel.classList.toggle("is-open");
     }
   });
+
+
+  // Sidebar tree behaves like a compact accordion. The desktop sidebar stays
+  // fixed; on phones it remains a drawer and closes after choosing a page.
+  function initSidebarTree(){
+    const trees=[...document.querySelectorAll(".nav-tree")];
+    if(!trees.length)return;
+    trees.forEach(tree=>{
+      const key="kareem_nav_"+[...trees].indexOf(tree);
+      try{
+        const saved=localStorage.getItem(key);
+        if(saved==="open" && !tree.hasAttribute("open")) tree.setAttribute("open","");
+        if(saved==="closed" && tree.hasAttribute("open") && !tree.querySelector(".active")) tree.removeAttribute("open");
+      }catch(e){}
+      tree.addEventListener("toggle",()=>{
+        if(tree.open){
+          trees.forEach(other=>{
+            if(other!==tree) other.removeAttribute("open");
+          });
+          try{localStorage.setItem(key,"open");}catch(e){}
+        }else{
+          try{localStorage.setItem(key,"closed");}catch(e){}
+        }
+      });
+    });
+  }
 
   document.addEventListener("keydown",event=>{if(event.key==="Escape")closeMenu();});
   // Reliable action menus for entity rows (employees, vehicles, etc.).
@@ -89,6 +115,8 @@
       navigator.serviceWorker.register("/static/sw.js?v=20260922-2",{updateViaCache:"none"}).catch(()=>{});
     });
   }
+
+  initSidebarTree();
 
   // Searchable tree-based account selectors.
   function closeAccountPickers(except){
