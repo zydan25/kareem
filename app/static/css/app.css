@@ -628,3 +628,105 @@
     background:#5f8fa9!important;color:#fff!important;border-color:#2f485b!important;
   }
 }
+
+
+/* Final sidebar polish */
+.nav-tree{
+  margin:6px 0;
+  border:1px solid #c9d8dd;
+  border-radius:11px;
+  overflow:hidden;
+  background:#eef4f6;
+  box-shadow:0 2px 7px rgba(30,55,65,.06)
+}
+.nav-tree>summary{
+  min-height:50px;
+  padding:10px 13px;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:#e7eff2;
+  color:#334a54;
+  font-size:13px;
+  font-weight:900;
+  transition:background .15s ease,box-shadow .15s ease
+}
+.nav-tree>summary:hover{background:#dfeaed}
+.nav-tree[open]>summary{
+  background:#d2e2e8;
+  color:#243d48;
+  box-shadow:inset 0 -1px 0 #bfd0d6
+}
+.nav-tree>summary>i:first-child{
+  color:#12bcc5;
+  width:25px;
+  font-size:18px
+}
+.nav-tree>summary .nav-chevron{
+  width:24px!important;
+  color:#516d79!important;
+  font-size:13px!important;
+  transition:transform .18s ease
+}
+.nav-tree:not([open])>summary .nav-chevron{
+  transform:rotate(90deg)
+}
+.nav-tree[open]>summary .nav-chevron{
+  transform:none
+}
+.nav-count{
+  min-width:27px;
+  height:27px;
+  border-radius:7px;
+  background:#ee1717;
+  font-size:12px
+}
+.nav-children{
+  background:#f8fbfc;
+  border:0;
+  border-top:1px solid #c9d8dd;
+  padding:5px 6px 7px
+}
+.nav-children a{
+  min-height:40px;
+  padding:8px 12px;
+  margin:2px 0;
+  border:1px solid transparent;
+  border-radius:7px;
+  background:#fff;
+  color:#50626a;
+  box-shadow:0 1px 2px rgba(30,55,65,.03)
+}
+.nav-children a:hover{
+  background:#f0f7f9;
+  border-color:#d4e2e6
+}
+.nav-children a.active{
+  background:#dff2f7;
+  border-color:#a9d6df;
+  color:#21444d;
+  box-shadow:inset -3px 0 0 #11bcc5
+}
+.nav-guide-link{
+  background:#fff8e3!important;
+  border-color:#ecd99e!important
+}
+.nav-important{
+  background:#edf8f3!important;
+  border-color:#c4e0d2!important
+}
+@media(max-width:600px){
+  .nav-tree{
+    margin:5px 0;
+    border-radius:10px
+  }
+  .nav-tree>summary{
+    min-height:48px;
+    padding:9px 12px;
+    font-size:13px
+  }
+  .nav-children a{
+    min-height:42px;
+    font-size:12.5px
+  }
+}

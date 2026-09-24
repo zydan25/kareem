@@ -62,4 +62,4 @@ def test_sidebar_contains_all_major_sections_and_report_links(client):
     for url in ["/reports/daily","/reports/weekly","/reports/monthly","/reports/clients","/reports/vehicles","/reports/employees","/reports/expenses","/reports/income-expenses","/reports/trial-balance"]:
         assert url in body
     assert 'class="nav-count"' in body
-    assert 'class="nav-chevron bi bi-chevron-left"' in body
+    assert 'class="nav-chevron bi bi-chevron-down"' in body
