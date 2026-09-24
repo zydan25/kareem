@@ -103,15 +103,23 @@
 
     {% if can("reports.view") %}
     <details class="nav-tree" {% if request.path.startswith('/reports') %}open{% endif %}>
-      <summary><i class="bi bi-bar-chart-fill"></i><span>التقارير</span><b class="nav-count">8</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
-      <div class="nav-children">
+      <summary><i class="bi bi-bar-chart-fill"></i><span>التقارير</span><b class="nav-count">16</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
+      <div class="nav-children nav-report-list">
         <a class="{% if request.path == '/reports/' %}active{% endif %}" href="{{url_for('reports.index')}}"><i class="bi bi-grid-1x2"></i><span>مركز التقارير</span></a>
+        <a href="{{url_for('reports.daily')}}"><i class="bi bi-calendar-day"></i><span>تقرير يومي</span></a>
+        <a href="{{url_for('reports.weekly')}}"><i class="bi bi-calendar-week"></i><span>تقرير أسبوعي</span></a>
+        <a href="{{url_for('reports.monthly')}}"><i class="bi bi-calendar-month"></i><span>تقرير شهري</span></a>
+        <a href="{{url_for('reports.period')}}"><i class="bi bi-calendar3"></i><span>تقرير الفترة</span></a>
         <a href="{{url_for('reports.gate')}}"><i class="bi bi-signpost-2"></i><span>تقرير البوابة</span></a>
         <a href="{{url_for('reports.collectors')}}"><i class="bi bi-person-lines-fill"></i><span>تقرير المتحصلين</span></a>
+        <a href="{{url_for('reports.clients_report')}}"><i class="bi bi-people"></i><span>تقرير العملاء</span></a>
+        <a href="{{url_for('reports.vehicles_report')}}"><i class="bi bi-truck"></i><span>دخول وخروج المركبات</span></a>
         <a href="{{url_for('reports.custody')}}"><i class="bi bi-safe2"></i><span>تقرير العهد</span></a>
-        <a href="{{url_for('reports.period')}}"><i class="bi bi-calendar3"></i><span>تقرير الفترة</span></a>
+        <a href="{{url_for('reports.employees_report')}}"><i class="bi bi-person-workspace"></i><span>تقرير الموظفين</span></a>
+        <a href="{{url_for('reports.expenses_report')}}"><i class="bi bi-wallet2"></i><span>تقرير المصروفات</span></a>
         <a href="{{url_for('reports.accounts_report')}}"><i class="bi bi-pie-chart"></i><span>ملخص الحسابات</span></a>
         <a href="{{url_for('reports.general_ledger')}}"><i class="bi bi-journal-bookmark"></i><span>دفتر الأستاذ</span></a>
+        <a href="{{url_for('reports.income_expenses')}}"><i class="bi bi-graph-up-arrow"></i><span>الإيرادات والمصروفات</span></a>
         <a href="{{url_for('reports.trial_balance')}}"><i class="bi bi-check2-square"></i><span>ميزان المراجعة</span></a>
       </div>
     </details>
