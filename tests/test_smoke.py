@@ -53,3 +53,13 @@ def test_settlements_page_and_admin_guide(client):
     assert "العهد وإخلاء العهدة" in body
     assert "حساب العهدة" in body
     assert body.count("دليل الإدارة") >= 1
+
+def test_sidebar_contains_all_major_sections_and_report_links(client):
+    login(client)
+    body=client.get("/").get_data(as_text=True)
+    for text_value in ["الرئيسية","البوابة والتحصيل","البيانات الأساسية","الإدارة والموظفون","المحاسبة والمالية","التشغيل المالي","التقارير","الإعدادات"]:
+        assert text_value in body
+    for url in ["/reports/daily","/reports/weekly","/reports/monthly","/reports/clients","/reports/vehicles","/reports/employees","/reports/expenses","/reports/income-expenses","/reports/trial-balance"]:
+        assert url in body
+    assert 'class="nav-count"' in body
+    assert 'class="nav-chevron bi bi-chevron-left"' in body
