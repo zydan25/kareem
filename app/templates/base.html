@@ -57,6 +57,7 @@
       {% if can("employees.view") %}<a href="{{url_for('master_data.employees')}}">الموظفون</a>{% endif %}
       {% if can("users.manage") %}<a href="{{url_for('admin.users')}}">المستخدمون</a>{% endif %}
       {% if can("users.manage") %}<a href="{{url_for('admin.guide')}}">دليل الإدارة</a>{% endif %}
+      {% if can("users.manage") %}<a href="{{url_for('admin.guide')}}">دليل الإدارة</a>{% endif %}
       {% if can("audit.view") %}<a href="{{url_for('admin.audit_logs')}}">سجل التدقيق</a>{% endif %}
     </section>{% endif %}
 
