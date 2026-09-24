@@ -44,3 +44,12 @@ def test_admin_guide_accessible(client):
     assert guide.status_code==200
     assert "دليل الإدارة" in guide.get_data(as_text=True)
     assert "التحصيل" in guide.get_data(as_text=True)
+
+def test_settlements_page_and_admin_guide(client):
+    login(client)
+    settlement=client.get("/operations/settlements")
+    assert settlement.status_code==200
+    body=settlement.get_data(as_text=True)
+    assert "إدارة العهد وإخلاء العهدة" in body
+    assert "حساب العهدة" in body
+    assert body.count("دليل الإدارة") >= 1
