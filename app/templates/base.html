@@ -45,7 +45,7 @@
 
     {% if can("collector.post") or can("collector.settle") %}
     <details class="nav-tree" {% if request.path.startswith('/collector') or request.path.startswith('/operations/shifts') or request.path.startswith('/operations/settlements') %}open{% endif %}>
-      <summary><i class="bi bi-sign-turn-right-fill"></i><span>البوابة والتحصيل</span><b class="nav-count">3</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
+      <summary><i class="bi bi-sign-turn-right-fill"></i><span>البوابة والتحصيل</span><b class="nav-count">3</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("collector.post") %}<a class="{% if request.path.startswith('/collector') %}active{% endif %}" href="{{url_for('collector.index')}}"><i class="bi bi-receipt"></i><span>تسجيل حركة البوابة</span></a>{% endif %}
         {% if can("collector.view") %}<a class="{% if request.path.startswith('/operations/shifts') %}active{% endif %}" href="{{url_for('operations.shifts')}}"><i class="bi bi-clock-history"></i><span>الورديات</span></a>{% endif %}
@@ -56,7 +56,7 @@
 
     {% if can("agents.view") or can("clients.view") or can("vehicles.view") %}
     <details class="nav-tree" {% if request.path.startswith('/master-data/agents') or request.path.startswith('/master-data/clients') or request.path.startswith('/master-data/vehicles') %}open{% endif %}>
-      <summary><i class="bi bi-database-fill"></i><span>البيانات الأساسية</span><b class="nav-count">3</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
+      <summary><i class="bi bi-database-fill"></i><span>البيانات الأساسية</span><b class="nav-count">3</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("agents.view") %}<a class="{% if request.path.startswith('/master-data/agents') %}active{% endif %}" href="{{url_for('master_data.agents')}}"><i class="bi bi-person-badge"></i><span>الوكلاء</span></a>{% endif %}
         {% if can("clients.view") %}<a class="{% if request.path.startswith('/master-data/clients') %}active{% endif %}" href="{{url_for('master_data.clients')}}"><i class="bi bi-people"></i><span>العملاء</span></a>{% endif %}
@@ -67,7 +67,7 @@
 
     {% if can("employees.view") or can("users.manage") or can("permissions.manage") %}
     <details class="nav-tree" {% if request.path.startswith('/master-data/employees') or request.path.startswith('/admin/') %}open{% endif %}>
-      <summary><i class="bi bi-person-workspace"></i><span>الإدارة والموظفون</span><b class="nav-count">4</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
+      <summary><i class="bi bi-person-workspace"></i><span>الإدارة والموظفون</span><b class="nav-count">4</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("employees.view") %}<a class="{% if request.path.startswith('/master-data/employees') %}active{% endif %}" href="{{url_for('master_data.employees')}}"><i class="bi bi-person-workspace"></i><span>الموظفون</span></a>{% endif %}
         {% if can("users.manage") %}<a class="{% if request.path.startswith('/admin/users') %}active{% endif %}" href="{{url_for('admin.users')}}"><i class="bi bi-person-gear"></i><span>المستخدمون</span></a>{% endif %}
@@ -79,7 +79,7 @@
 
     {% if can("accounting.view") or can("vouchers.post") or can("expenses.view") %}
     <details class="nav-tree" {% if request.path.startswith('/accounting/') or request.path.startswith('/operations/vouchers') or request.path.startswith('/operations/manual-journal') or request.path.startswith('/operations/expenses') %}open{% endif %}>
-      <summary><i class="bi bi-calculator-fill"></i><span>المحاسبة والمالية</span><b class="nav-count">5</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
+      <summary><i class="bi bi-calculator-fill"></i><span>المحاسبة والمالية</span><b class="nav-count">5</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/accounts') %}active{% endif %}" href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3"></i><span>شجرة الحسابات</span></a>{% endif %}
         {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/journal') %}active{% endif %}" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i><span>دفتر القيود اليومية</span></a>{% endif %}
@@ -92,7 +92,7 @@
 
     {% if can("leases.view") or can("payroll.view") %}
     <details class="nav-tree" {% if request.path.startswith('/operations/leases') or request.path.startswith('/operations/rents') or request.path.startswith('/operations/payroll') %}open{% endif %}>
-      <summary><i class="bi bi-building-fill"></i><span>التشغيل المالي</span><b class="nav-count">3</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
+      <summary><i class="bi bi-building-fill"></i><span>التشغيل المالي</span><b class="nav-count">3</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("leases.view") %}<a class="{% if request.path.startswith('/operations/leases') %}active{% endif %}" href="{{url_for('operations.leases')}}"><i class="bi bi-building"></i><span>عقود الإيجارات</span></a>{% endif %}
         {% if can("leases.view") %}<a class="{% if request.path.startswith('/operations/rents') %}active{% endif %}" href="{{url_for('operations.rents')}}"><i class="bi bi-cash-coin"></i><span>استحقاقات الإيجارات</span></a>{% endif %}
@@ -103,7 +103,7 @@
 
     {% if can("reports.view") %}
     <details class="nav-tree" {% if request.path.startswith('/reports') %}open{% endif %}>
-      <summary><i class="bi bi-bar-chart-fill"></i><span>التقارير</span><b class="nav-count">16</b><i class="nav-chevron bi bi-chevron-left"></i></summary>
+      <summary><i class="bi bi-bar-chart-fill"></i><span>التقارير</span><b class="nav-count">16</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children nav-report-list">
         <a class="{% if request.path == '/reports/' %}active{% endif %}" href="{{url_for('reports.index')}}"><i class="bi bi-grid-1x2"></i><span>مركز التقارير</span></a>
         <a href="{{url_for('reports.daily')}}"><i class="bi bi-calendar-day"></i><span>تقرير يومي</span></a>
