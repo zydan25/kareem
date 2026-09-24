@@ -5,12 +5,13 @@ from app.extensions import db
 from app.services.accounting import create_posted_entry
 
 def login(client):
-    return client.post("/login",data={"username":"admin","password":"admin"},follow_redirects=True)
+    return client.post("/login",data={"identifier":"admin","password":"admin"},follow_redirects=True)
 
 def test_seed_and_dashboard(client):
     response=login(client)
     assert response.status_code==200
     assert "سوق الجملة" in response.get_data(as_text=True)
+    assert "مدير النظام" in response.get_data(as_text=True)
 
 def test_migration_seeded_system_accounts(app):
     with app.app_context():
@@ -34,3 +35,12 @@ def test_balanced_entry_and_reject_unbalanced(app):
 def test_login_bad_password(client):
     response=client.post("/login",data={"username":"admin","password":"wrong"},follow_redirects=True)
     assert "بيانات الدخول غير صحيحة" in response.get_data(as_text=True)
+
+
+def test_admin_guide_accessible(client):
+    response=client.post("/login",data={"identifier":"admin","password":"admin"},follow_redirects=True)
+    assert response.status_code==200
+    guide=client.get("/admin/guide")
+    assert guide.status_code==200
+    assert "دليل الإدارة" in guide.get_data(as_text=True)
+    assert "التحصيل" in guide.get_data(as_text=True)
