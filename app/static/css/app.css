@@ -595,3 +595,12 @@
  .nav-main-link,.nav-tree>summary{min-height:46px;font-size:13px}
  .nav-children a{min-height:42px;font-size:12.5px}
 }
+
+
+/* Desktop: keep the main navigation permanently visible, like a classic ERP tree menu. */
+@media(min-width:1101px){
+  .menu-toggle{display:none!important}
+  .menu-backdrop{display:none!important}
+  .app-drawer{top:0!important;transform:translateX(0)!important}
+  .content{width:calc(100% - 324px);margin-right:324px}
+}
