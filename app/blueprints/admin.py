@@ -99,11 +99,6 @@ def permissions(user_id):
 def guide():
     return render_template("admin/guide.html", role_labels=ROLE_LABELS)
 
-@bp.get("/guide")
-@permission_required("users.manage")
-def guide():
-    return render_template("admin/guide.html", role_labels=ROLE_LABELS)
-
 @bp.get("/audit")
 @permission_required("audit.view")
 def audit_logs():
