@@ -37,67 +37,76 @@
   </div>
 
   <nav class="sidebar-nav">
-    {% if can("dashboard.view") %}<a href="{{url_for('dashboard.index')}}"><i class="bi bi-house-door-fill"></i><span>الرئيسية</span></a>{% endif %}
+    {% if can("dashboard.view") %}
+      <a class="nav-main-link {% if request.path == url_for('dashboard.index') %}active{% endif %}" href="{{url_for('dashboard.index')}}"><i class="bi bi-house-door-fill"></i><span>الرئيسية</span></a>
+    {% endif %}
+
     {% if can("collector.post") or can("collector.settle") %}
-    <section class="nav-section"><h4><i class="bi bi-sign-turn-right"></i> البوابة والتحصيل</h4>
-      {% if can("collector.post") %}<a href="{{url_for('collector.index')}}">تسجيل حركة البوابة</a>{% endif %}
-      {% if can("collector.view") %}<a href="{{url_for('operations.shifts')}}">الورديات</a>{% endif %}
-      {% if can("collector.settle") and current_user.role != "collector" %}<a href="{{url_for('operations.settlements')}}">العهد وإخلاء العهدة</a>{% endif %}
-    </section>{% endif %}
+    <section class="nav-section">
+      <div class="nav-section-head"><h4><i class="bi bi-sign-turn-right-fill"></i> البوابة والتحصيل</h4><span>تشغيل</span></div>
+      {% if can("collector.post") %}<a class="{% if request.path.startswith('/collector') %}active{% endif %}" href="{{url_for('collector.index')}}"><i class="bi bi-receipt"></i><span>تسجيل حركة البوابة</span></a>{% endif %}
+      {% if can("collector.view") %}<a class="{% if request.path.startswith('/operations/shifts') %}active{% endif %}" href="{{url_for('operations.shifts')}}"><i class="bi bi-clock-history"></i><span>الورديات</span></a>{% endif %}
+      {% if can("collector.settle") and current_user.role != "collector" %}<a class="{% if request.path.startswith('/operations/settlements') %}active{% endif %} nav-important" href="{{url_for('operations.settlements')}}"><i class="bi bi-safe2-fill"></i><span>العهد وإخلاء العهدة</span></a>{% endif %}
+    </section>
+    {% endif %}
 
     {% if can("agents.view") or can("clients.view") or can("vehicles.view") %}
-    <section class="nav-section"><h4><i class="bi bi-database"></i> البيانات الأساسية</h4>
-      {% if can("agents.view") %}<a href="{{url_for('master_data.agents')}}">الوكلاء</a>{% endif %}
-      {% if can("clients.view") %}<a href="{{url_for('master_data.clients')}}">العملاء</a>{% endif %}
-      {% if can("vehicles.view") %}<a href="{{url_for('master_data.vehicles')}}">المركبات واللوحات</a>{% endif %}
-    </section>{% endif %}
+    <section class="nav-section">
+      <div class="nav-section-head"><h4><i class="bi bi-database-fill"></i> البيانات الأساسية</h4><span>بيانات</span></div>
+      {% if can("agents.view") %}<a class="{% if request.path.startswith('/master-data/agents') %}active{% endif %}" href="{{url_for('master_data.agents')}}"><i class="bi bi-person-badge"></i><span>الوكلاء</span></a>{% endif %}
+      {% if can("clients.view") %}<a class="{% if request.path.startswith('/master-data/clients') %}active{% endif %}" href="{{url_for('master_data.clients')}}"><i class="bi bi-people"></i><span>العملاء</span></a>{% endif %}
+      {% if can("vehicles.view") %}<a class="{% if request.path.startswith('/master-data/vehicles') %}active{% endif %}" href="{{url_for('master_data.vehicles')}}"><i class="bi bi-truck"></i><span>المركبات واللوحات</span></a>{% endif %}
+    </section>
+    {% endif %}
 
     {% if can("employees.view") or can("users.manage") or can("permissions.manage") %}
-    <section class="nav-section"><h4><i class="bi bi-person-workspace"></i> شؤون الموظفين</h4>
-      {% if can("employees.view") %}<a href="{{url_for('master_data.employees')}}">الموظفون</a>{% endif %}
-      {% if can("users.manage") %}<a href="{{url_for('admin.users')}}">المستخدمون</a>{% endif %}
-      {% if can("users.manage") %}<a href="{{url_for('admin.guide')}}">دليل الإدارة</a>{% endif %}
-      {% if can("audit.view") %}<a href="{{url_for('admin.audit_logs')}}">سجل التدقيق</a>{% endif %}
-    </section>{% endif %}
+    <section class="nav-section">
+      <div class="nav-section-head"><h4><i class="bi bi-person-workspace"></i> الإدارة والموظفون</h4><span>إدارة</span></div>
+      {% if can("employees.view") %}<a class="{% if request.path.startswith('/master-data/employees') %}active{% endif %}" href="{{url_for('master_data.employees')}}"><i class="bi bi-person-workspace"></i><span>الموظفون</span></a>{% endif %}
+      {% if can("users.manage") %}<a class="{% if request.path.startswith('/admin/users') %}active{% endif %}" href="{{url_for('admin.users')}}"><i class="bi bi-person-gear"></i><span>المستخدمون</span></a>{% endif %}
+      {% if can("users.manage") %}<a class="nav-guide-link {% if request.path.startswith('/admin/guide') %}active{% endif %}" href="{{url_for('admin.guide')}}"><i class="bi bi-book-half"></i><span>دليل الإدارة</span><b>مهم</b></a>{% endif %}
+      {% if can("audit.view") %}<a class="{% if request.path.startswith('/admin/audit') %}active{% endif %}" href="{{url_for('admin.audit_logs')}}"><i class="bi bi-fingerprint"></i><span>سجل التدقيق</span></a>{% endif %}
+    </section>
+    {% endif %}
 
     {% if can("accounting.view") or can("vouchers.post") or can("expenses.view") %}
-    <section class="nav-section"><h4><i class="bi bi-calculator"></i> المحاسبة والمالية</h4>
-      {% if can("accounting.view") %}<a href="{{url_for('accounting.accounts')}}">شجرة الحسابات</a>{% endif %}
-      {% if can("accounting.view") %}<a href="{{url_for('accounting.journal')}}">دفتر القيود اليومية</a>{% endif %}
-      {% if can("vouchers.post") %}<a href="{{url_for('operations.vouchers')}}">السندات</a>{% endif %}
-      {% if can("accounting.post") %}<a href="{{url_for('operations.manual_journal')}}">القيد اليدوي</a>{% endif %}
-      {% if can("expenses.view") %}<a href="{{url_for('operations.expenses')}}">المصروفات</a>{% endif %}
-    </section>{% endif %}
+    <section class="nav-section">
+      <div class="nav-section-head"><h4><i class="bi bi-calculator-fill"></i> المحاسبة والمالية</h4><span>ماليات</span></div>
+      {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/accounts') %}active{% endif %}" href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3"></i><span>شجرة الحسابات</span></a>{% endif %}
+      {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/journal') %}active{% endif %}" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i><span>دفتر القيود اليومية</span></a>{% endif %}
+      {% if can("vouchers.post") %}<a class="{% if request.path.startswith('/operations/vouchers') %}active{% endif %}" href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt-cutoff"></i><span>السندات</span></a>{% endif %}
+      {% if can("accounting.post") %}<a class="{% if request.path.startswith('/operations/manual-journal') %}active{% endif %}" href="{{url_for('operations.manual_journal')}}"><i class="bi bi-pencil-square"></i><span>القيد اليدوي</span></a>{% endif %}
+      {% if can("expenses.view") %}<a class="{% if request.path.startswith('/operations/expenses') %}active{% endif %}" href="{{url_for('operations.expenses')}}"><i class="bi bi-wallet2"></i><span>المصروفات</span></a>{% endif %}
+    </section>
+    {% endif %}
 
     {% if can("leases.view") or can("payroll.view") %}
-    <section class="nav-section"><h4><i class="bi bi-wallet2"></i> المالية التشغيلية</h4>
-      {% if can("leases.view") %}<a href="{{url_for('operations.leases')}}">عقود الإيجارات</a>{% endif %}
-      {% if can("leases.view") %}<a href="{{url_for('operations.rents')}}">استحقاقات الإيجارات</a>{% endif %}
-      {% if can("payroll.view") %}<a href="{{url_for('operations.payroll')}}">الرواتب</a>{% endif %}
-    </section>{% endif %}
+    <section class="nav-section">
+      <div class="nav-section-head"><h4><i class="bi bi-building-fill"></i> التشغيل المالي</h4><span>تشغيل</span></div>
+      {% if can("leases.view") %}<a class="{% if request.path.startswith('/operations/leases') %}active{% endif %}" href="{{url_for('operations.leases')}}"><i class="bi bi-building"></i><span>عقود الإيجارات</span></a>{% endif %}
+      {% if can("leases.view") %}<a class="{% if request.path.startswith('/operations/rents') %}active{% endif %}" href="{{url_for('operations.rents')}}"><i class="bi bi-cash-coin"></i><span>استحقاقات الإيجارات</span></a>{% endif %}
+      {% if can("payroll.view") %}<a class="{% if request.path.startswith('/operations/payroll') %}active{% endif %}" href="{{url_for('operations.payroll')}}"><i class="bi bi-wallet-fill"></i><span>الرواتب</span></a>{% endif %}
+    </section>
+    {% endif %}
 
     {% if can("reports.view") %}
-    <section class="nav-section"><h4><i class="bi bi-bar-chart-line"></i> التقارير</h4>
-      <a href="{{url_for('reports.index')}}">مركز التقارير</a>
-      <a href="{{url_for('reports.daily')}}">تقرير يومي</a>
-      <a href="{{url_for('reports.weekly')}}">تقرير أسبوعي</a>
-      <a href="{{url_for('reports.monthly')}}">تقرير شهري</a>
-      <a href="{{url_for('reports.period')}}">تقرير الفترة</a>
-      <a href="{{url_for('reports.gate')}}">تقرير البوابة</a>
-      <a href="{{url_for('reports.collectors')}}">تقرير المتحصلين</a>
-      <a href="{{url_for('reports.clients_report')}}">تقرير العملاء</a>
-      <a href="{{url_for('reports.vehicles_report')}}">دخول وخروج المركبات</a>
-      <a href="{{url_for('reports.custody')}}">تقرير العهد</a>
-      <a href="{{url_for('reports.employees_report')}}">تقرير الموظفين</a>
-      <a href="{{url_for('reports.expenses_report')}}">تقرير المصروفات</a>
-      <a href="{{url_for('reports.accounts_report')}}">ملخص الحسابات</a>
-      <a href="{{url_for('reports.general_ledger')}}">دفتر الأستاذ</a>
-      <a href="{{url_for('reports.income_expenses')}}">الإيرادات والمصروفات</a>
-      <a href="{{url_for('reports.trial_balance')}}">ميزان المراجعة</a>
-    </section>{% endif %}
+    <section class="nav-section">
+      <div class="nav-section-head"><h4><i class="bi bi-bar-chart-fill"></i> التقارير</h4><span>رقابة</span></div>
+      <a class="{% if request.path.startswith('/reports') %}active{% endif %}" href="{{url_for('reports.index')}}"><i class="bi bi-grid-1x2"></i><span>مركز التقارير</span></a>
+      <a href="{{url_for('reports.gate')}}"><i class="bi bi-signpost-2"></i><span>تقرير البوابة</span></a>
+      <a href="{{url_for('reports.collectors')}}"><i class="bi bi-person-lines-fill"></i><span>تقرير المتحصلين</span></a>
+      <a href="{{url_for('reports.custody')}}"><i class="bi bi-safe2"></i><span>تقرير العهد</span></a>
+      <a href="{{url_for('reports.period')}}"><i class="bi bi-calendar3"></i><span>تقرير الفترة</span></a>
+      <a href="{{url_for('reports.accounts_report')}}"><i class="bi bi-pie-chart"></i><span>ملخص الحسابات</span></a>
+      <a href="{{url_for('reports.general_ledger')}}"><i class="bi bi-journal-bookmark"></i><span>دفتر الأستاذ</span></a>
+      <a href="{{url_for('reports.trial_balance')}}"><i class="bi bi-check2-square"></i><span>ميزان المراجعة</span></a>
+    </section>
+    {% endif %}
 
-    {% if can("settings.view") %}<a class="nav-standalone" href="{{url_for('settings.index')}}"><i class="bi bi-sliders2"></i><span>الإعدادات</span></a>{% endif %}
-    <a class="nav-standalone" href="{{url_for('auth.account')}}"><i class="bi bi-person-gear"></i><span>حسابي</span></a>
+    {% if can("settings.view") %}
+      <a class="nav-main-link {% if request.path.startswith('/settings') %}active{% endif %}" href="{{url_for('settings.index')}}"><i class="bi bi-sliders2"></i><span>الإعدادات</span></a>
+    {% endif %}
+    <a class="nav-main-link" href="{{url_for('auth.account')}}"><i class="bi bi-person-circle"></i><span>حسابي</span></a>
   </nav>
 </aside>
 
