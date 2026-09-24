@@ -59,8 +59,16 @@ def post_expense(*, amount, expense_account, cash_account, description, user_id,
 def create_settlement(*, source_account, target_account, amount, requested_by_id, shift_id=None, description="إخلاء عهدة"):
     amount=D(amount)
     if amount<=0: raise ValueError("قيمة الإخلاء يجب أن تكون أكبر من صفر")
-    if source_account.account_type!="asset" or target_account.account_type!="asset": raise ValueError("الإخلاء متاح لحسابات الأصول فقط")
-    if source_account.id==target_account.id: raise ValueError("حساب المصدر والهدف يجب أن يختلفا")
+    custody_root=Account.query.filter_by(system_key="collector_root").one_or_none()
+    cash_account=get_system_account("main_cash")
+    if source_account.account_type!="asset" or target_account.account_type!="asset":
+        raise ValueError("إخلاء العهدة متاح لحسابات الأصول فقط")
+    if not custody_root or source_account.parent_id!=custody_root.id:
+        raise ValueError("حساب المصدر يجب أن يكون عهدة متحصل تابعة لشجرة العهد")
+    if target_account.id!=cash_account.id:
+        raise ValueError("هدف إخلاء العهدة يجب أن يكون الصندوق الرئيسي")
+    if source_account.id==target_account.id:
+        raise ValueError("حساب المصدر والهدف يجب أن يختلفا")
     available=account_balance(source_account.id)
     if available<amount: raise ValueError(f"الرصيد المتاح في العهدة {available} أقل من مبلغ الإخلاء {amount}")
     settlement=Settlement(number=next_number("SET"),settlement_date=date.today(),source_account_id=source_account.id,
