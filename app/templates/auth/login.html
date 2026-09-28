@@ -9,7 +9,7 @@
 </div>
     {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="alert alert-{{category}}">{{message}}</div>{% endfor %}{% endwith %}
     <form method="post" id="login-form" class="vstack gap-3">
-      <div><label class="form-label">رقم الهاتف</label><input id="login-identifier" name="identifier" class="form-control form-control-lg" type="tel" inputmode="tel" autocomplete="tel" required placeholder="رقم الموظف"><small class="text-muted">يمكن استخدام اسم المستخدم القديم للحسابات السابقة.</small></div>
+      <div><label class="form-label">رقم الهاتف</label><input id="login-identifier" name="identifier" class="form-control form-control-lg" type="tel" inputmode="tel" autocomplete="username" dir="ltr" required placeholder="775660418"><small class="text-muted">اكتب رقم الهاتف بدون مسافات. يمكن استخدام اسم المستخدم القديم للحسابات السابقة.</small></div>
       <div><label class="form-label">كلمة المرور</label><input name="password" class="form-control form-control-lg" type="password" autocomplete="current-password" required></div>
       <label class="form-check"><input class="form-check-input" type="checkbox" name="remember" value="1" checked><span class="form-check-label">حفظ جلسة الدخول على هذا الجهاز</span></label>
       <button class="btn btn-primary btn-lg w-100">دخول</button>
@@ -21,9 +21,27 @@
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
  const input=document.getElementById('login-identifier'), key='kareem_login_phone';
- try{if(input&&!input.value)input.value=localStorage.getItem(key)||'';}catch(e){}
+ const cleanPhone=value=>{
+   value=String(value||'');
+   let out='';
+   for(const ch of value){
+     if(/[0-9]/.test(ch)) out+=ch;
+     else if('٠١٢٣٤٥٦٧٨٩'.includes(ch)) out+=String('٠١٢٣٤٥٦٧٨٩'.indexOf(ch));
+     else if('۰۱۲۳۴۵۶۷۸۹'.includes(ch)) out+=String('۰۱۲۳۴۵۶۷۸۹'.indexOf(ch));
+     else if(ch==='+' && !out) out+=ch;
+   }
+   return out;
+ };
+ try{
+   if(input&&!input.value){
+     const saved=cleanPhone(localStorage.getItem(key)||'');
+     if(saved) input.value=saved;
+   }
+ }catch(e){}
+ input?.addEventListener('input',()=>{ input.value=cleanPhone(input.value); });
  document.getElementById('login-form')?.addEventListener('submit',()=>{
-   try{if(input?.value)localStorage.setItem(key,input.value.trim());}catch(e){}
+   if(input) input.value=cleanPhone(input.value);
+   try{if(input?.value)localStorage.setItem(key,input.value);}catch(e){}
  });
 });
 </script>
