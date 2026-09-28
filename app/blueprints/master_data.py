@@ -11,7 +11,7 @@ from ..permissions import can, permission_required
 from ..services.accounting import account_balance, create_posted_entry, get_system_account
 from ..services.audit import audit
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_payroll_account
-from ..services.phone import normalize_phone
+from ..services.phone import normalize_phone, strip_password_formatting
 from ..services.setup import ensure_employees_for_users
 
 bp=Blueprint("master_data",__name__)
@@ -62,7 +62,7 @@ def _save_employee_login(emp):
     # Employee is the source of truth for login accounts. Username is always
     # the employee phone; there is no separate "add user" workflow.
     username=normalize_phone(emp.phone)
-    password=request.form.get("login_password","")
+    password=strip_password_formatting(request.form.get("login_password",""))
     role=request.form.get("login_role") or Role.COLLECTOR.value
     if not username:
         raise ValueError("رقم الهاتف مطلوب لإنشاء حساب الموظف تلقائيًا")
