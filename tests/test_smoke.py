@@ -1,6 +1,6 @@
 from decimal import Decimal
 import pytest
-from app.models import Account, VehicleType, JournalEntry, JournalLine
+from app.models import Account, Employee, User, VehicleType, JournalEntry, JournalLine
 from app.extensions import db
 from app.services.accounting import create_posted_entry
 
@@ -33,8 +33,40 @@ def test_balanced_entry_and_reject_unbalanced(app):
                 lines=[{"account":debit,"debit":Decimal("100")},{"account":credit,"credit":Decimal("90")}],prefix="BAD")
 
 def test_login_bad_password(client):
-    response=client.post("/login",data={"username":"admin","password":"wrong"},follow_redirects=True)
+    response=client.post("/login",data={"identifier":"admin","password":"wrong"},follow_redirects=True)
     assert "بيانات الدخول غير صحيحة" in response.get_data(as_text=True)
+
+def test_employee_created_account_can_login(app):
+    admin_client=app.test_client()
+    login(admin_client)
+    response=admin_client.post("/employees",data={
+        "full_name":"موظف اختبار",
+        "phone":"٧٧٧ ١٢٣ ٤٥٦",
+        "job_title":"متحصل",
+        "monthly_salary":"0",
+        "weekly_hours":"48",
+        "hire_date":"2026-09-28",
+        "login_password":"pass1234",
+        "login_role":"collector",
+    },follow_redirects=False)
+    assert response.status_code==302
+
+    with app.app_context():
+        employee=Employee.query.filter_by(full_name="موظف اختبار").one()
+        user=User.query.filter_by(employee_id=employee.id).one()
+        assert user.username=="777123456"
+        assert user.phone=="777123456"
+        assert employee.user.id==user.id
+        assert user.check_password("pass1234")
+
+    employee_client=app.test_client()
+    response=employee_client.post("/login",data={
+        "identifier":"777123456",
+        "password":"pass1234",
+    },follow_redirects=True)
+    assert response.status_code==200
+    assert "بيانات الدخول غير صحيحة" not in response.get_data(as_text=True)
+    assert "موظف اختبار" in response.get_data(as_text=True)
 
 
 def test_admin_guide_accessible(client):
