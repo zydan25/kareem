@@ -65,13 +65,39 @@ def test_employee_created_account_can_login(app):
         assert user.check_password("pass1234")
 
     employee_client=app.test_client()
-    response=employee_client.post("/login",data={
+    employee_response=employee_client.post("/login",data={
         "identifier":"777123456",
         "password":"pass1234",
-    },follow_redirects=True)
-    assert response.status_code==200
-    assert "بيانات الدخول غير صحيحة" not in response.get_data(as_text=True)
-    assert "موظف اختبار" in response.get_data(as_text=True)
+    },follow_redirects=False)
+    assert employee_response.status_code==302
+    assert employee_response.headers["Location"].endswith("/collector/")
+
+
+def test_employee_login_accepts_hidden_bidi_marks_in_phone_and_password(app):
+    from app.models import Role
+    client=app.test_client()
+    raw_phone="\u200f\u202a775 660 418\u202c\u200f"
+    with app.app_context():
+        employee=Employee(
+            code="EMP-UNICODE", full_name="موظف اختبار رموز", phone=raw_phone,
+            job_title="متحصل", active=True
+        )
+        db.session.add(employee)
+        db.session.flush()
+        user=User(
+            username=raw_phone, full_name=employee.full_name, phone=raw_phone,
+            role=Role.COLLECTOR.value, active=True, employee_id=employee.id
+        )
+        user.set_password("775660418")
+        db.session.add(user)
+        db.session.commit()
+
+    response=client.post("/login",data={
+        "identifier":"775660418",
+        "password":"\u200f775660418\u202c",
+    },follow_redirects=False)
+    assert response.status_code==302
+    assert response.headers["Location"].endswith("/collector/")
 
 
 def test_admin_guide_accessible(client):
