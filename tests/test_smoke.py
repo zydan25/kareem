@@ -36,6 +36,11 @@ def test_login_bad_password(client):
     response=client.post("/login",data={"identifier":"admin","password":"wrong"},follow_redirects=True)
     assert "بيانات الدخول غير صحيحة" in response.get_data(as_text=True)
 
+def test_employee_phone_normalization_handles_hidden_unicode(client):
+    response=client.post("/login",data={"identifier":"775632256","password":"wrong"},follow_redirects=True)
+    # The identifier must at least reach password validation; hidden Unicode
+    # formatting in stored employee numbers must not cause a false user miss.
+    assert "رقم الهاتف/اسم المستخدم" in response.get_data(as_text=True)
 def test_employee_created_account_can_login(app):
     admin_client=app.test_client()
     login(admin_client)
