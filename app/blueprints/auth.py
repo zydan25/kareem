@@ -6,7 +6,7 @@ from ..extensions import db
 from ..models import User
 from ..permissions import permission_required
 from ..services.audit import audit
-from ..services.phone import normalize_phone
+from ..services.phone import normalize_phone, strip_password_formatting
 
 bp=Blueprint("auth",__name__)
 
@@ -17,7 +17,7 @@ def login():
     if request.method=="POST":
         raw_identifier=request.form.get("identifier","").strip()
         identifier=normalize_phone(raw_identifier) or raw_identifier
-        password=request.form.get("password","")
+        password=strip_password_formatting(request.form.get("password",""))
         user=(User.query.filter(
             User.active.is_(True),
             or_(
