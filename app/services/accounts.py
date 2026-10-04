@@ -44,9 +44,18 @@ def ensure_employee_account(employee):
     if employee.account_id:
         return employee.account
     db.session.flush()
-    account=ensure_child_account(parent_key="collector_root",code=f"102E{employee.id:06d}",
-        name=f"عهدة موظف: {employee.full_name}",account_type="asset")
+    account=ensure_child_account(parent_key="employee_accounts_root",code=f"105E{employee.id:06d}",
+        name=f"حساب موظف: {employee.full_name}",account_type="asset")
     employee.account_id=account.id
+    return account
+
+def ensure_employee_cashbox(employee):
+    if employee.cashbox_account_id:
+        return employee.cashbox_account
+    db.session.flush()
+    account=ensure_child_account(parent_key="collector_root",code=f"102E{employee.id:06d}",
+        name=f"صندوق موظف: {employee.full_name}",account_type="asset")
+    employee.cashbox_account_id=account.id
     return account
 
 def ensure_employee_payroll_account(employee):
