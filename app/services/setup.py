@@ -98,7 +98,11 @@ def seed():
         row=Setting.query.filter_by(key=key).first()
         if not row:
             db.session.add(Setting(key=key,value=value,value_type=value_type,description=description))
-    for name in ["خصوصي","نقل","دينة","قلاب","ناقلة","شاص","باص","سوزوكي","صهريج","معدات","أخرى"]:
-        if not db.session.query(VehicleType).filter_by(name=name).first():
+    for name in ["خصوصي","نقل","دينة","قلاب","ناقلة","شاص","باص","سوزوكي","صهريج","معدات","أخرى","افتراضي"]:
+        existing_type=db.session.query(VehicleType).filter_by(name=name).first()
+        if not existing_type:
             db.session.add(VehicleType(name=name,is_system=True))
+        elif name=="افتراضي":
+            existing_type.active=True
+            existing_type.is_system=True
     db.session.commit()
