@@ -72,8 +72,8 @@ def create_app(config_class=Config):
             brand_color="#0b6e4f"
         font_size=_read_setting("font_size","100")
         if font_size not in {"100","110","120","130"}: font_size="100"
-        font_size=_read_setting("font_size","100")
-        if font_size not in {"100","110","120","130"}: font_size="100"
+        collector_font_size=_read_setting("collector_font_size","110")
+        if collector_font_size not in {"100","110","120","130","140"}: collector_font_size="110"
         return {
             "app_name":organization_name or app.config["PWA_NAME"],
             "project_name":project_name or "إدارة السوق والمحاسبة",
@@ -84,7 +84,7 @@ def create_app(config_class=Config):
             "brand_icon_enabled":_read_setting("brand_icon_enabled","1") == "1",
             "brand_version":_read_setting("brand_version","1"),
             "ui_font_scale":str(float(font_size)/100),
-            "ui_font_scale":str(float(font_size)/100),
+            "collector_font_scale":str(float(collector_font_size)/100),
             "can":can,
             "role_labels": ROLE_LABELS,
         }
