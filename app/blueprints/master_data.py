@@ -11,6 +11,7 @@ from ..permissions import can, permission_required
 from ..services.accounting import account_balance, create_posted_entry, get_system_account
 from ..services.audit import audit
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_cashbox, ensure_employee_payroll_account
+from ..services.phone import normalize_phone, strip_password_formatting
 from ..services.setup import ensure_employees_for_users
 
 bp=Blueprint("master_data",__name__)
@@ -60,42 +61,48 @@ def _save_party_identity(obj, prefix):
 def _save_employee_login(emp):
     # Employee is the source of truth for login accounts. Username is always
     # the employee phone; there is no separate "add user" workflow.
-    username=(emp.phone or "").strip()
-    password=request.form.get("login_password","")
+    username=normalize_phone(emp.phone)
+    password=strip_password_formatting(request.form.get("login_password",""))
     role=request.form.get("login_role") or Role.COLLECTOR.value
     if not username:
         raise ValueError("رقم الهاتف مطلوب لإنشاء حساب الموظف تلقائيًا")
-    if not emp.phone:
-        raise ValueError("أدخل رقم هاتف الموظف قبل إنشاء حساب الدخول")
     if not password and not emp.user:
         raise ValueError("عند إنشاء حساب دخول للموظف يجب إدخال كلمة المرور")
+    emp.phone=username
     existing=User.query.filter(User.username==username).first()
+    if not existing and username:
+        for candidate in User.query.filter(User.active.is_(True)).all():
+            if normalize_phone(candidate.username)==username or normalize_phone(candidate.phone)==username:
+                existing=candidate
+                break
     if existing and (not emp.user or existing.id!=emp.user.id):
-        raise ValueError("اسم المستخدم مستخدم مسبقًا")
-    other_phone=User.query.filter(User.phone==emp.phone,User.id!=(emp.user.id if emp.user else -1)).first()
+        raise ValueError("رقم هاتف الموظف مستخدم لحساب آخر")
+    other_phone=None
+    if username:
+        for candidate in User.query.filter(User.phone.isnot(None),User.id!=(emp.user.id if emp.user else -1)).all():
+            if normalize_phone(candidate.phone)==username:
+                other_phone=candidate
+                break
     if other_phone:
         raise ValueError("رقم هاتف الموظف مرتبط بحساب مستخدم آخر")
     user=emp.user
     if user:
         user.username=username
         user.full_name=emp.full_name
-        user.phone=emp.phone
+        user.phone=username
         user.role=role
         user.active=emp.active
         if password:
             user.set_password(password)
         audit("update","user",user.id,user.username)
     else:
-        user=User(username=username,full_name=emp.full_name,phone=emp.phone,role=role,active=emp.active,employee_id=emp.id)
+        user=User(username=username,full_name=emp.full_name,phone=username,role=role,active=emp.active,employee_id=emp.id)
         user.set_password(password)
         db.session.add(user)
         db.session.flush()
         audit("create","user",user.id,user.username)
-    return user
+    emp.user=user
 
-def _sync_work_days(emp):
-    days=sorted({str(s.weekday) for s in emp.schedules if s.active})
-    emp.work_days=",".join(days)
 
 @bp.route("/agents",methods=["GET","POST"])
 @permission_required("agents.view")
