@@ -1,88 +1,140 @@
 {% extends 'base.html' %}
-{% block title %}شؤون الموظفين - {{app_name}}{% endblock %}
+{% block title %}الموظفون - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>شؤون الموظفين</h1><p>ملفات الموظفين والحسابات والرواتب والجداول والصلاحيات.</p></div>{% if can_manage %}<div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary" data-toggle-panel="employee-fine-panel"><i class="bi bi-exclamation-triangle"></i> تسجيل مخالفة</button><button class="btn btn-primary" data-toggle-panel="add-employee"><i class="bi bi-plus-lg"></i> إضافة موظف</button></div>{% endif %}</div>
-<div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الوظيفة"></div><button class="btn btn-outline-primary">بحث</button></form></div>
-{% if can_manage %}<div id="add-employee" class="card-soft add-panel"><form method="post" enctype="multipart/form-data" class="row g-3">
-<div class="col-12"><div class="form-section-title">بيانات الموظف <span>المعرف والصورة اختياريان · الكود ينشأ تلقائيًا</span></div></div>
-<div class="col-12 col-lg-4"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control form-control-lg" required></div>
-<div class="col-6 col-lg-2"><label class="form-label">رقم الهاتف</label><input name="phone" class="form-control" inputmode="tel" required></div>
-<div class="col-6 col-lg-2"><label class="form-label">رقم البطاقة</label><input name="identity_number" class="form-control"></div>
-<div class="col-6 col-lg-2"><label class="form-label">النوع</label><select name="gender" class="form-select"><option value="">غير محدد</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
-<div class="col-6 col-lg-2"><label class="form-label">نوع العمل</label><select name="employment_type" class="form-select"><option>دوام كامل</option><option>دوام جزئي</option><option>متعاون</option><option>مؤقت</option></select></div>
-<div class="col-6 col-lg-3"><label class="form-label">الوظيفة</label><input name="job_title" class="form-control" value="موظف"></div>
-<div class="col-6 col-lg-3"><label class="form-label">الراتب الشهري</label><input name="monthly_salary" class="form-control" inputmode="decimal" value="0"></div>
-<div class="col-6 col-lg-2"><label class="form-label">ساعات أسبوعية</label><input name="weekly_hours" class="form-control" value="48" inputmode="decimal"></div>
-<div class="col-6 col-lg-4"><label class="form-label">تاريخ التوظيف</label><input type="date" name="hire_date" class="form-control"></div>
-<div class="col-12 col-lg-4"><label class="form-label">صورة البطاقة <small>(اختياري)</small></label><input type="file" name="identity_image" class="form-control" accept="image/png,image/jpeg,image/webp"></div>
-<div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات الموظف"></textarea></div>
-<div class="col-12"><div class="form-section-title">حساب الدخول والصلاحيات <span>ينشأ تلقائيًا من الموظف — اسم المستخدم هو الهاتف</span></div></div>
-<div class="col-12 col-lg-5"><label class="form-label">كلمة المرور</label><input name="login_password" type="password" class="form-control" autocomplete="new-password" required placeholder="كلمة مرور الدخول"></div>
-<div class="col-12 col-lg-5"><label class="form-label">نوع الموظف / الصلاحيات</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}" {% if r=='collector' %}selected{% endif %}>{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
-<div class="col-12"><button class="btn btn-primary btn-lg">حفظ الموظف</button></div>
-</form></div>{% endif %}
+<style>
+.employee-page{max-width:1100px;margin:auto}
+.employee-head h1{font-size:1.3rem;margin:.1rem 0}
+.employee-head p{display:none}
+.employee-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px}
+.employee-toolbar .form-control{min-height:39px;border-radius:10px;font-size:10.5px}
+.employee-toolbar .btn{min-height:39px;border-radius:10px;font-size:10px;font-weight:900}
+.employee-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.employee-card{border:1px solid rgba(37,65,58,.10);border-radius:13px;background:#fff;padding:9px;display:flex;flex-direction:column;gap:7px;box-shadow:0 3px 12px rgba(22,43,37,.035)}
+.employee-card.inactive{opacity:.68}
+.employee-card-head{display:flex;align-items:center;gap:8px}
+.employee-avatar{width:38px;height:38px;flex:0 0 38px;border-radius:11px;overflow:hidden;background:#edf5f2;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:950}
+.employee-avatar img{width:100%;height:100%;object-fit:cover}
+.employee-card-name{min-width:0;display:flex;flex-direction:column}
+.employee-card-name strong{font-size:11.5px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.employee-card-name small{font-size:8px;color:#8b9693;margin-top:2px}
+.employee-status{margin-right:auto;font-size:7.5px;padding:3px 6px;border-radius:7px;background:#edf9f1;color:#28764f;font-weight:900}
+.employee-status.off{background:#fff0ef;color:#ac5049}
+.employee-info{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.employee-info-item{padding:6px 7px;background:#f8faf9;border-radius:8px;min-width:0}
+.employee-info-item span{display:block;font-size:7px;color:#8a9591}
+.employee-info-item strong{display:block;font-size:8.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.employee-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.employee-actions .btn{min-height:29px;padding:4px;border-radius:8px;font-size:8px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:3px}
+.employee-actions form{margin:0}
+.employee-section{margin-top:8px}
+.employee-add-panel{display:none}
+.employee-add-panel.is-open{display:block}
+.employee-add-panel .form-control,.employee-add-panel .form-select{min-height:38px;border-radius:9px;font-size:10px}
+.employee-add-panel .form-label{font-size:9px;font-weight:900}
+.employee-add-panel .form-section-title{font-size:10px}
+@media(max-width:900px){.employee-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){
+ .employee-page{padding-bottom:10px}
+ .employee-head h1{font-size:1.15rem}
+ .employee-head .d-flex{gap:4px!important}
+ .employee-head .btn{font-size:8px;padding:6px 7px;border-radius:8px}
+ .employee-toolbar{grid-template-columns:1fr auto}
+ .employee-toolbar .btn{padding:6px 9px}
+ .employee-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .employee-card{padding:7px;border-radius:11px;gap:5px}
+ .employee-avatar{width:31px;height:31px;flex-basis:31px;border-radius:9px;font-size:12px}
+ .employee-card-name strong{font-size:9.5px}
+ .employee-card-name small{font-size:7px}
+ .employee-info-item{padding:5px}
+ .employee-info-item span{font-size:6.5px}
+ .employee-info-item strong{font-size:7.5px}
+ .employee-actions .btn{min-height:26px;font-size:7px}
+ .employee-actions .btn span{display:none}
+}
+</style>
+
+<div class="employee-page">
+<div class="page-head employee-head">
+  <div><span class="eyebrow">الموارد البشرية</span><h1>الموظفون</h1></div>
+  {% if can_manage %}<div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary" data-toggle-panel="employee-fine-panel"><i class="bi bi-exclamation-triangle"></i> مخالفة</button><button class="btn btn-primary" data-toggle-panel="add-employee"><i class="bi bi-plus-lg"></i> موظف</button></div>{% endif %}
+</div>
+
+<div class="employee-toolbar">
+<form method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="بحث بالاسم أو الهاتف أو الوظيفة"></div></form>
+<a class="btn btn-light" href="{{url_for('master_data.employees')}}">مسح</a>
+</div>
+
 {% if can_manage %}
-<div id="employee-fine-panel" class="card-soft mb-3 add-panel fine-panel">
-  <div class="section-title"><div><h3><i class="bi bi-exclamation-triangle"></i> إضافة غرامة / مخالفة</h3><small class="text-muted">تُسجل كقيد مالي على حساب الموظف مقابل إيراد الغرامات والمخالفات.</small></div></div>
-  <form method="post" action="{{url_for('master_data.add_employee_fine')}}" class="row g-3" id="employee-fine-form">
-    <input type="hidden" name="employee_id" id="fine_employee_id">
-    <input type="hidden" name="return_q" value="{{q}}">
-    <div class="col-12 col-lg-7">
-      <label class="form-label">ابحث عن الموظف</label>
-      <input id="fine_employee_search" class="form-control form-control-lg" autocomplete="off" placeholder="اكتب اسم الموظف أو رقم الهاتف">
-      <div id="fine_employee_selected" class="fine-selected" hidden></div>
-      <div id="fine_employee_results" class="fine-employee-results">
-        {% for e in fine_employees %}
-        <button type="button" class="fine-employee-option" data-id="{{e.id}}" data-name="{{e.full_name|e}}" data-phone="{{e.phone or ''}}">
-          <span><strong>{{e.full_name}}</strong><small>{{e.phone or 'بدون هاتف'}} · {{e.job_title or 'موظف'}}</small></span><i class="bi bi-person-check"></i>
-        </button>
-        {% endfor %}
-      </div>
-    </div>
-    <div class="col-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required placeholder="0.00"></div>
-    <div class="col-6 col-lg-3"><label class="form-label">التاريخ</label><input type="date" name="fine_date" class="form-control form-control-lg" value="{{today.isoformat()}}" required></div>
-    <div class="col-12"><label class="form-label">البيان</label><input name="reason" class="form-control" required placeholder="مثال: مخالفة تعليمات العمل"></div>
-    <div class="col-12"><button class="btn btn-primary btn-lg" id="fine-submit" disabled><i class="bi bi-check2-circle"></i> تسجيل الغرامة وترحيل القيد</button></div>
-  </form>
+<div id="add-employee" class="card-soft add-panel employee-add-panel">
+<form method="post" enctype="multipart/form-data" class="row g-2">
+<div class="col-12"><div class="form-section-title">بيانات الموظف <span>الكود والملف المالي ينشآن تلقائيًا</span></div></div>
+<div class="col-12 col-md-6"><label class="form-label">الاسم</label><input name="full_name" class="form-control" required></div>
+<div class="col-6 col-md-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel" required></div>
+<div class="col-6 col-md-3"><label class="form-label">الوظيفة</label><input name="job_title" class="form-control" value="موظف"></div>
+<div class="col-6 col-md-3"><label class="form-label">الراتب</label><input name="monthly_salary" class="form-control" inputmode="decimal" value="0"></div>
+<div class="col-6 col-md-3"><label class="form-label">نوع العمل</label><select name="employment_type" class="form-select"><option>دوام كامل</option><option>دوام جزئي</option><option>متعاون</option><option>مؤقت</option></select></div>
+<div class="col-6 col-md-3"><label class="form-label">النوع</label><select name="gender" class="form-select"><option value="">غير محدد</option><option>ذكر</option><option>أنثى</option></select></div>
+<div class="col-6 col-md-3"><label class="form-label">تاريخ التوظيف</label><input type="date" name="hire_date" class="form-control"></div>
+<div class="col-6 col-md-3"><label class="form-label">ساعات أسبوعية</label><input name="weekly_hours" class="form-control" value="48" inputmode="decimal"></div>
+<div class="col-6 col-md-3"><label class="form-label">رقم البطاقة</label><input name="identity_number" class="form-control"></div>
+<div class="col-12 col-md-6"><label class="form-label">صورة البطاقة <small>(اختياري)</small></label><input type="file" name="identity_image" class="form-control" accept="image/png,image/jpeg,image/webp"></div>
+<div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظة مختصرة"></textarea></div>
+<div class="col-12"><div class="form-section-title">حساب الدخول</div></div>
+<div class="col-12 col-md-6"><label class="form-label">كلمة المرور</label><input name="login_password" type="password" class="form-control" autocomplete="new-password" required></div>
+<div class="col-12 col-md-6"><label class="form-label">الدور</label><select name="login_role" class="form-select">{% for r in roles %}<option value="{{r}}" {% if r=='collector' %}selected{% endif %}>{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
+<div class="col-12"><button class="btn btn-primary" type="submit"><i class="bi bi-person-plus"></i> حفظ</button></div>
+</form>
+</div>
+
+<div id="employee-fine-panel" class="card-soft add-panel employee-add-panel">
+<div class="section-title"><div><h3>مخالفة</h3><small class="text-muted">تُرحّل تلقائيًا إلى حساب الموظف.</small></div></div>
+<form method="post" action="{{url_for('master_data.add_employee_fine')}}" class="row g-2" id="employee-fine-form">
+<input type="hidden" name="employee_id" id="fine_employee_id"><input type="hidden" name="return_q" value="{{q}}">
+<div class="col-12 col-md-7"><label class="form-label">الموظف</label><input id="fine_employee_search" class="form-control" autocomplete="off" placeholder="اسم أو هاتف"><div id="fine_employee_selected" class="fine-selected" hidden></div><div id="fine_employee_results" class="fine-employee-results">{% for e in fine_employees %}<button type="button" class="fine-employee-option" data-id="{{e.id}}" data-name="{{e.full_name|e}}" data-phone="{{e.phone or ''}}"><span><strong>{{e.full_name}}</strong><small>{{e.phone or 'بدون هاتف'}}</small></span><i class="bi bi-person-check"></i></button>{% endfor %}</div></div>
+<div class="col-6 col-md-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control" inputmode="decimal" required></div>
+<div class="col-6 col-md-3"><label class="form-label">التاريخ</label><input type="date" name="fine_date" class="form-control" value="{{today.isoformat()}}" required></div>
+<div class="col-12"><label class="form-label">البيان</label><input name="reason" class="form-control" required></div>
+<div class="col-12"><button class="btn btn-primary" id="fine-submit" disabled><i class="bi bi-check2"></i> حفظ المخالفة</button></div>
+</form>
 </div>
 {% endif %}
 
-<div class="card-soft"><div class="section-title"><div><h3>الموظفون</h3><small class="text-muted">{{employees|length}} موظف</small></div></div><div class="entity-list">
-{% for e in employees %}<div class="entity-row"><div class="entity-main"><div class="entity-icon employee">{% if e.identity_image %}<img src="{{url_for('master_data.employee_identity',employee_id=e.id)}}" alt="صورة البطاقة">{% else %}<i class="bi bi-person-badge"></i>{% endif %}</div><div><strong>{{e.full_name}}</strong><div class="entity-meta"><span>{{e.job_title}}</span><span>{{e.phone or 'بدون هاتف'}}</span><span>{{'{:,.0f}'.format(e.monthly_salary or 0)}} {{currency}}</span></div></div></div><div class="entity-balance">{% if e.user %}<span class="badge-soft">{{role_labels.get(e.user.role,e.user.role)}}</span>{% else %}<span class="text-muted">بدون دخول</span>{% endif %}</div><div class="more-menu"><button type="button" class="more-trigger" data-more-toggle aria-expanded="false" aria-haspopup="menu" aria-label="خيارات الموظف"><i class="bi bi-three-dots-vertical"></i></button><div class="more-pop" hidden><a href="{{url_for('master_data.employee_detail',employee_id=e.id)}}"><i class="bi bi-eye"></i> تفاصيل</a>{% if can_manage %}<a href="{{url_for('master_data.edit_employee',employee_id=e.id)}}"><i class="bi bi-pencil"></i> تعديل</a><a href="{{url_for('reports.employee_report',employee_id=e.id)}}"><i class="bi bi-bar-chart"></i> تقرير الموظف</a>{% if e.user and can("permissions.manage") %}<a href="{{url_for('admin.permissions',user_id=e.user.id)}}"><i class="bi bi-shield-check"></i> الصلاحيات</a>{% endif %}<form method="post" action="{{url_for('master_data.delete_employee',employee_id=e.id)}}" onsubmit="return confirm('سيتم إيقاف الموظف وحسابه مع حفظ السجل المالي. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}</div></div></div>
-{% else %}<div class="empty-state"><i class="bi bi-person-workspace"></i><strong>لا يوجد موظفون</strong><span>أضف أول موظف؛ حساب المدير سيظهر هنا بعد تشغيل التهيئة.</span></div>{% endfor %}
-</div></div>
+<div class="card-soft">
+<div class="section-title"><div><h3>قائمة الموظفين</h3><small class="text-muted">{{employees|length}} موظف</small></div></div>
+<div class="employee-list">
+{% for e in employees %}
+<article class="employee-card {% if not e.active %}inactive{% endif %}">
+ <div class="employee-card-head">
+  <div class="employee-avatar">{% if e.identity_image %}<img src="{{url_for('master_data.employee_identity',employee_id=e.id)}}" alt="">{% else %}<span>{{e.full_name[:1]}}</span>{% endif %}</div>
+  <div class="employee-card-name"><strong>{{e.full_name}}</strong><small>{{e.job_title or 'موظف'}} · {{e.phone or 'بدون هاتف'}}</small></div>
+  <span class="employee-status {% if not e.active %}off{% endif %}">{{'نشط' if e.active else 'موقوف'}}</span>
+ </div>
+ <div class="employee-info">
+  <div class="employee-info-item"><span>الراتب</span><strong>{{'{:,.0f}'.format(e.monthly_salary or 0)}} {{currency}}</strong></div>
+  <div class="employee-info-item"><span>الدخول</span><strong>{{role_labels.get(e.user.role,e.user.role) if e.user else 'بدون'}}</strong></div>
+ </div>
+ <div class="employee-actions">
+  <a class="btn btn-outline-primary" href="{{url_for('master_data.employee_detail',employee_id=e.id)}}" title="مشاهدة"><i class="bi bi-eye"></i><span>مشاهدة</span></a>
+  {% if can_manage %}<a class="btn btn-light" href="{{url_for('master_data.edit_employee',employee_id=e.id)}}" title="تعديل"><i class="bi bi-pencil"></i><span>تعديل</span></a><a class="btn btn-outline-primary" href="{{url_for('reports.employee_report',employee_id=e.id)}}" title="تقرير"><i class="bi bi-bar-chart"></i><span>تقرير</span></a><form method="post" action="{{url_for('master_data.delete_employee',employee_id=e.id)}}" onsubmit="return confirm('سيتم إيقاف الموظف وحسابه مع حفظ السجل المالي. متابعة؟')"><button class="btn btn-outline-danger w-100" title="حذف"><i class="bi bi-trash3"></i><span>حذف</span></button></form>{% endif %}
+ </div>
+</article>
+{% else %}<div class="empty-state" style="grid-column:1/-1">لا يوجد موظفون.</div>{% endfor %}
+</div>
+</div>
+</div>
 {% endblock %}
 {% block scripts %}
 {% if can_manage %}
 <script>
 (function(){
- const search=document.getElementById('fine_employee_search');
- const results=document.getElementById('fine_employee_results');
- const hidden=document.getElementById('fine_employee_id');
- const selected=document.getElementById('fine_employee_selected');
- const submit=document.getElementById('fine-submit');
+ const search=document.getElementById('fine_employee_search'),results=document.getElementById('fine_employee_results'),hidden=document.getElementById('fine_employee_id'),selected=document.getElementById('fine_employee_selected'),submit=document.getElementById('fine-submit');
  if(!search)return;
- function choose(btn){
-   hidden.value=btn.dataset.id;
-   search.value=btn.dataset.name||'';
-   selected.textContent='الموظف المحدد: '+(btn.dataset.name||'')+(btn.dataset.phone?' — '+btn.dataset.phone:'');
-   selected.hidden=false;
-   submit.disabled=false;
-   document.querySelectorAll('.fine-employee-option').forEach(x=>x.classList.toggle('active',x===btn));
- }
- search.addEventListener('input',()=>{
-   const q=search.value.trim().toLowerCase();
-   document.querySelectorAll('.fine-employee-option').forEach(btn=>{
-     const hay=((btn.dataset.name||'')+' '+(btn.dataset.phone||'')).toLowerCase();
-     btn.hidden=!!q && !hay.includes(q);
-   });
-   if(!q){hidden.value='';selected.hidden=true;submit.disabled=true;document.querySelectorAll('.fine-employee-option').forEach(x=>x.classList.remove('active'));}
- });
- results?.addEventListener('click',e=>{
-   const btn=e.target.closest('.fine-employee-option');
-   if(btn) choose(btn);
- });
+ function choose(btn){hidden.value=btn.dataset.id;search.value=btn.dataset.name||'';selected.textContent='الموظف: '+(btn.dataset.name||'');selected.hidden=false;submit.disabled=false;}
+ search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();document.querySelectorAll('.fine-employee-option').forEach(b=>{const hay=((b.dataset.name||'')+' '+(b.dataset.phone||'')).toLowerCase();b.hidden=!!q&&!hay.includes(q)});if(!q){hidden.value='';selected.hidden=true;submit.disabled=true;}});
+ results?.addEventListener('click',e=>{const b=e.target.closest('.fine-employee-option');if(b)choose(b);});
 })();
+document.querySelector('[data-toggle-panel="add-employee"]')?.addEventListener('click',()=>document.getElementById('add-employee')?.classList.toggle('is-open'));
+document.querySelector('[data-toggle-panel="employee-fine-panel"]')?.addEventListener('click',()=>document.getElementById('employee-fine-panel')?.classList.toggle('is-open'));
 </script>
 {% endif %}
 {% endblock %}
