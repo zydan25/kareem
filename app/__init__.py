@@ -70,6 +70,8 @@ def create_app(config_class=Config):
         brand_color=_read_setting("brand_color","#0b6e4f")
         if not isinstance(brand_color,str) or not __import__("re").fullmatch(r"#[0-9a-fA-F]{6}",brand_color):
             brand_color="#0b6e4f"
+        font_size=_read_setting("font_size","100")
+        if font_size not in {"100","110","120","130"}: font_size="100"
         return {
             "app_name":organization_name or app.config["PWA_NAME"],
             "project_name":project_name or "إدارة السوق والمحاسبة",
@@ -79,6 +81,7 @@ def create_app(config_class=Config):
             "brand_icon":_read_setting("brand_icon",""),
             "brand_icon_enabled":_read_setting("brand_icon_enabled","1") == "1",
             "brand_version":_read_setting("brand_version","1"),
+            "ui_font_scale":str(float(font_size)/100),
             "can":can,
             "role_labels": ROLE_LABELS,
         }
