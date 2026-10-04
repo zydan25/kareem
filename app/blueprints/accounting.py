@@ -51,7 +51,7 @@ def accounts():
                            account_type_labels=ACCOUNT_TYPE_LABELS,balance_func=account_balance,can_manage=can("accounting.manage"))
 
 @bp.route("/accounts/new",methods=["GET","POST"])
-@permission_required("accounting.post")
+@permission_required("accounting.manage")
 def account_new():
     parents=Account.query.filter_by(is_group=True,active=True).order_by(Account.code).all()
     parent_id=request.form.get("parent_id",type=int) if request.method=="POST" else request.args.get("parent_id",type=int)
