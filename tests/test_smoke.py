@@ -116,12 +116,15 @@ def test_vouchers_page_polished_receipt_payment_ui(app, client):
     assert 'data-voucher-open' in body
     assert 'data-voucher-open-mode="receipt"' in body
     assert 'data-voucher-open-mode="payment"' in body
+    assert "سند عام" in body
     assert "سند قبض" in body
     assert "سند صرف" in body
     assert 'id="voucher-kind-tabs"' in body
     assert 'id="voucher-type" value=""' in body
-    assert "سند عام" not in body
     assert "إصدار سند" in body
+    assert "voucher-toolbar-btn general" in body
+    assert "voucher-toolbar-btn receipt" in body
+    assert "voucher-toolbar-btn payment" in body
     receipt_pos=body.index('data-voucher-open-mode="receipt"')
     payment_pos=body.index('data-voucher-open-mode="payment"')
     sort_pos=body.index('id="voucher-sort"')
