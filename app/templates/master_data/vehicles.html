@@ -143,5 +143,17 @@ document.querySelector('[data-toggle-panel="add-vehicle"]')?.addEventListener('c
 const rs=document.getElementById('vehicle-registration-status'),plate=document.getElementById('vehicle-plate-number');
 function syncVehiclePlate(){if(rs&&plate)plate.required=rs.value==='registered';}
 rs?.addEventListener('change',syncVehiclePlate);syncVehiclePlate();
+
+const vehicleParams=new URLSearchParams(window.location.search);
+if(vehicleParams.get('open')==='add-vehicle'){
+  const panel=document.getElementById('add-vehicle');
+  if(panel) panel.classList.add('is-open');
+  const clientId=vehicleParams.get('client_id');
+  const clientSelect=document.querySelector('#add-vehicle select[name="client_id"]');
+  if(clientId&&clientSelect){
+    clientSelect.value=clientId;
+  }
+  document.getElementById('add-vehicle')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
 </script>
 {% endblock %}
