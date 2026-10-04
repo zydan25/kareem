@@ -10,14 +10,14 @@
   </div>
   <div class="voucher-toolbar">
     {% if can("vouchers.post") %}
-    <button class="btn btn-primary voucher-main-open" type="button" data-voucher-open>
-      <i class="bi bi-file-earmark-plus"></i><span>سند</span>
+    <button class="voucher-toolbar-btn general" type="button" data-voucher-open>
+      <i class="bi bi-file-earmark-plus"></i><span>سند عام</span>
     </button>
 
-    <button class="voucher-quick-btn receipt" type="button" data-voucher-open-mode="receipt">
+    <button class="voucher-toolbar-btn receipt" type="button" data-voucher-open-mode="receipt">
       <i class="bi bi-box-arrow-in-down"></i><span>سند قبض</span>
     </button>
-    <button class="voucher-quick-btn payment" type="button" data-voucher-open-mode="payment">
+    <button class="voucher-toolbar-btn payment" type="button" data-voucher-open-mode="payment">
       <i class="bi bi-box-arrow-up"></i><span>سند صرف</span>
     </button>
     {% endif %}
