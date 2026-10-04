@@ -2,29 +2,29 @@
 {% block title %}الموظفون - {{app_name}}{% endblock %}
 {% block content %}
 <style>
-.employee-page{max-width:1100px;margin:auto}
+.employee-page{max-width:820px;margin:auto}
 .employee-head h1{font-size:1.3rem;margin:.1rem 0}
 .employee-head p{display:none}
 .employee-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px}
 .employee-toolbar .form-control{min-height:39px;border-radius:10px;font-size:10.5px}
 .employee-toolbar .btn{min-height:39px;border-radius:10px;font-size:10px;font-weight:900}
-.employee-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.employee-card{border:1px solid rgba(37,65,58,.10);border-radius:13px;background:#fff;padding:9px;display:flex;flex-direction:column;gap:7px;box-shadow:0 3px 12px rgba(22,43,37,.035)}
+.employee-list{display:grid;grid-template-columns:1fr;gap:10px}
+.employee-card{border:1px solid rgba(37,65,58,.10);border-radius:16px;background:#fff;padding:15px;display:flex;flex-direction:column;gap:7px;box-shadow:0 3px 12px rgba(22,43,37,.035)}
 .employee-card.inactive{opacity:.68}
 .employee-card-head{display:flex;align-items:center;gap:8px}
 .employee-avatar{width:38px;height:38px;flex:0 0 38px;border-radius:11px;overflow:hidden;background:#edf5f2;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:950}
 .employee-avatar img{width:100%;height:100%;object-fit:cover}
 .employee-card-name{min-width:0;display:flex;flex-direction:column}
-.employee-card-name strong{font-size:11.5px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.employee-card-name small{font-size:8px;color:#8b9693;margin-top:2px}
-.employee-status{margin-right:auto;font-size:7.5px;padding:3px 6px;border-radius:7px;background:#edf9f1;color:#28764f;font-weight:900}
+.employee-card-name strong{font-size:16px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.employee-card-name small{font-size:11px;color:#8b9693;margin-top:2px}
+.employee-status{margin-right:auto;font-size:10px;padding:4px 8px;border-radius:7px;background:#edf9f1;color:#28764f;font-weight:900}
 .employee-status.off{background:#fff0ef;color:#ac5049}
 .employee-info{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .employee-info-item{padding:6px 7px;background:#f8faf9;border-radius:8px;min-width:0}
-.employee-info-item span{display:block;font-size:7px;color:#8a9591}
-.employee-info-item strong{display:block;font-size:8.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.employee-info-item span{display:block;font-size:10px;color:#8a9591}
+.employee-info-item strong{display:block;font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .employee-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.employee-actions .btn{min-height:29px;padding:4px;border-radius:8px;font-size:8px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:3px}
+.employee-actions .btn{min-height:36px;padding:6px;border-radius:10px;font-size:11px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:3px}
 .employee-actions form{margin:0}
 .employee-section{margin-top:8px}
 .employee-add-panel{display:none}
@@ -32,7 +32,7 @@
 .employee-add-panel .form-control,.employee-add-panel .form-select{min-height:38px;border-radius:9px;font-size:10px}
 .employee-add-panel .form-label{font-size:9px;font-weight:900}
 .employee-add-panel .form-section-title{font-size:10px}
-@media(max-width:900px){.employee-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.employee-list{grid-template-columns:1fr}}
 @media(max-width:700px){
  .employee-page{padding-bottom:10px}
  .employee-head h1{font-size:1.15rem}
@@ -40,16 +40,16 @@
  .employee-head .btn{font-size:8px;padding:6px 7px;border-radius:8px}
  .employee-toolbar{grid-template-columns:1fr auto}
  .employee-toolbar .btn{padding:6px 9px}
- .employee-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
- .employee-card{padding:7px;border-radius:11px;gap:5px}
- .employee-avatar{width:31px;height:31px;flex-basis:31px;border-radius:9px;font-size:12px}
- .employee-card-name strong{font-size:9.5px}
- .employee-card-name small{font-size:7px}
- .employee-info-item{padding:5px}
- .employee-info-item span{font-size:6.5px}
- .employee-info-item strong{font-size:7.5px}
- .employee-actions .btn{min-height:26px;font-size:7px}
- .employee-actions .btn span{display:none}
+ .employee-list{grid-template-columns:1fr;gap:8px}
+ .employee-card{padding:12px;border-radius:14px;gap:8px}
+ .employee-avatar{width:44px;height:44px;flex-basis:44px;border-radius:12px;font-size:17px}
+ .employee-card-name strong{font-size:14px}
+ .employee-card-name small{font-size:10px}
+ .employee-info-item{padding:8px}
+ .employee-info-item span{font-size:8px}
+ .employee-info-item strong{font-size:10.5px}
+ .employee-actions .btn{min-height:34px;font-size:10px}
+ .employee-actions .btn span{display:inline}
 }
 </style>
 
