@@ -14,14 +14,12 @@
       <i class="bi bi-file-earmark-plus"></i><span>سند</span>
     </button>
 
-    <div class="voucher-type-actions" aria-label="إصدار سريع">
-      <button class="voucher-quick-btn receipt" type="button" data-voucher-open-mode="receipt">
-        <i class="bi bi-box-arrow-in-down"></i><span>سند قبض</span>
-      </button>
-      <button class="voucher-quick-btn payment" type="button" data-voucher-open-mode="payment">
-        <i class="bi bi-box-arrow-up"></i><span>سند صرف</span>
-      </button>
-    </div>
+    <button class="voucher-quick-btn receipt" type="button" data-voucher-open-mode="receipt">
+      <i class="bi bi-box-arrow-in-down"></i><span>سند قبض</span>
+    </button>
+    <button class="voucher-quick-btn payment" type="button" data-voucher-open-mode="payment">
+      <i class="bi bi-box-arrow-up"></i><span>سند صرف</span>
+    </button>
     {% endif %}
 
     <a class="btn btn-outline-primary voucher-report-btn" href="{{url_for('accounting.journal',source='voucher')}}">
