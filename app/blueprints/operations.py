@@ -134,7 +134,7 @@ def vouchers():
     if selected_type not in {
         VoucherType.RECEIPT.value,VoucherType.PAYMENT.value,VoucherType.TRANSFER.value
     }:
-        selected_type=VoucherType.RECEIPT.value
+        selected_type=""
 
     return render_template("operations/vouchers.html",
         account_options=account_options,counterpart_ids=counterpart_ids,
