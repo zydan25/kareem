@@ -118,33 +118,107 @@
 
   initSidebarTree();
 
-  // Searchable tree-based account selectors.
+  // Reusable collapsible account-tree picker.
   function closeAccountPickers(except){
     document.querySelectorAll("[data-account-picker]").forEach(p=>{
       if(p!==except){
         const panel=p.querySelector("[data-account-panel]");
+        const trigger=p.querySelector("[data-account-trigger]");
         if(panel) panel.hidden=true;
+        if(trigger) trigger.setAttribute("aria-expanded","false");
         p.classList.remove("open");
       }
     });
   }
-  function filterAccountTree(picker,q){
-    const needle=(q||"").trim().toLowerCase();
-    const leaves=[...picker.querySelectorAll("[data-account-leaf]")];
-    let count=0;
-    leaves.forEach(leaf=>{
-      const match=!needle || (leaf.dataset.accountLabelText||"").includes(needle);
-      leaf.hidden=!match;
-      if(match) count++;
-    });
-    const groups=[...picker.querySelectorAll("[data-account-group]")];
-    groups.forEach(group=>{
-      const match=!needle || (group.dataset.accountLabelText||"").includes(needle);
-      group.hidden=!match && count>0;
-    });
-    const empty=picker.querySelector("[data-account-empty]");
-    if(empty) empty.hidden=count!==0;
+
+  function accountPickerNodes(picker){
+    return [...picker.querySelectorAll("[data-account-group],[data-account-leaf]")];
   }
+
+  function accountPickerMap(picker){
+    const map=new Map();
+    accountPickerNodes(picker).forEach(node=>map.set(String(node.dataset.accountId),node));
+    return map;
+  }
+
+  function accountNodeAncestors(node,map){
+    const result=[];
+    let parentId=String(node?.dataset.accountParentId||"");
+    const guard=new Set();
+    while(parentId && !guard.has(parentId)){
+      guard.add(parentId);
+      const parent=map.get(parentId);
+      if(!parent) break;
+      result.push(parent);
+      parentId=String(parent.dataset.accountParentId||"");
+    }
+    return result;
+  }
+
+  function setAccountGroupExpanded(group,expanded){
+    group.dataset.accountExpanded=expanded?"1":"0";
+    group.setAttribute("aria-expanded",expanded?"true":"false");
+    const icon=group.querySelector(".account-picker-caret i");
+    if(icon) icon.className=expanded?"bi bi-chevron-down":"bi bi-chevron-left";
+  }
+
+  function accountPickerApply(picker){
+    const search=picker.querySelector("[data-account-search]");
+    const needle=(search?.value||"").trim().toLowerCase();
+    const nodes=accountPickerNodes(picker);
+    const leaves=nodes.filter(n=>n.hasAttribute("data-account-leaf"));
+    const map=accountPickerMap(picker);
+    const matchedLeaves=leaves.filter(leaf=>(leaf.dataset.accountLabelText||"").includes(needle));
+    const matchingLeafIds=new Set(matchedLeaves.map(x=>String(x.dataset.accountId)));
+
+    const groupHasMatch=group=>{
+      if(!needle) return true;
+      return leaves.some(leaf=>{
+        if(!matchingLeafIds.has(String(leaf.dataset.accountId))) return false;
+        return accountNodeAncestors(leaf,map).some(parent=>String(parent.dataset.accountId)===String(group.dataset.accountId))
+          || (group.dataset.accountLabelText||"").includes(needle);
+      });
+    };
+
+    nodes.forEach(node=>{
+      const isGroup=node.hasAttribute("data-account-group");
+      let show=true;
+      if(needle){
+        show=isGroup?groupHasMatch(node):matchedLeaves.includes(node);
+      }
+      if(!needle && isGroup){
+        const hasSelectableDescendant=leaves.some(leaf=>accountNodeAncestors(leaf,map).some(parent=>String(parent.dataset.accountId)===String(node.dataset.accountId)));
+        show=hasSelectableDescendant;
+      }
+      if(!needle && !isGroup){
+        show=true;
+      }
+
+      if(show && !needle){
+        const ancestors=accountNodeAncestors(node,map);
+        if(ancestors.some(parent=>parent.hasAttribute("data-account-group") && parent.dataset.accountExpanded!=="1")){
+          show=false;
+        }
+      }
+      node.hidden=!show;
+
+      if(!isGroup && !needle && node.dataset.accountSelected==="1"){
+        node.classList.add("selected");
+      }
+    });
+
+    const empty=picker.querySelector("[data-account-empty]");
+    if(empty) empty.hidden=matchedLeaves.length!==0;
+  }
+
+  function openSelectedAccountPath(picker,selectedId){
+    if(!selectedId) return;
+    const map=accountPickerMap(picker);
+    const selected=map.get(String(selectedId));
+    if(!selected) return;
+    accountNodeAncestors(selected,map).forEach(group=>setAccountGroupExpanded(group,true));
+  }
+
   function initAccountPickers(){
     document.querySelectorAll("[data-account-picker]").forEach(picker=>{
       if(picker.dataset.accountReady==="1") return;
@@ -154,32 +228,66 @@
       const search=picker.querySelector("[data-account-search]");
       const value=picker.querySelector("[data-account-value]");
       const label=picker.querySelector("[data-account-label]");
+      const groups=[...picker.querySelectorAll("[data-account-group]")];
       const leaves=[...picker.querySelectorAll("[data-account-leaf]")];
+
+      groups.forEach(group=>{
+        setAccountGroupExpanded(group,false);
+        group.addEventListener("click",e=>{
+          e.preventDefault();
+          const willExpand=group.dataset.accountExpanded!=="1";
+          setAccountGroupExpanded(group,willExpand);
+          accountPickerApply(picker);
+        });
+      });
+
       trigger?.addEventListener("click",e=>{
         e.preventDefault();
         const willOpen=!!panel?.hidden;
         closeAccountPickers(willOpen?picker:null);
         if(panel) panel.hidden=!willOpen;
         picker.classList.toggle("open",willOpen);
-        if(willOpen){search?.focus();filterAccountTree(picker,"");}
+        trigger.setAttribute("aria-expanded",willOpen?"true":"false");
+        if(willOpen){
+          search?.focus();
+          if(search) search.value="";
+          accountPickerApply(picker);
+        }
       });
+
       leaves.forEach(leaf=>leaf.addEventListener("click",()=>{
         value.value=leaf.dataset.accountId||"";
-        label.textContent=leaf.querySelector("span:last-child")?.textContent?.trim()||"اختر الحساب";
+        label.textContent=leaf.dataset.accountLabelDisplay||leaf.dataset.accountLabelText||"اختر الحساب";
+        leaves.forEach(x=>{
+          x.classList.remove("selected");
+          delete x.dataset.accountSelected;
+        });
+        leaf.classList.add("selected");
+        leaf.dataset.accountSelected="1";
         panel.hidden=true;
         picker.classList.remove("open");
+        trigger?.setAttribute("aria-expanded","false");
         if(search) search.value="";
-        filterAccountTree(picker,"");
+        accountPickerApply(picker);
         value.dispatchEvent(new Event("change",{bubbles:true}));
       }));
-      search?.addEventListener("input",e=>filterAccountTree(picker,e.target.value));
+
+      search?.addEventListener("input",()=>accountPickerApply(picker));
+
       if(value?.value){
         const selected=leaves.find(x=>x.dataset.accountId===value.value);
-        if(selected) label.textContent=selected.querySelector("span:last-child")?.textContent?.trim()||label.textContent;
+        if(selected){
+          selected.classList.add("selected");
+          selected.dataset.accountSelected="1";
+          const parts=(selected.dataset.accountLabelText||"").split(/\s+/);
+          label.textContent=selected.dataset.accountLabelDisplay||selected.dataset.accountLabelText||label.textContent;
+          openSelectedAccountPath(picker,value.value);
+        }
       }
-      filterAccountTree(picker,"");
+      accountPickerApply(picker);
     });
   }
+
   document.addEventListener("click",event=>{
     if(!event.target.closest("[data-account-picker]")) closeAccountPickers(null);
   });

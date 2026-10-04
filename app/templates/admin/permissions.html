@@ -12,10 +12,19 @@
 </div>
 
 <form method="post">
-<div class="permission-toolbar"><span>{% if role_locked %}المدير ومدير النظام يحصلان على جميع الصلاحيات تلقائيًا.{% else %}الحالة المعروضة هي الصلاحيات الفعلية للحساب، ويمكن تخصيصها هنا.{% endif %}</span>{% if not role_locked %}<button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('input[name=permission_ids]').forEach(x=>{if(!x.disabled)x.checked=true})">تحديد الكل</button><button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('input[name=permission_ids]').forEach(x=>{if(!x.disabled)x.checked=false})">إلغاء الكل</button>{% endif %}</div>
+<div class="permission-toolbar">
+  <span>{% if role_locked %}المدير ومدير النظام يحصلان على جميع الصلاحيات تلقائيًا.{% else %}حدد ما يستطيع هذا المستخدم فعله. الإعداد هنا مخصص للهاتف وسهل المراجعة.{% endif %}</span>
+  {% if not role_locked %}
+  <div class="permission-toolbar-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-permissions-all>تحديد الكل</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-permissions-none>إلغاء الكل</button>
+  </div>
+  {% endif %}
+</div>
 <div class="row g-3">
 {% for group in permissions|groupby('group_name') %}
-<div class="col-12 col-md-6 col-xl-4"><div class="permission-group"><h3>{{group.grouper}}</h3>
+<div class="col-12 col-md-6 col-xl-4"><div class="permission-group">
+<div class="permission-group-head"><h3>{{group.grouper}}</h3>{% if not role_locked %}<button type="button" class="permission-select-all" data-group-select="{{loop.index}}">تحديد القسم</button>{% endif %}</div>
 {% for p in group.list %}
 <label class="permission-row {% if p.key in role_defaults %}role-default{% endif %}">
 <input type="checkbox" name="permission_ids" value="{{p.id}}" {% if effective.get(p.key) %}checked{% endif %} {% if role_locked %}disabled{% endif %}>
@@ -27,4 +36,17 @@
 </div>
 {% if not role_locked %}<div class="mt-4 d-flex gap-2 flex-wrap"><button class="btn btn-primary"><i class="bi bi-shield-check"></i> حفظ الصلاحيات</button><a class="btn btn-light" href="{{url_for('admin.users')}}">إلغاء</a></div>{% endif %}
 </form>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const checks=[...document.querySelectorAll('input[name="permission_ids"]')].filter(x=>!x.disabled);
+  document.querySelector('[data-permissions-all]')?.addEventListener('click',()=>checks.forEach(x=>x.checked=true));
+  document.querySelector('[data-permissions-none]')?.addEventListener('click',()=>checks.forEach(x=>x.checked=false));
+  document.querySelectorAll('[data-group-select]').forEach(button=>{
+    const group=button.closest('.permission-group');
+    button.addEventListener('click',()=>group?.querySelectorAll('input[name="permission_ids"]:not(:disabled)').forEach(x=>x.checked=true));
+  });
+})();
+</script>
 {% endblock %}

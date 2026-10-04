@@ -14,6 +14,19 @@ def ensure_user_shift(user_id, shift_name="وردية تشغيل"):
     db.session.add(shift); db.session.flush()
     return shift
 
+def is_cash_account(account):
+    if not account or account.is_group:
+        return False
+    cash_root=get_system_account("cash_root")
+    node=account
+    seen=set()
+    while node and node.id not in seen:
+        if node.parent_id==cash_root.id:
+            return True
+        seen.add(node.id)
+        node=db.session.get(Account,node.parent_id) if node.parent_id else None
+    return False
+
 def infer_voucher_type(from_account,to_account):
     cash=get_system_account("main_cash")
     if from_account.id==cash.id and to_account.id!=cash.id:
@@ -24,16 +37,34 @@ def infer_voucher_type(from_account,to_account):
 
 def post_voucher(*, voucher_type=None, amount, from_account, to_account, description, user_id, beneficiary=""):
     amount=D(amount)
-    if amount<=0: raise ValueError("قيمة السند يجب أن تكون أكبر من صفر")
+    if amount<=0:
+        raise ValueError("قيمة السند يجب أن تكون أكبر من صفر")
     if not from_account or not to_account or from_account.is_group or to_account.is_group:
         raise ValueError("اختر حسابات فرعية قابلة للقيد")
+    if from_account.id==to_account.id:
+        raise ValueError("لا يمكن أن يكون حسابا السند متساويين")
     if not from_account.active or not to_account.active or not from_account.allow_manual_posting or not to_account.allow_manual_posting:
         raise ValueError("الحساب المصدر والهدف يجب أن يكونا نشطين وقابلين للقيد")
+
+    voucher_type=voucher_type or infer_voucher_type(from_account,to_account)
+    if voucher_type not in {VoucherType.RECEIPT.value,VoucherType.PAYMENT.value,VoucherType.TRANSFER.value}:
+        raise ValueError("نوع السند غير صالح")
+
+    if voucher_type==VoucherType.RECEIPT.value:
+        if not is_cash_account(to_account):
+            raise ValueError("سند القبض يجب أن يصب في حساب صندوق أو حساب نقدي")
+        debit_account,to_credit_account=to_account,from_account
+    elif voucher_type==VoucherType.PAYMENT.value:
+        if not is_cash_account(from_account):
+            raise ValueError("سند الصرف يجب أن يصدر من حساب صندوق أو حساب نقدي")
+        debit_account,to_credit_account=to_account,from_account
+    else:
+        debit_account,to_credit_account=to_account,from_account
+
     ensure_user_shift(user_id,"وردية مالية")
-    inferred=infer_voucher_type(from_account,to_account)
     entry=create_posted_entry(description=description,entry_date=date.today(),created_by_id=user_id,source_type="voucher",
-        lines=[{"account":to_account,"debit":amount},{"account":from_account,"credit":amount}],prefix="VCH")
-    voucher=Voucher(number=next_number("V"),voucher_type=inferred,voucher_date=date.today(),amount=amount,
+        lines=[{"account":debit_account,"debit":amount},{"account":to_credit_account,"credit":amount}],prefix="VCH")
+    voucher=Voucher(number=next_number("V"),voucher_type=voucher_type,voucher_date=date.today(),amount=amount,
         from_account_id=from_account.id,to_account_id=to_account.id,beneficiary=beneficiary,
         description=description,status=VoucherStatus.POSTED.value,journal_entry_id=entry.id,created_by_id=user_id)
     db.session.add(voucher)
@@ -59,14 +90,14 @@ def post_expense(*, amount, expense_account, cash_account, description, user_id,
 def create_settlement(*, source_account, target_account, amount, requested_by_id, shift_id=None, description="إخلاء عهدة"):
     amount=D(amount)
     if amount<=0: raise ValueError("قيمة الإخلاء يجب أن تكون أكبر من صفر")
-    custody_root=Account.query.filter_by(system_key="collector_root").one_or_none()
+    cashbox_root=Account.query.filter_by(system_key="collector_root").one_or_none()
     cash_account=get_system_account("main_cash")
     if source_account.account_type!="asset" or target_account.account_type!="asset":
-        raise ValueError("إخلاء العهدة متاح لحسابات الأصول فقط")
-    if not custody_root or source_account.parent_id!=custody_root.id:
-        raise ValueError("حساب المصدر يجب أن يكون عهدة متحصل تابعة لشجرة العهد")
+        raise ValueError("تسوية الصندوق متاحة لحسابات الأصول فقط")
+    if not cashbox_root or source_account.parent_id!=cashbox_root.id:
+        raise ValueError("حساب المصدر يجب أن يكون صندوق موظف تابعًا لشجرة صناديق الموظفين")
     if target_account.id!=cash_account.id:
-        raise ValueError("هدف إخلاء العهدة يجب أن يكون الصندوق الرئيسي")
+        raise ValueError("هدف تسوية الصندوق يجب أن يكون الصندوق الرئيسي")
     if source_account.id==target_account.id:
         raise ValueError("حساب المصدر والهدف يجب أن يختلفا")
     available=account_balance(source_account.id)

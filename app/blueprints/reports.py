@@ -378,7 +378,8 @@ def employee_report(employee_id):
         __import__("app.models",fromlist=["AuditLog"]).AuditLog.created_at<end_dt
     ).order_by(__import__("app.models",fromlist=["AuditLog"]).AuditLog.created_at.desc()).limit(100).all()
     return render_template("reports/employee_report.html",employee=employee,start=start,end=end,shifts=shifts,gates=gates,audits=audits,
-        custody=account_balance(employee.account_id) if employee.account_id else D(0),
+        custody=account_balance(employee.cashbox_account_id) if employee.cashbox_account_id else D(0),
+        employee_balance=account_balance(employee.account_id) if employee.account_id else D(0),
         payroll_due=account_balance(employee.payroll_account_id) if employee.payroll_account_id else D(0))
 
 @bp.get("/employees")
@@ -395,7 +396,8 @@ def employees_report():
         shifts=Shift.query.filter_by(collector_id=uid).filter(Shift.opened_at<end_dt).filter(
             (Shift.closed_at.is_(None)) | (Shift.closed_at>=start_dt)).all()
         rows.append({"employee":e,"gate_count":len(gates),"total":sum((D(x.amount) for x in gates),D(0)),"shifts":len(shifts),
-                     "custody":account_balance(e.account_id) if e.account_id else D(0)})
+                     "custody":account_balance(e.cashbox_account_id) if e.cashbox_account_id else D(0),
+                     "employee_balance":account_balance(e.account_id) if e.account_id else D(0)})
     return render_template("reports/employees.html",rows=rows,start=start,end=end)
 
 @bp.get("/expenses")

@@ -21,7 +21,7 @@
 
   <div class="employee-kpis">
     <div class="employee-kpi accent"><span>الراتب الشهري</span><strong>{{'{:,.2f}'.format(employee.monthly_salary or 0)}}</strong><small>{{currency}}</small></div>
-    <div class="employee-kpi"><span>العهدة</span><strong>{{'{:,.2f}'.format(custody)}}</strong><small>{{currency}}</small></div>
+    <div class="employee-kpi"><span>صندوق الموظف</span><strong>{{'{:,.2f}'.format(custody)}}</strong><small>{{currency}}</small></div>
     <div class="employee-kpi"><span>مستحق الرواتب</span><strong>{{'{:,.2f}'.format(-payroll_due if payroll_due<0 else payroll_due)}}</strong><small>{{currency}}</small></div>
     <div class="employee-kpi"><span>الدوام الأسبوعي</span><strong>{{employee.weekly_hours or 0}}</strong><small>ساعة</small></div>
   </div>
@@ -44,7 +44,8 @@
     <section class="employee-section">
       <div class="employee-section-head"><div><h2>الحسابات والدخول</h2><small>الربط المالي والحساب الوظيفي</small></div></div>
       <div class="employee-account-grid">
-        <div><span>حساب العهدة</span><strong>{{employee.account.name if employee.account else '—'}}</strong>{% if employee.account and can("reports.view") %}<a href="{{url_for('reports.account_statement',account_id=employee.account.id)}}">كشف الحساب</a>{% endif %}</div>
+        <div><span>حساب الموظف</span><strong>{{employee.account.name if employee.account else '—'}}</strong>{% if employee.account and can("reports.view") %}<a href="{{url_for('reports.account_statement',account_id=employee.account.id)}}">كشف الحساب</a>{% endif %}</div>
+        <div><span>صندوق الموظف</span><strong>{{employee.cashbox_account.name if employee.cashbox_account else '—'}}</strong>{% if employee.cashbox_account and can("reports.view") %}<a class="btn btn-sm btn-outline-primary mt-2" href="{{url_for('reports.account_statement',account_id=employee.cashbox_account.id)}}">كشف الصندوق</a>{% endif %}</div>
         <div><span>حساب مستحق الراتب</span><strong>{{employee.payroll_account.name if employee.payroll_account else '—'}}</strong>{% if employee.payroll_account and can("reports.view") %}<a href="{{url_for('reports.account_statement',account_id=employee.payroll_account.id)}}">كشف الحساب</a>{% endif %}</div>
         <div><span>رقم الدخول</span><strong>{{employee.user.phone if employee.user else '—'}}</strong>{% if employee.user %}<small>{{role_labels.get(employee.user.role,employee.user.role)}}</small>{% endif %}</div>
       </div>

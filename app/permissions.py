@@ -16,7 +16,7 @@ PERMISSIONS=[
 ("vehicles.view","عرض المركبات","البيانات"),("vehicles.manage","إدارة المركبات","البيانات"),
 ("employees.view","عرض الموظفين","الموارد البشرية"),("employees.manage","إدارة الموظفين","الموارد البشرية"),
 ("users.manage","إدارة المستخدمين","الموارد البشرية"),("permissions.manage","إدارة الصلاحيات","الموارد البشرية"),
-("accounting.view","عرض المحاسبة","المحاسبة"),("accounting.post","ترحيل قيود يدوية","المحاسبة"),("vouchers.post","إصدار السندات","المحاسبة"),
+("accounting.view","عرض المحاسبة","المحاسبة"),("accounting.manage","إدارة شجرة الحسابات","المحاسبة"),("accounting.post","ترحيل قيود يدوية","المحاسبة"),("vouchers.view","عرض السندات","المحاسبة"),("vouchers.post","إصدار السندات","المحاسبة"),
 ("leases.view","عرض الإيجارات","الإيجارات"),("leases.manage","إدارة الإيجارات","الإيجارات"),("leases.pay","تحصيل الإيجارات","الإيجارات"),
 ("payroll.view","عرض الرواتب","الرواتب"),("payroll.manage","إعداد وترحيل الرواتب","الرواتب"),("payroll.pay","صرف الرواتب","الرواتب"),
 ("expenses.view","عرض المصروفات","المصروفات"),("expenses.manage","إدارة المصروفات","المصروفات"),
@@ -26,9 +26,9 @@ PERMISSIONS=[
 ROLE_DEFAULTS={
 "admin":{"*"},
 "manager":{p[0] for p in PERMISSIONS},
-"accountant":{"dashboard.view","accounting.view","accounting.post","vouchers.post","leases.view","leases.manage","leases.pay","payroll.view","payroll.manage","payroll.pay","expenses.view","expenses.manage","reports.view","reports.export","audit.view"},
+"accountant":{"dashboard.view","accounting.view","accounting.manage","accounting.post","vouchers.view","vouchers.post","leases.view","leases.manage","leases.pay","payroll.view","payroll.manage","payroll.pay","expenses.view","expenses.manage","reports.view","reports.export","audit.view"},
 "collector":{"dashboard.view","collector.view","collector.post","clients.view","vehicles.view"},
-"auditor":{"dashboard.view","accounting.view","reports.view","reports.export","audit.view"}}
+"auditor":{"dashboard.view","accounting.view","vouchers.view","reports.view","reports.export","audit.view"}}
 
 def _permission_cache():
     cached=getattr(g,"_permission_cache",None)
@@ -76,6 +76,11 @@ def permission_required(permission):
 
 def seed_permissions():
     for key,name,group in PERMISSIONS:
-        if not db.session.query(Permission).filter_by(key=key).first():
-            db.session.add(Permission(key=key,name=name,group_name=group,active=True))
+        row=db.session.query(Permission).filter_by(key=key).first()
+        if not row:
+            row=Permission(key=key)
+            db.session.add(row)
+        row.name=name
+        row.group_name=group
+        row.active=True
     db.session.flush()

@@ -50,8 +50,8 @@ def test_settlements_page_and_admin_guide(client):
     settlement=client.get("/operations/settlements")
     assert settlement.status_code==200
     body=settlement.get_data(as_text=True)
-    assert "العهد وإخلاء العهدة" in body
-    assert "حساب العهدة" in body
+    assert "صناديق الموظفين والتسويات" in body
+    assert "صندوق الموظف" in body
     assert body.count("دليل الإدارة") >= 1
 
 def test_sidebar_contains_all_major_sections_and_report_links(client):
@@ -63,3 +63,59 @@ def test_sidebar_contains_all_major_sections_and_report_links(client):
         assert url in body
     assert 'class="nav-count"' in body
     assert 'class="nav-chevron bi bi-chevron-down"' in body
+
+
+def test_employee_has_separate_account_and_cashbox(app):
+    with app.app_context():
+        from app.models import Employee
+        employee=db.session.query(Employee).filter_by(active=True).order_by(Employee.id).first()
+        assert employee is not None
+        assert employee.account_id is not None
+        assert employee.cashbox_account_id is not None
+        assert employee.account_id != employee.cashbox_account_id
+        assert employee.account.is_group is False
+        assert employee.cashbox_account.is_group is False
+        assert employee.account.parent_id != employee.cashbox_account.parent_id
+        assert employee.cashbox_account.parent.system_key == "collector_root"
+        assert employee.account.parent.system_key == "employee_accounts_root"
+
+
+def test_simple_receipt_and_payment_vouchers_use_cashboxes(app):
+    with app.app_context():
+        from app.models import User
+        from app.services.operations import post_voucher
+
+        user=db.session.query(User).filter_by(username="admin").one()
+        cash=db.session.query(Account).filter_by(system_key="main_cash").one()
+        other=db.session.query(Account).filter_by(system_key="entry_revenue").one()
+
+        receipt,receipt_entry=post_voucher(
+            voucher_type="receipt",amount="100",
+            from_account=other,to_account=cash,
+            description="اختبار قبض",user_id=user.id,
+        )
+        db.session.commit()
+        assert receipt.voucher_type=="receipt"
+        assert receipt_entry.totals()==(Decimal("100.00"),Decimal("100.00"))
+
+        payment,payment_entry=post_voucher(
+            voucher_type="payment",amount="25",
+            from_account=cash,to_account=other,
+            description="اختبار صرف",user_id=user.id,
+        )
+        db.session.commit()
+        assert payment.voucher_type=="payment"
+        assert payment_entry.totals()==(Decimal("25.00"),Decimal("25.00"))
+
+
+def test_voucher_route_requires_post_permission(app, client):
+    with app.app_context():
+        from app.models import User
+        user=db.session.query(User).filter_by(username="admin").one()
+        user.role="auditor"
+        db.session.commit()
+    client.post("/login",data={"identifier":"admin","password":"admin"},follow_redirects=True)
+    response=client.post("/operations/vouchers",data={
+        "voucher_type":"receipt","account_id":"1","cash_account_id":"2","amount":"10","description":"x"
+    },follow_redirects=True)
+    assert "ليست لديك صلاحية إصدار السندات" in response.get_data(as_text=True)

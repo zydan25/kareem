@@ -13,8 +13,9 @@ ROOTS=[
 CHILDREN=[
 ("101","الصناديق",AccountType.ASSET.value,"root_assets",True,"cash_root"),
 ("10101","الصندوق الرئيسي",AccountType.ASSET.value,"cash_root",False,"main_cash"),
-("102","عهد الموظفين والمتحصلين",AccountType.ASSET.value,"root_assets",True,"collector_root"),
+("102","صناديق الموظفين",AccountType.ASSET.value,"cash_root",True,"collector_root"),
 ("103","حسابات العملاء",AccountType.ASSET.value,"root_assets",True,"clients_root"),
+("105","حسابات الموظفين",AccountType.ASSET.value,"root_assets",True,"employee_accounts_root"),
 ("104","حسابات الوكلاء",AccountType.ASSET.value,"root_assets",True,"agents_root"),
 ("201","مستحقات الرواتب",AccountType.LIABILITY.value,"root_liabilities",True,"payable_root"),
 ("20101","مخصص مستحقات الرواتب",AccountType.LIABILITY.value,"payable_root",False,"salary_payable"),
@@ -74,6 +75,8 @@ def ensure_employees_for_users():
         db.session.flush()
         user.employee_id=emp.id
         ensure_employee_account(emp)
+        from .accounts import ensure_employee_cashbox
+        ensure_employee_cashbox(emp)
         ensure_employee_payroll_account(emp)
 
 def seed():

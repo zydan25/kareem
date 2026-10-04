@@ -48,10 +48,10 @@ def accounts():
         "balance":sum((account_balance(a.id) for a in all_accounts if not a.is_group),0),
     }
     return render_template("accounting/accounts.html",tree=tree,flat_accounts=all_accounts,stats=stats,
-                           account_type_labels=ACCOUNT_TYPE_LABELS,balance_func=account_balance,can_manage=can("accounting.post"))
+                           account_type_labels=ACCOUNT_TYPE_LABELS,balance_func=account_balance,can_manage=can("accounting.manage"))
 
 @bp.route("/accounts/new",methods=["GET","POST"])
-@permission_required("accounting.post")
+@permission_required("accounting.manage")
 def account_new():
     parents=Account.query.filter_by(is_group=True,active=True).order_by(Account.code).all()
     parent_id=request.form.get("parent_id",type=int) if request.method=="POST" else request.args.get("parent_id",type=int)
@@ -78,7 +78,7 @@ def account_new():
     return render_template("accounting/account_form.html",parents=parents,selected_parent=selected_parent,auto_codes=auto_codes)
 
 @bp.route("/accounts/<int:account_id>/edit",methods=["GET","POST"])
-@permission_required("accounting.post")
+@permission_required("accounting.manage")
 def account_edit(account_id):
     account=db.session.get(Account,account_id)
     if not account: return ("غير موجود",404)
@@ -102,7 +102,7 @@ def account_edit(account_id):
     return render_template("accounting/account_edit.html",account=account,parents=parents)
 
 @bp.post("/accounts/<int:account_id>/toggle")
-@permission_required("accounting.post")
+@permission_required("accounting.manage")
 def account_toggle(account_id):
     account=db.session.get(Account,account_id)
     if not account: return ("غير موجود",404)

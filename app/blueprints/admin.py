@@ -5,7 +5,7 @@ from ..extensions import db
 from ..models import Employee, Permission, User, UserPermission, Role
 from ..permissions import can, permission_required
 from ..services.audit import audit
-from ..services.accounts import ensure_employee_account, ensure_employee_payroll_account
+from ..services.accounts import ensure_employee_account, ensure_employee_cashbox, ensure_employee_payroll_account
 
 ROLE_LABELS={"admin":"مدير النظام","manager":"مدير","accountant":"محاسب","collector":"متحصل","auditor":"مراجع"}
 
@@ -37,6 +37,7 @@ def edit_user(user_id):
                 u.employee.active=u.active
                 u.employee.job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,u.employee.job_title or "موظف")
                 ensure_employee_account(u.employee)
+                ensure_employee_cashbox(u.employee)
                 ensure_employee_payroll_account(u.employee)
             else:
                 last=Employee.query.order_by(Employee.id.desc()).first()
@@ -45,7 +46,7 @@ def edit_user(user_id):
                     job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,"موظف"),
                     monthly_salary=0,hire_date=date.today(),active=u.active)
                 db.session.add(emp); db.session.flush(); u.employee_id=emp.id
-                ensure_employee_account(emp); ensure_employee_payroll_account(emp)
+                ensure_employee_account(emp); ensure_employee_cashbox(emp); ensure_employee_payroll_account(emp)
             audit("update","user",u.id,u.username); db.session.commit(); flash("تم تحديث المستخدم وملفه المالي","success"); return redirect(url_for("admin.users"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
