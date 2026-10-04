@@ -1,122 +1,208 @@
 {% extends 'base.html' %}
 {% block title %}تحصيل البوابة - {{app_name}}{% endblock %}
 {% block content %}
-<div class="collector-dashboard-head">
-  <div class="collector-welcome">
-    <div class="gate-icon"><i class="bi bi-receipt-cutoff"></i></div>
-    <div><span class="eyebrow">لوحة المتحصل</span><h1>واجهة التحصيل</h1><p>كل ما تحتاجه لتسجيل الدخول والخروج والتحصيل في شاشة واحدة.</p></div>
+<style>
+.collector-mobile-page{max-width:900px;margin:auto}
+.collector-mobile-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.collector-mobile-head h1{font-size:1.3rem;margin:0 0 2px;font-weight:950}
+.collector-mobile-head small{font-size:9px;color:#87938f}
+.collector-mini-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+.collector-mini-stat{border-radius:12px;padding:8px 9px;min-width:0;border:1px solid transparent;display:flex;align-items:center;gap:7px}
+.collector-mini-stat i{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 28px}
+.collector-mini-stat .copy{min-width:0;display:flex;flex-direction:column}
+.collector-mini-stat span{font-size:8px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.collector-mini-stat strong{font-size:13px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.collector-mini-stat.entry{background:#edf9f1;border-color:#d5efde;color:#197247}
+.collector-mini-stat.entry i{background:#d5f0df}
+.collector-mini-stat.exit{background:#fff1f0;border-color:#f3d8d6;color:#bb4841}
+.collector-mini-stat.exit i{background:#f9dbd8}
+.collector-mini-stat.total{background:#eef5ff;border-color:#d9e6fa;color:#2f67a8}
+.collector-mini-stat.total i{background:#dce9fb}
+.collector-mini-stat.custody{background:#fff8e9;border-color:#f2e5bf;color:#9a7514}
+.collector-mini-stat.custody i{background:#f5e7bc}
+.collector-mobile-card{padding:10px!important}
+.collector-form-compact{display:flex;flex-direction:column;gap:8px}
+.collector-field{display:flex;flex-direction:column;gap:4px}
+.collector-field-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.collector-field .form-label{font-size:10px;font-weight:900;margin:0;color:#5d6b66}
+.collector-field .form-control,.collector-field .form-select{min-height:40px;border-radius:10px;font-size:11px}
+.client-search-box{position:relative}
+.client-search-box .search-icon{position:absolute;right:10px;top:12px;color:#8b9893;font-size:13px;z-index:2}
+.client-search-box input{padding-right:32px!important}
+.client-suggestion-list{border:1px solid rgba(37,65,58,.10);border-radius:10px;margin-top:5px;background:#fff;overflow:hidden;box-shadow:0 7px 20px rgba(16,42,34,.07)}
+.client-suggestion-list[hidden]{display:none}
+.client-suggestion{width:100%;border:0;background:#fff;padding:8px;display:flex;align-items:center;gap:7px;text-align:right;border-bottom:1px solid rgba(37,65,58,.06)}
+.client-suggestion:last-child{border-bottom:0}
+.client-suggestion:hover{background:#f7fbf9}
+.client-suggestion-icon{width:28px;height:28px;border-radius:8px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center;flex:0 0 28px}
+.client-suggestion span:nth-child(2){min-width:0;display:flex;flex-direction:column}
+.client-suggestion strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-suggestion small{font-size:8.5px;color:#8d9895;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-suggestion>i{font-size:11px;color:#9aa4a1;margin-right:auto}
+.customer-vehicles-panel{border:1px solid rgba(11,110,79,.12);background:#f8fbfa;border-radius:11px;padding:8px}
+.customer-vehicles-panel[hidden]{display:none}
+.customer-vehicles-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.customer-vehicles-head strong{font-size:10.5px}
+.customer-vehicles-head small{display:block;font-size:8px;color:#8a9792}
+.customer-vehicles-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.customer-vehicle-option{border:1px solid rgba(37,65,58,.10);background:#fff;border-radius:10px;padding:7px;display:flex;align-items:center;gap:6px;text-align:right}
+.customer-vehicle-option.active{border-color:rgba(11,110,79,.34);background:#eff8f4}
+.customer-vehicle-icon{width:27px;height:27px;border-radius:8px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center;flex:0 0 27px}
+.customer-vehicle-option span:nth-child(2){min-width:0;display:flex;flex-direction:column}
+.customer-vehicle-option strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.customer-vehicle-option small{font-size:7.5px;color:#899590}
+.customer-vehicle-option>i{margin-right:auto;font-size:9px;color:#9aa5a2}
+.collector-selected-vehicle{display:flex;align-items:center;gap:7px;border:1px solid rgba(37,65,58,.10);border-radius:10px;padding:7px;background:#fff}
+.collector-selected-vehicle[hidden]{display:none}
+.selected-vehicle-icon{width:30px;height:30px;border-radius:9px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center}
+.collector-selected-vehicle>div{min-width:0;display:flex;flex-direction:column}
+.collector-selected-vehicle strong{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.collector-selected-vehicle small{font-size:8px;color:#899590}
+.collector-selected-vehicle button{margin-right:auto;border-radius:8px;font-size:9px;padding:5px 7px}
+.collector-inline-actions{display:flex;gap:5px;flex-wrap:wrap}
+.collector-inline-actions .btn{border-radius:9px;padding:6px 8px;font-size:9px;font-weight:850}
+.direction-compact{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.direction-choice{margin:0}
+.direction-choice input{position:absolute;opacity:0;pointer-events:none}
+.direction-choice span{display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(37,65,58,.11);border-radius:10px;padding:8px 6px;background:#fff}
+.direction-choice b{font-size:10px}
+.direction-choice i{font-size:13px}
+.direction-choice small{display:none}
+.direction-choice.entry input:checked+span{background:#eff9f3;border-color:#8fd1a8;color:#197247}
+.direction-choice.exit input:checked+span{background:#fff2f1;border-color:#e5a7a2;color:#bb4841}
+.collector-submit-row{display:grid;grid-template-columns:1fr auto;gap:6px}
+.collector-submit{min-height:44px;border-radius:10px;font-size:12px;font-weight:950}
+.collector-submit.loading{pointer-events:none;opacity:.85}
+.collector-reset{min-height:44px;width:44px;padding:0;border-radius:10px}
+.collector-optional-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.amount-box{display:flex;flex-direction:column;gap:4px}
+.amount-box .input-group-text{font-size:9px;padding-inline:8px}
+.collector-note{min-height:58px!important;resize:vertical}
+.collector-recent{margin-top:8px}
+.collector-recent-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px}
+.collector-recent-head h3{font-size:11px;margin:0}
+.collector-recent-head small{font-size:8px;color:#8c9794}
+.collector-recent-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.recent-mini{border:1px solid rgba(37,65,58,.09);background:#fff;border-radius:10px;padding:7px;display:flex;flex-direction:column;gap:3px}
+.recent-mini strong{font-size:10px}
+.recent-mini .meta{font-size:8px;color:#8a9692;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-mini .amount{font-size:9px;font-weight:900}
+.recent-mini .top{display:flex;justify-content:space-between;gap:5px}
+.recent-mini a{font-size:8px}
+@media(max-width:700px){
+  .collector-mobile-page{padding-bottom:8px}
+  .collector-mobile-head{align-items:flex-end}
+  .collector-mobile-head h1{font-size:1.15rem}
+  .collector-mini-stats{gap:5px}
+  .collector-mini-stat{padding:6px 5px;border-radius:10px;gap:4px}
+  .collector-mini-stat i{width:24px;height:24px;flex-basis:24px;font-size:11px;border-radius:7px}
+  .collector-mini-stat span{font-size:7px}
+  .collector-mini-stat strong{font-size:11px}
+  .collector-field-row,.collector-optional-grid,.collector-recent-list{grid-template-columns:1fr 1fr}
+  .customer-vehicles-list{grid-template-columns:1fr 1fr}
+}
+</style>
+
+<div class="collector-mobile-page">
+  <div class="collector-mobile-head">
+    <div><span class="eyebrow">البوابة</span><h1>تحصيل</h1><small>{{today if today is defined else ''}}</small></div>
+    <a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.gate')}}"><i class="bi bi-bar-chart"></i></a>
   </div>
-  <div class="collector-date"><i class="bi bi-calendar3"></i><span>اليوم</span><strong>{{today if today is defined else ''}}</strong></div>
-</div>
 
-<div class="stat-grid collector-stats mb-3">
-  <div class="stat-card primary"><span>تحصيلي اليوم</span><strong>{{'{:,.2f}'.format(daily_total or 0)}}</strong><small>{{currency}}</small></div>
-  <div class="stat-card"><span>دخول</span><strong>{{daily_entries}}</strong><small>عملية اليوم</small></div>
-  <div class="stat-card"><span>خروج</span><strong>{{daily_exits}}</strong><small>عملية اليوم</small></div>
-  <div class="stat-card"><span>عهدتي الحالية</span><strong>{{'{:,.2f}'.format(custody_balance or 0)}}</strong><small>{{currency}} · {{current_shift.shift_name if current_shift else 'وردية تلقائية'}}</small></div>
-</div>
-
-<div class="collector-layout">
-<div class="card-soft collector-card">
-  <div class="collector-hero compact"><div><span class="eyebrow">عملية جديدة</span><strong>سجّل حركة البوابة</strong><p>ابدأ بالبحث عن العميل أو الهاتف أو اللوحة، وسيتم اختيار المركبة تلقائيًا.</p></div><div class="collector-hero-action"><i class="bi bi-lightning-charge-fill"></i><span>سريع</span></div></div>
-
-<form method="post" id="collector-form" class="collector-form">
-  <input type="hidden" id="plate_number" name="plate_number">
-  <input type="hidden" id="plate_separator" name="plate_separator">
-  <input type="hidden" id="vehicle_id" name="vehicle_id">
-  <input type="hidden" id="vehicle_type_id" name="vehicle_type_id">
-  <input type="hidden" id="registration_status" name="registration_status" value="registered">
-
-  <div class="client-search-block">
-    <div class="client-label-row">
-      <label class="form-label mb-0">ابحث عن العميل أو الهاتف أو رقم اللوحة</label>
-      <button class="btn btn-sm btn-outline-primary new-client-trigger" type="button" data-new-client-open><i class="bi bi-person-plus"></i> عميل جديد</button>
-    </div>
-    <div class="smart-client-search">
-      <i class="bi bi-search"></i>
-      <input id="client_name" name="client_name" class="form-control form-control-lg collector-search-input" placeholder="اكتب الاسم أو الهاتف أو اللوحة..." autocomplete="off">
-      <input type="hidden" id="client_id" name="client_id">
-      <input type="hidden" id="client_phone" name="client_phone">
-      <input type="hidden" id="client_address" name="client_address">
-      <input type="hidden" id="client_notes" name="client_notes">
-    </div>
-    <div id="client-suggestions" class="client-suggestion-list" hidden></div>
+  <div class="collector-mini-stats">
+    <div class="collector-mini-stat total"><i class="bi bi-cash-stack"></i><div class="copy"><span>تحصيلي</span><strong>{{'{:,.0f}'.format(daily_total or 0)}}</strong></div></div>
+    <div class="collector-mini-stat entry"><i class="bi bi-arrow-down-circle"></i><div class="copy"><span>دخول</span><strong>{{daily_entries}}</strong></div></div>
+    <div class="collector-mini-stat exit"><i class="bi bi-arrow-up-circle"></i><div class="copy"><span>خروج</span><strong>{{daily_exits}}</strong></div></div>
+    <div class="collector-mini-stat custody"><i class="bi bi-safe2"></i><div class="copy"><span>عهدتي</span><strong>{{'{:,.0f}'.format(custody_balance or 0)}}</strong></div></div>
   </div>
 
-  <div id="customer-vehicles-panel" class="customer-vehicles-panel" hidden>
-    <div class="customer-vehicles-head"><div><strong>مركبات العميل</strong><small id="customer-vehicles-count">اختر المركبة المطلوب دخولها أو خروجها</small></div></div>
-    <div id="customer-vehicles-list"></div>
-  </div>
+  <div class="card-soft collector-mobile-card">
+    <form method="post" id="collector-form" class="collector-form-compact" novalidate>
+      <input type="hidden" id="plate_number" name="plate_number">
+      <input type="hidden" id="plate_separator" name="plate_separator">
+      <input type="hidden" id="vehicle_id" name="vehicle_id">
+      <input type="hidden" id="vehicle_type_id" name="vehicle_type_id">
+      <input type="hidden" id="registration_status" name="registration_status" value="registered">
+      <input type="hidden" id="is_default_vehicle" name="is_default_vehicle" value="">
 
-  <div id="new-vehicle-panel" class="new-vehicle-panel" hidden>
-    <div class="new-vehicle-head">
-      <div><strong>إضافة مركبة للعميل</strong><small>تظهر عند عدم وجود مركبة محددة أو عند إضافة مركبة جديدة.</small></div>
-      <button type="button" class="btn btn-sm btn-light" id="clear-new-vehicle">إلغاء</button>
-    </div>
-    <div class="collector-main-fields">
-      <div class="field-block">
-        <label class="form-label">حالة المركبة</label>
-        <select id="new_registration_status" class="form-select form-select-lg"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select>
+      <div class="collector-field">
+        <label class="form-label">العميل</label>
+        <div class="client-search-box">
+          <i class="bi bi-search search-icon"></i>
+          <input id="client_name" name="client_name" class="form-control" placeholder="اسم العميل، الهاتف أو اللوحة" autocomplete="off">
+        </div>
+        <input type="hidden" id="client_id" name="client_id">
+        <input type="hidden" id="client_phone" name="client_phone">
+        <input type="hidden" id="client_address" name="client_address">
+        <input type="hidden" id="client_notes" name="client_notes">
+        <div id="client-suggestions" class="client-suggestion-list" hidden></div>
       </div>
-      <div class="field-block">
-        <label class="form-label">نوع المركبة</label>
-        <select id="new_vehicle_type_id" class="form-select form-select-lg"><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select>
+
+      <div id="customer-vehicles-panel" class="customer-vehicles-panel" hidden>
+        <div class="customer-vehicles-head"><div><strong>المركبات</strong><small id="customer-vehicles-count"></small></div><button type="button" class="btn btn-sm btn-outline-primary" id="add-real-vehicle"><i class="bi bi-plus"></i> جديدة</button></div>
+        <div id="customer-vehicles-list" class="customer-vehicles-list"></div>
       </div>
-      <div class="field-block">
-        <label class="form-label">رقم اللوحة</label>
-        <input id="new_plate_number" class="form-control form-control-lg" inputmode="numeric" autocomplete="off" placeholder="اختياري لبدون جمارك">
+
+      <div id="new-vehicle-panel" class="customer-vehicles-panel" hidden>
+        <div class="customer-vehicles-head"><div><strong>مركبة جديدة</strong><small>لإضافة مركبة فعلية للعميل</small></div><button type="button" class="btn btn-sm btn-light" id="cancel-real-vehicle">إلغاء</button></div>
+        <div class="collector-field-row">
+          <div class="collector-field"><label class="form-label">النوع</label><select id="new_vehicle_type_id" class="form-select"><option value="">اختر</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
+          <div class="collector-field"><label class="form-label">الحالة</label><select id="new_registration_status" class="form-select"><option value="registered">جمركية</option><option value="without_customs">بدون جمارك</option></select></div>
+          <div class="collector-field"><label class="form-label">الرقم</label><input id="new_plate_number" class="form-control" inputmode="numeric"></div>
+          <div class="collector-field"><label class="form-label">الفاصل</label><input id="new_plate_separator" class="form-control" placeholder="0"></div>
+        </div>
+        <div class="collector-inline-actions mt-1"><button type="button" class="btn btn-primary" id="use-real-vehicle"><i class="bi bi-check2"></i> استخدام</button></div>
       </div>
-      <div class="field-block">
-        <label class="form-label">وصف المركبة</label>
-        <input id="new_vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء">
+
+      <div id="selected-vehicle" class="collector-selected-vehicle" hidden>
+        <div class="selected-vehicle-icon"><i class="bi bi-truck-front"></i></div>
+        <div><strong id="selected-vehicle-name">—</strong><small id="selected-vehicle-meta">—</small></div>
+        <button type="button" class="btn btn-light" id="change-vehicle">تغيير</button>
       </div>
-    </div>
+
+      <div class="collector-optional-grid">
+        <div class="collector-field">
+          <label class="form-label">الوكيل <small>(اختياري)</small></label>
+          <select id="agent_id" name="agent_id" class="form-select">
+            <option value="">على عهدة المتحصل</option>
+            {% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="amount-box">
+          <label class="form-label">المبلغ</label>
+          <div class="input-group"><input name="amount" id="amount" class="form-control text-center fw-bold" inputmode="decimal" required autocomplete="off" data-money-words="collector-amount-words" data-currency="{{currency}}"><span class="input-group-text">{{currency}}</span></div>
+          <div id="collector-amount-words" class="text-muted" style="font-size:8px" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="direction-compact">
+        <label class="direction-choice entry"><input type="radio" name="direction" value="entry" checked><span><i class="bi bi-arrow-down-circle"></i><b>دخول</b></span></label>
+        <label class="direction-choice exit"><input type="radio" name="direction" value="exit"><span><i class="bi bi-arrow-up-circle"></i><b>خروج</b></span></label>
+      </div>
+
+      <div class="collector-field">
+        <label class="form-label">ملاحظة <small>(اختياري)</small></label>
+        <textarea name="gate_notes" id="gate_notes" class="form-control collector-note" placeholder="ملاحظة مختصرة..."></textarea>
+      </div>
+
+      <div class="collector-submit-row">
+        <button class="btn btn-primary collector-submit" id="submit-btn" type="submit"><i class="bi bi-check2-circle"></i> تسجيل الحركة</button>
+        <button class="btn btn-light collector-reset" id="reset-collector" type="button" title="تفريغ"><i class="bi bi-arrow-counterclockwise"></i></button>
+      </div>
+    </form>
   </div>
 
-  <div id="selected-vehicle" class="collector-selected-vehicle" hidden>
-    <div class="selected-vehicle-icon"><i class="bi bi-truck-front"></i></div>
-    <div><strong id="selected-vehicle-name">—</strong><small id="selected-vehicle-meta">مركبة مسجلة</small></div>
-    <button type="button" class="btn btn-sm btn-light" id="change-vehicle">تغيير المركبة</button>
-  </div>
-
-  <div class="collector-note-field">
-    <label class="form-label">ملاحظات الحركة <small>(اختياري)</small></label>
-    <textarea name="gate_notes" id="gate_notes" class="form-control" rows="2" placeholder="مثال: دخول بضائع، موعد خاص، ملاحظة على المركبة..."></textarea>
-  </div>
-
-  <div class="collector-optional-fields">
-    <div><label class="form-label">الوكيل <small>(اختياري)</small></label><select id="agent_id" name="agent_id" class="form-select form-select-lg"><option value="">غير مربوط — على عهدة المتحصل</option>{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
-    <div class="collector-amount-wrap"><label class="form-label">المبلغ</label><div class="input-group"><input name="amount" id="amount" class="form-control text-center fw-bold collector-amount-input" inputmode="decimal" required autocomplete="off" data-money-words="collector-amount-words" data-currency="{{currency}}"><span class="input-group-text">{{currency}}</span></div><div id="collector-amount-words" class="collector-amount-words" aria-live="polite"></div></div>
-  </div>
-
-  <div class="direction-buttons">
-    <label class="direction-choice entry"><input type="radio" name="direction" value="entry" checked><span><i class="bi bi-box-arrow-in-down"></i><b>دخول</b><small>تحصيل وإثبات إيراد</small></span></label>
-    <label class="direction-choice exit"><input type="radio" name="direction" value="exit"><span><i class="bi bi-box-arrow-up"></i><b>خروج</b><small>خروج مع تحصيل</small></span></label>
-  </div>
-
-  <div class="collector-submit-row"><button class="btn btn-primary btn-lg collector-submit" id="submit-btn"><i class="bi bi-box-arrow-in-down"></i> تسجيل الدخول</button></div>
-</form>
-</div>
-
-<div class="card-soft side-info">
-  <div class="section-title"><h3>ملخص اليوم</h3>{% if current_user.role != "collector" and can("reports.view") %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.gate')}}">تفصيل</a>{% endif %}</div>
-  <div class="daily-mini"><div><span>التحصيل</span><strong>{{'{:,.2f}'.format(daily_total or 0)}}</strong></div><div><span>العمليات</span><strong>{{daily_count}}</strong></div></div>
-  <div class="flow mt-3"><div><b>01</b><span>البحث</span><small>عميل أو هاتف أو لوحة</small></div><div><b>02</b><span>المركبات</span><small>تظهر مركبات العميل للاختيار</small></div><div><b>03</b><span>الجديد</span><small>يمكن إضافة مركبة بلا رقم عند الحاجة</small></div><div><b>04</b><span>الحركة</span><small>دخول أو خروج مع مبلغ</small></div></div>
-</div>
-</div>
-
-<div class="card-soft mt-3"><div class="section-title"><div><h3>آخر حركاتي اليوم</h3><small class="text-muted">{{recent|length}} حركة</small></div>{% if current_user.role != "collector" and can("reports.view") %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.collectors')}}">تقارير المتحصلين</a>{% endif %}</div><div class="table-wrap"><table class="table"><thead><tr><th>الوقت</th><th>اللوحة</th><th>العميل</th><th>الوكيل</th><th>الحركة</th><th>المبلغ</th><th>التفاصيل</th></tr></thead><tbody>{% for x in recent %}<tr><td>{{x.transaction_date.strftime('%H:%M')}}</td><td class="fw-bold">{{x.vehicle.plate_number or 'بدون جمارك'}}</td><td>{{x.client.name if x.client else '—'}}</td><td>{{x.agent.name if x.agent else 'العهدة'}}</td><td><span class="badge-soft">{{'دخول' if x.direction=='entry' else 'خروج'}}</span></td><td>{{'{:,.2f}'.format(x.amount)}} {{currency}}</td><td><a class="btn btn-sm btn-outline-primary" href="{{url_for('collector.transaction_detail',transaction_id=x.id)}}">تفاصيل</a></td></tr>{% else %}<tr><td colspan="7" class="text-center text-muted py-4">لا توجد عمليات اليوم.</td></tr>{% endfor %}</tbody></table></div></div>
-
-<div id="new-client-modal" class="collector-modal" hidden>
-  <div class="collector-modal-backdrop" data-new-client-close></div>
-  <div class="collector-modal-card" role="dialog" aria-modal="true">
-    <div class="collector-modal-head"><div><strong>إضافة عميل جديد</strong><small>سيُضاف بدون وكيل، ثم يمكنك إضافة أول مركبة له.</small></div><button type="button" class="menu-close" data-new-client-close><i class="bi bi-x-lg"></i></button></div>
-    <div class="row g-3">
-      <div class="col-12"><label class="form-label">اسم العميل</label><input id="new_client_name" class="form-control form-control-lg"></div>
-      <div class="col-12 col-sm-6"><label class="form-label">الهاتف</label><input id="new_client_phone" class="form-control" inputmode="tel"></div>
-      <div class="col-12 col-sm-6"><label class="form-label">العنوان</label><input id="new_client_address" class="form-control"></div>
-      <div class="col-12"><label class="form-label">ملاحظات</label><textarea id="new_client_notes" class="form-control"></textarea></div>
-      <div class="col-12 d-flex gap-2 justify-content-end"><button type="button" class="btn btn-light" data-new-client-close>إلغاء</button><button type="button" class="btn btn-primary" id="new-client-apply"><i class="bi bi-check2"></i> استخدام العميل</button></div>
+  <div class="card-soft collector-recent">
+    <div class="collector-recent-head"><div><h3>آخر الحركات</h3><small>{{recent|length}} اليوم</small></div>{% if current_user.role != "collector" and can("reports.view") %}<a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.collectors')}}">التقرير</a>{% endif %}</div>
+    <div class="collector-recent-list">
+      {% for x in recent[:8] %}
+      <div class="recent-mini">
+        <div class="top"><strong>{{x.vehicle.plate_number or 'بدون'}}</strong><span class="badge-soft">{{'دخول' if x.direction=='entry' else 'خروج'}}</span></div>
+        <div class="meta">{{x.client.name if x.client else '—'}} · {{x.agent.name if x.agent else 'العهدة'}}</div>
+        <div class="amount">{{'{:,.0f}'.format(x.amount)}} {{currency}}</div>
+        <a href="{{url_for('collector.transaction_detail',transaction_id=x.id)}}">التفاصيل</a>
+      </div>
+      {% else %}<div class="empty-state" style="grid-column:1/-1">لا توجد حركات اليوم.</div>{% endfor %}
     </div>
   </div>
 </div>
@@ -124,164 +210,124 @@
 
 {% block scripts %}
 <script>
-const plateHidden=document.getElementById('plate_number'),sep=document.getElementById('plate_separator'),vehicleHidden=document.getElementById('vehicle_id'),vehicleTypeHidden=document.getElementById('vehicle_type_id'),regHidden=document.getElementById('registration_status');
-const newVehiclePanel=document.getElementById('new-vehicle-panel'),newStatus=document.getElementById('new_registration_status'),newPlate=document.getElementById('new_plate_number'),newType=document.getElementById('new_vehicle_type_id'),newNotes=document.getElementById('new_vehicle_notes');
-const selectedVehicle=document.getElementById('selected-vehicle'),selectedVehicleName=document.getElementById('selected-vehicle-name'),selectedVehicleMeta=document.getElementById('selected-vehicle-meta');
-const customerVehicles=document.getElementById('customer-vehicles-panel'),customerVehiclesList=document.getElementById('customer-vehicles-list'),customerVehiclesCount=document.getElementById('customer-vehicles-count');
-const client=document.getElementById('client_name'),clientId=document.getElementById('client_id'),clientPhone=document.getElementById('client_phone'),clientAddress=document.getElementById('client_address'),clientNotes=document.getElementById('client_notes');
-const agent=document.getElementById('agent_id'),clientSug=document.getElementById('client-suggestions'),modal=document.getElementById('new-client-modal'),submitBtn=document.getElementById('submit-btn');
-let searchTimer;
-
-function esc(value){return String(value??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
-function clearSuggestions(){clientSug.innerHTML='';clientSug.hidden=true;}
-function openNewClient(){modal.hidden=false;setTimeout(()=>document.getElementById('new_client_name')?.focus(),40);}
-function closeNewClient(){modal.hidden=true;}
-
-function hideVehicleAreas(){
-  customerVehicles.hidden=true;
-  selectedVehicle.hidden=true;
-  newVehiclePanel.hidden=true;
-  vehicleHidden.value='';plateHidden.value='';sep.value='';vehicleTypeHidden.value='';regHidden.value='registered';
-}
-function showNewVehicle(){
-  customerVehicles.hidden=true;
-  selectedVehicle.hidden=true;
-  newVehiclePanel.hidden=false;
-  vehicleHidden.value='';plateHidden.value='';sep.value='';
-  vehicleTypeHidden.value=newType.value||'';
-  regHidden.value=newStatus.value||'registered';
-}
-let currentCustomerVehicles=[];
-
-function formatPlate(v){
-  const number=(v.plate||'').trim();
-  const separator=(v.separator||'').trim();
-  return [number,separator].filter(Boolean).join(' ');
-}
+const DEFAULT_VEHICLE_TYPE_ID={{default_vehicle_type_id|int}};
+const plateHidden=document.getElementById('plate_number');
+const sep=document.getElementById('plate_separator');
+const vehicleHidden=document.getElementById('vehicle_id');
+const vehicleTypeHidden=document.getElementById('vehicle_type_id');
+const regHidden=document.getElementById('registration_status');
+const defaultHidden=document.getElementById('is_default_vehicle');
+const client=document.getElementById('client_name');
+const clientId=document.getElementById('client_id');
+const clientPhone=document.getElementById('client_phone');
+const clientAddress=document.getElementById('client_address');
+const clientNotes=document.getElementById('client_notes');
+const clientSug=document.getElementById('client-suggestions');
+const vehiclePanel=document.getElementById('customer-vehicles-panel');
+const vehicleList=document.getElementById('customer-vehicles-list');
+const vehicleCount=document.getElementById('customer-vehicles-count');
+const selectedVehicle=document.getElementById('selected-vehicle');
+const selectedVehicleName=document.getElementById('selected-vehicle-name');
+const selectedVehicleMeta=document.getElementById('selected-vehicle-meta');
+const newVehiclePanel=document.getElementById('new-vehicle-panel');
+const newType=document.getElementById('new_vehicle_type_id');
+const newStatus=document.getElementById('new_registration_status');
+const newPlate=document.getElementById('new_plate_number');
+const newSep=document.getElementById('new_plate_separator');
+const submitBtn=document.getElementById('submit-btn');
+let currentVehicles=[],searchTimer;
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function plateText(v){return [String(v.plate??'').trim(),String(v.separator??'').trim()].filter(Boolean).join(' / ');}
+function clearVehicle(){vehicleHidden.value='';plateHidden.value='';sep.value='';vehicleTypeHidden.value='';regHidden.value='registered';defaultHidden.value='';selectedVehicle.hidden=true;}
 function setSelectedVehicle(v){
   vehicleHidden.value=v.id||'';
-  plateHidden.value=v.plate||'';
-  sep.value=v.separator||'';
+  plateHidden.value=v.plate??'';
+  sep.value=v.separator??'';
   vehicleTypeHidden.value=v.vehicle_type_id||'';
   regHidden.value=v.registration_status||'registered';
-  const plateText=formatPlate(v);
-  selectedVehicleName.textContent=plateText||'مركبة بدون رقم جمركي';
-  selectedVehicleMeta.textContent=(v.vehicle_type||'مركبة')+(v.registration_status==='without_customs'?' — بدون جمارك':'')+(client.value?' — '+client.value:'');
+  defaultHidden.value=v.is_default?'1':'';
+  selectedVehicleName.textContent=plateText(v)||'مركبة بدون رقم';
+  selectedVehicleMeta.textContent=(v.vehicle_type||'مركبة')+(v.is_default?' · افتراضية':'')+(client.value?' · '+client.value:'');
   selectedVehicle.hidden=false;
   newVehiclePanel.hidden=true;
-  if(currentCustomerVehicles.length>1){
-    renderCustomerVehicles(currentCustomerVehicles,v.id);
-  }else{
-    customerVehicles.hidden=true;
-  }
+  renderVehicles(currentVehicles,v.id);
 }
-function renderCustomerVehicles(vehicles,selectedId){
-  currentCustomerVehicles=vehicles||[];
-  customerVehiclesList.innerHTML='';
-  customerVehiclesCount.textContent=vehicles.length===1?'مركبة واحدة':('عدد المركبات: '+vehicles.length);
+function renderVehicles(vehicles,selectedId){
+  currentVehicles=vehicles||[];
+  vehicleList.innerHTML='';
+  vehicleCount.textContent=vehicles.length===1?'مركبة واحدة':'عدد: '+vehicles.length;
   vehicles.forEach(v=>{
-    const label=formatPlate(v)||'بدون رقم جمركي';
-    const meta=(v.vehicle_type||'مركبة')+(v.registration_status==='without_customs'?' · بدون جمارك':'');
-    const btn=document.createElement('button');
-    btn.type='button';
-    btn.className='customer-vehicle-option'+(Number(selectedId)===Number(v.id)?' active':'');
-    btn.innerHTML='<span class="customer-vehicle-icon"><i class="bi bi-truck-front"></i></span><span><strong>'+esc(label)+'</strong><small>'+esc(meta)+'</small></span><i class="bi bi-chevron-left"></i>';
-    btn.addEventListener('click',()=>setSelectedVehicle(v));
-    customerVehiclesList.appendChild(btn);
+    const b=document.createElement('button');
+    b.type='button';b.className='customer-vehicle-option'+(String(selectedId)===String(v.id)?' active':'');
+    b.innerHTML='<span class="customer-vehicle-icon"><i class="bi bi-truck-front"></i></span><span><strong>'+esc(plateText(v)||'بدون رقم')+'</strong><small>'+esc((v.vehicle_type||'مركبة')+(v.is_default?' · افتراضية':''))+'</small></span><i class="bi bi-chevron-left"></i>';
+    b.onclick=()=>setSelectedVehicle(v);
+    vehicleList.appendChild(b);
   });
-  customerVehicles.hidden=false;
+  vehiclePanel.hidden=false;
 }
-
+function showRealVehicle(){
+  newVehiclePanel.hidden=false;
+  vehiclePanel.hidden=true;
+  selectedVehicle.hidden=true;
+  defaultHidden.value='';
+  newType.focus();
+}
+function useRealVehicle(){
+  const typeId=newType.value;
+  const status=newStatus.value;
+  const plate=newPlate.value.trim();
+  if(!typeId){newType.focus();return;}
+  if(status==='registered'&&!plate){newPlate.focus();return;}
+  setSelectedVehicle({id:'',plate:plate,separator:newSep.value.trim(),vehicle_type_id:typeId,vehicle_type:newType.options[newType.selectedIndex]?.textContent,registration_status:status,is_default:false});
+  defaultHidden.value='';
+}
+function resetCollector(){
+  document.getElementById('collector-form')?.reset();
+  clientId.value='';clientPhone.value='';clientAddress.value='';clientNotes.value='';
+  clearVehicle();vehiclePanel.hidden=true;newVehiclePanel.hidden=true;clientSug.innerHTML='';clientSug.hidden=true;
+  document.querySelectorAll('.customer-vehicle-option').forEach(x=>x.classList.remove('active'));
+  setTimeout(()=>client.focus(),40);
+}
 function chooseCustomer(x){
-  client.value=x.name||'';
-  clientId.value=x.id||'';
-  clientPhone.value=x.phone||'';
-  clientAddress.value=x.address||'';
-  clientNotes.value='';
-  agent.value='';
-  clearSuggestions();
-  if(x.vehicles?.length===1) setSelectedVehicle(x.vehicles[0]);
-  else if(x.vehicles?.length>1) renderCustomerVehicles(x.vehicles);
-  else showNewVehicle();
+  client.value=x.name||'';clientId.value=x.id||'';clientPhone.value=x.phone||'';clientAddress.value=x.address||'';clientNotes.value='';
+  document.getElementById('agent_id').value='';
+  clearVehicle();renderVehicles(x.vehicles||[]);
+  if((x.vehicles||[]).length===1)setSelectedVehicle(x.vehicles[0]);
+  else if(!(x.vehicles||[]).length){
+    setSelectedVehicle({id:'',plate:'0',separator:'0',vehicle_type_id:DEFAULT_VEHICLE_TYPE_ID,vehicle_type:'افتراضي',registration_status:'registered',is_default:true});
+  }
+  clientSug.innerHTML='';clientSug.hidden=true;
 }
 function chooseVehicleResult(x){
-  // A vehicle without a customer must not submit a fake customer name.
-  client.value=x.id ? (x.name||'') : '';
-  clientId.value=x.id||'';
-  clientPhone.value=x.phone||'';
-  clientAddress.value=x.address||'';
-  clientNotes.value='';
-  setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,registration_status:x.registration_status,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type});
-  clearSuggestions();
+  client.value=x.name||'';clientId.value=x.id||'';clientPhone.value=x.phone||'';clientAddress.value=x.address||'';
+  setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type,registration_status:x.registration_status,is_default:x.is_default});
+  clientSug.innerHTML='';clientSug.hidden=true;
 }
-function applyNewClient(){
-  const n=document.getElementById('new_client_name').value.trim();
-  if(!n){document.getElementById('new_client_name').focus();return;}
-  client.value=n;clientId.value='';
-  clientPhone.value=document.getElementById('new_client_phone').value.trim();
-  clientAddress.value=document.getElementById('new_client_address').value.trim();
-  clientNotes.value=document.getElementById('new_client_notes').value.trim();
-  clearSuggestions();closeNewClient();showNewVehicle();
-}
-function prepareNewVehicle(){
-  plateHidden.value=newPlate.value.trim()||'';
-  vehicleHidden.value='';
-  vehicleTypeHidden.value=newType.value||'';
-  regHidden.value=newStatus.value||'registered';
-}
-document.querySelectorAll('[data-new-client-open]').forEach(x=>x.addEventListener('click',openNewClient));
-document.querySelectorAll('[data-new-client-close]').forEach(x=>x.addEventListener('click',closeNewClient));
-document.getElementById('new-client-apply')?.addEventListener('click',applyNewClient);
-newPlate?.addEventListener('input',prepareNewVehicle);
-newType?.addEventListener('change',prepareNewVehicle);
-newStatus?.addEventListener('change',prepareNewVehicle);
-document.getElementById('clear-new-vehicle')?.addEventListener('click',hideVehicleAreas);
-document.getElementById('change-vehicle')?.addEventListener('click',()=>{hideVehicleAreas();client.focus();});
-
 client?.addEventListener('input',()=>{
-  clientId.value='';vehicleHidden.value='';clearTimeout(searchTimer);
+  clientId.value='';clearVehicle();clearTimeout(searchTimer);
   const q=client.value.trim();
-  if(!q){hideVehicleAreas();return;}
-  clientSug.hidden=false;
-  clientSug.innerHTML='<div class="suggestion-loading"><i class="bi bi-arrow-repeat"></i><span>البحث...</span></div>';
-  searchTimer=setTimeout(()=>{
-    fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(q))
-      .then(r=>r.json())
-      .then(rows=>{
-        if(!rows.length){
-          clientSug.innerHTML='<div class="no-client-result"><span>لا توجد مطابقة بالاسم أو الهاتف أو اللوحة.</span><button type="button" class="btn btn-sm btn-outline-primary" data-empty-new-client>+ عميل جديد</button></div>';
-          document.querySelector('[data-empty-new-client]')?.addEventListener('click',openNewClient);
-          showNewVehicle();
-          return;
-        }
-        clientSug.innerHTML=rows.map((x,i)=>{
-          const title=x.name||'مركبة بدون عميل';
-          const meta=x.kind==='vehicle'
-            ? ('لوحة '+(x.plate||'بدون رقم')+(x.vehicle_type?' · '+x.vehicle_type:'')+(x.registration_status==='without_customs'?' · بدون جمارك':''))
-            : ((x.phone||'بدون هاتف')+(x.vehicles? ' · '+x.vehicles.length+' مركبة':''));
-          return '<button type="button" class="client-suggestion" data-i="'+i+'"><span class="client-suggestion-icon"><i class="bi '+(x.kind==='vehicle'?'bi-truck-front':'bi-person')+'"></i></span><span><strong>'+esc(title)+'</strong><small>'+esc(meta)+'</small></span><i class="bi bi-chevron-left"></i></button>';
-        }).join('');
-        document.querySelectorAll('.client-suggestion').forEach(b=>b.onclick=()=>{const x=rows[Number(b.dataset.i)];x.kind==='vehicle'?chooseVehicleResult(x):chooseCustomer(x);});
-      })
-      .catch(()=>{clientSug.innerHTML='<div class="no-client-result">تعذر البحث مؤقتًا.</div>';});
-  },60);
+  if(!q){vehiclePanel.hidden=true;clientSug.hidden=true;return;}
+  clientSug.hidden=false;clientSug.innerHTML='<div style="padding:8px;font-size:9px;color:#8c9693">البحث...</div>';
+  searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(q)).then(r=>r.json()).then(rows=>{
+    if(!rows.length){clientSug.innerHTML='<div style="padding:9px;font-size:9px">لا توجد نتائج — يمكنك كتابة اسم العميل وتسجيل الحركة.</div>';return;}
+    clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi '+(x.kind==='vehicle'?'bi-truck-front':'bi-person')+'"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc(x.kind==='vehicle'?('لوحة '+(x.plate||'0')):((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة'))+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
+    clientSug.querySelectorAll('.client-suggestion').forEach(b=>b.onclick=()=>{const x=rows[Number(b.dataset.index)];x.kind==='vehicle'?chooseVehicleResult(x):chooseCustomer(x);});
+  }).catch(()=>{clientSug.innerHTML='<div style="padding:9px;font-size:9px">تعذر البحث.</div>';})},70);
 });
-
-document.querySelectorAll('input[name="direction"]').forEach(x=>x.addEventListener('change',()=>{
-  submitBtn.innerHTML=x.checked&&x.value==='exit'
-    ? '<i class="bi bi-box-arrow-up"></i> تسجيل الخروج والتحصيل'
-    : '<i class="bi bi-box-arrow-in-down"></i> تسجيل الدخول';
+document.getElementById('add-real-vehicle')?.addEventListener('click',showRealVehicle);
+document.getElementById('cancel-real-vehicle')?.addEventListener('click',()=>{newVehiclePanel.hidden=true;vehiclePanel.hidden=false;});
+document.getElementById('use-real-vehicle')?.addEventListener('click',useRealVehicle);
+document.getElementById('change-vehicle')?.addEventListener('click',()=>{clearVehicle();if(currentVehicles.length)vehiclePanel.hidden=false;else setSelectedVehicle({id:'',plate:'0',separator:'0',vehicle_type_id:DEFAULT_VEHICLE_TYPE_ID,vehicle_type:'افتراضي',registration_status:'registered',is_default:true});});
+document.getElementById('reset-collector')?.addEventListener('click',resetCollector);
+document.querySelectorAll('input[name="direction"]').forEach(r=>r.addEventListener('change',()=>{
+  submitBtn.innerHTML=r.checked&&r.value==='exit'?'<i class="bi bi-arrow-up-circle"></i> تسجيل الخروج':'<i class="bi bi-arrow-down-circle"></i> تسجيل الدخول';
 }));
 document.getElementById('collector-form')?.addEventListener('submit',e=>{
-  if(!vehicleHidden.value){
-    const status=regHidden.value;
-    const typeId=vehicleTypeHidden.value;
-    if(!typeId){e.preventDefault();showNewVehicle();newType.focus();return;}
-    const plate=plateHidden.value.trim();
-    if(status==='registered'&&!plate){e.preventDefault();showNewVehicle();newPlate.focus();return;}
-  }
-  submitBtn.disabled=true;
+  const clientValue=clientId.value||client.value.trim();
+  if(!clientValue){e.preventDefault();client.focus();return;}
+  if(!vehicleTypeHidden.value){e.preventDefault();newVehiclePanel.hidden=false;newType.focus();return;}
+  if(regHidden.value==='registered'&&!plateHidden.value.trim()){e.preventDefault();newVehiclePanel.hidden=false;newPlate.focus();return;}
+  submitBtn.disabled=true;submitBtn.classList.add('loading');submitBtn.innerHTML='<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> جارٍ التسجيل...';
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeNewClient();});
 </script>
 {% endblock %}
