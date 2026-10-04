@@ -4,7 +4,7 @@ from flask_login import current_user
 from ..extensions import db
 from ..models import (
     Account, Agent, AgentLease, AgentRent, Employee, JournalEntry, PayrollLine, PayrollRun,
-    Settlement, SettlementStatus, Shift, Voucher, VoucherType,
+    Settlement, SettlementStatus, Shift, Voucher, VoucherStatus, VoucherType,
 )
 from ..permissions import can, permission_required
 from ..services.accounting import D, account_balance, get_system_account, create_posted_entry, reverse_entry
