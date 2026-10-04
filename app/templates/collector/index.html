@@ -211,7 +211,7 @@
 {% block scripts %}
 <script>
 const DEFAULT_VEHICLE_TYPE_ID={{default_vehicle_type_id|int}};
-window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>client?.focus(),40));
+window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{client?.focus();loadClientSuggestions('');},40));
 const plateHidden=document.getElementById('plate_number');
 const sep=document.getElementById('plate_separator');
 const vehicleHidden=document.getElementById('vehicle_id');
@@ -304,16 +304,32 @@ function chooseVehicleResult(x){
   setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type,registration_status:x.registration_status,is_default:x.is_default});
   clientSug.innerHTML='';clientSug.hidden=true;
 }
+async function loadClientSuggestions(q='',autoOpen=true){
+  const query=String(q??'').trim();
+  clearTimeout(searchTimer);
+  clientSug.hidden=!autoOpen;
+  if(autoOpen) clientSug.innerHTML='<div style="padding:8px;font-size:9px;color:#8c9693">جارٍ تحميل العملاء...</div>';
+  searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query))
+    .then(r=>r.ok?r.json():Promise.reject(new Error('search failed')))
+    .then(rows=>{
+      if(!rows.length){
+        clientSug.innerHTML='<div style="padding:9px;font-size:9px">لا يوجد عملاء مسجلون.</div>';
+        return;
+      }
+      clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi '+(x.kind==='vehicle'?'bi-truck-front':'bi-person')+'"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc(x.kind==='vehicle'?('لوحة '+(x.plate||'0')):((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة'))+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
+      clientSug.querySelectorAll('.client-suggestion').forEach(b=>b.onclick=()=>{
+        const x=rows[Number(b.dataset.index)];
+        x.kind==='vehicle'?chooseVehicleResult(x):chooseCustomer(x);
+      });
+    })
+    .catch(()=>{clientSug.innerHTML='<div style="padding:9px;font-size:9px">تعذر تحميل العملاء.</div>';});},70);
+}
+client?.addEventListener('focus',()=>loadClientSuggestions(client.value,true));
 client?.addEventListener('input',()=>{
-  clientId.value='';clearVehicle();clearTimeout(searchTimer);
+  clientId.value='';clearVehicle();
   const q=client.value.trim();
-  if(!q){vehiclePanel.hidden=true;clientSug.hidden=true;return;}
-  clientSug.hidden=false;clientSug.innerHTML='<div style="padding:8px;font-size:9px;color:#8c9693">البحث...</div>';
-  searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(q)).then(r=>r.json()).then(rows=>{
-    if(!rows.length){clientSug.innerHTML='<div style="padding:9px;font-size:9px">لا توجد نتائج — يمكنك كتابة اسم العميل وتسجيل الحركة.</div>';return;}
-    clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi '+(x.kind==='vehicle'?'bi-truck-front':'bi-person')+'"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc(x.kind==='vehicle'?('لوحة '+(x.plate||'0')):((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة'))+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
-    clientSug.querySelectorAll('.client-suggestion').forEach(b=>b.onclick=()=>{const x=rows[Number(b.dataset.index)];x.kind==='vehicle'?chooseVehicleResult(x):chooseCustomer(x);});
-  }).catch(()=>{clientSug.innerHTML='<div style="padding:9px;font-size:9px">تعذر البحث.</div>';})},70);
+  if(!q){vehiclePanel.hidden=true;loadClientSuggestions('',true);return;}
+  loadClientSuggestions(q,true);
 });
 document.getElementById('add-real-vehicle')?.addEventListener('click',showRealVehicle);
 document.getElementById('cancel-real-vehicle')?.addEventListener('click',()=>{newVehiclePanel.hidden=true;vehiclePanel.hidden=false;});
