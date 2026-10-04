@@ -5,7 +5,7 @@
 <div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الكود"></div><button class="btn btn-outline-primary">بحث</button>{% if q %}<a class="btn btn-light" href="{{url_for('master_data.clients')}}">مسح</a>{% endif %}</form></div>
 {% if can_manage %}<div id="add-client" class="card-soft add-panel">
 <form method="post" enctype="multipart/form-data" class="row g-3" id="new-client-form">
-  <div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب يُنشأ تلقائيًا · يجب إضافة مركبة واحدة على الأقل</span></div></div>
+  <div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب يُنشأ تلقائيًا · ستُنشأ مركبة افتراضية تلقائيًا إذا لم تضف مركبة</span></div></div>
   <div class="col-12 col-lg-4"><label class="form-label">اسم العميل</label><input name="name" class="form-control form-control-lg" required></div>
   <div class="col-6 col-lg-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
   <div class="col-6 col-lg-3"><label class="form-label">نوع الهوية <small>(اختياري)</small></label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
@@ -20,8 +20,8 @@
       <div class="client-vehicle-row">
         <input type="hidden" name="vehicle_id" value="">
         <div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div>
-        <div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اختياري فقط لبدون جمارك"></div>
-        <div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
+        <div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اتركه فارغًا للمركبة الافتراضية"></div>
+        <div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select"><option value="">إضافة لاحقًا / تلقائي</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
         <div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div>
         <button type="button" class="btn btn-sm btn-light vehicle-remove" disabled><i class="bi bi-x"></i></button>
       </div>
@@ -45,7 +45,7 @@ function setVehicleRequirement(row){
   if(status&&plate) plate.required=status.value==='registered';
 }
 function vehicleTemplate(){
-  return '<div class="client-vehicle-row"><input type="hidden" name="vehicle_id" value=""><div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div><div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اختياري لبدون جمارك"></div><div><label class="form-label">الفاصل</label><input name="vehicle_plate_separator" class="form-control" placeholder="مثال: /"></div><div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div><div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div><button type="button" class="btn btn-sm btn-light vehicle-remove"><i class="bi bi-x"></i></button></div>';
+  return '<div class="client-vehicle-row"><input type="hidden" name="vehicle_id" value=""><div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div><div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اتركه فارغًا للمركبة الافتراضية"></div><div><label class="form-label">الفاصل</label><input name="vehicle_plate_separator" class="form-control" placeholder="مثال: /"></div><div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div><div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div><button type="button" class="btn btn-sm btn-light vehicle-remove"><i class="bi bi-x"></i></button></div>';
 }
 document.getElementById('add-client-vehicle')?.addEventListener('click',()=>{
   builder.insertAdjacentHTML('beforeend',vehicleTemplate());
