@@ -186,7 +186,8 @@ def transaction_detail(transaction_id):
 @permission_required("collector.view")
 def search():
     q=request.args.get("q","").strip()
-    initial_load=not q
+    if not q:
+        return jsonify([])
     rows=(Vehicle.query.filter(Vehicle.active.is_(True),
         or_(Vehicle.plate_number.ilike(f"%{q}%"),Vehicle.plate_separator.ilike(f"%{q}%"),Vehicle.plate_letters.ilike(f"%{q}%")))
         .order_by(Vehicle.updated_at.desc()).limit(15).all())
