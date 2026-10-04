@@ -26,7 +26,7 @@ PERMISSIONS=[
 ROLE_DEFAULTS={
 "admin":{"*"},
 "manager":{p[0] for p in PERMISSIONS},
-"accountant":{"dashboard.view","accounting.view","accounting.post","vouchers.post","leases.view","leases.manage","leases.pay","payroll.view","payroll.manage","payroll.pay","expenses.view","expenses.manage","reports.view","reports.export","audit.view"},
+"accountant":{"dashboard.view","accounting.view","accounting.manage","accounting.post","vouchers.view","vouchers.post","leases.view","leases.manage","leases.pay","payroll.view","payroll.manage","payroll.pay","expenses.view","expenses.manage","reports.view","reports.export","audit.view"},
 "collector":{"dashboard.view","collector.view","collector.post","clients.view","vehicles.view"},
 "auditor":{"dashboard.view","accounting.view","reports.view","reports.export","audit.view"}}
 
