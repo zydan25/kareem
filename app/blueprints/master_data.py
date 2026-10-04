@@ -221,7 +221,7 @@ def clients():
 
             for aid in {int(x) for x in request.form.getlist("agent_ids")}:
                 db.session.add(ClientAgent(client_id=client.id,agent_id=aid,priority=1))
-            audit("create","client",client.id,client.name); db.session.commit(); flash(f"تم إضافة العميل وحسابه وتسجيل {created} مركبة","success")
+            audit("create","client",client.id,client.name); db.session.commit(); flash(f"تم إضافة العميل وحسابه وإنشاء المركبة الافتراضية"+(f" وتسجيل {created} مركبة إضافية" if created else ""),"success")
             return redirect(url_for("master_data.client_detail",client_id=client.id))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
