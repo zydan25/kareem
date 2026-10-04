@@ -21,14 +21,14 @@
 .collector-mini-stat.custody{background:#fff8e9;border-color:#f2e5bf;color:#9a7514}
 .collector-mini-stat.custody i{background:#f5e7bc}
 .collector-mobile-card{padding:10px!important}
-.collector-form-compact{display:flex;flex-direction:column;gap:8px}
+.collector-form-compact{--collector-form-scale:{{collector_font_scale|default('1.1')}};display:flex;flex-direction:column;gap:8px;font-size:calc(14px * var(--collector-form-scale))}
 .collector-field{display:flex;flex-direction:column;gap:4px}
 .collector-field-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .collector-field .form-label{font-size:12px;font-weight:900;margin:0;color:#5d6b66}
 .collector-field .form-control,.collector-field .form-select{min-height:44px;border-radius:10px;font-size:13px}
 .client-search-box{position:relative}
 .client-search-box .search-icon{position:absolute;right:10px;top:12px;color:#8b9893;font-size:13px;z-index:2}
-.client-search-box input{padding-right:32px!important}
+.client-search-box input{padding-right:32px!important}.client-search-box input.customer-selected{border-color:#6faed9!important;background:#f5faff!important;color:#205b86!important;font-weight:800}
 .client-suggestion-list{border:1px solid rgba(37,65,58,.10);border-radius:10px;margin-top:5px;background:#fff;overflow:hidden;box-shadow:0 7px 20px rgba(16,42,34,.07)}
 .client-suggestion-list[hidden]{display:none}
 .client-suggestion{width:100%;border:0;background:#fff;padding:8px;display:flex;align-items:center;gap:7px;text-align:right;border-bottom:1px solid rgba(37,65,58,.06)}
@@ -39,25 +39,25 @@
 .client-suggestion strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .client-suggestion small{font-size:10px;color:#8d9895;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .client-suggestion>i{font-size:11px;color:#9aa4a1;margin-right:auto}
-.customer-vehicles-panel{border:1px solid rgba(11,110,79,.12);background:#f8fbfa;border-radius:11px;padding:8px}
+.customer-vehicles-panel{border:1px solid #c8dbef;background:#eef6ff;border-radius:12px;padding:10px}
 .customer-vehicles-panel[hidden]{display:none}
 .customer-vehicles-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.customer-vehicles-head strong{font-size:10.5px}
-.customer-vehicles-head small{display:block;font-size:8px;color:#8a9792}
+.customer-vehicles-head strong{font-size:calc(12px * var(--collector-form-scale));color:#27679e}
+.customer-vehicles-head small{display:block;font-size:calc(9px * var(--collector-form-scale));color:#6f879b}
 .customer-vehicles-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-.customer-vehicle-option{border:1px solid rgba(37,65,58,.10);background:#fff;border-radius:10px;padding:7px;display:flex;align-items:center;gap:6px;text-align:right}
-.customer-vehicle-option.active{border-color:rgba(11,110,79,.34);background:#eff8f4}
+.customer-vehicle-option{border:1px solid #d4e2ef;background:#fff;border-radius:10px;padding:9px;display:flex;align-items:center;gap:6px;text-align:right}
+.customer-vehicle-option.active{border-color:#7db3dd;background:#e3f1ff}
 .customer-vehicle-icon{width:27px;height:27px;border-radius:8px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center;flex:0 0 27px}
 .customer-vehicle-option span:nth-child(2){min-width:0;display:flex;flex-direction:column}
 .customer-vehicle-option strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .customer-vehicle-option small{font-size:9px;color:#899590}
 .customer-vehicle-option>i{margin-right:auto;font-size:9px;color:#9aa5a2}
-.collector-selected-vehicle{display:flex;align-items:center;gap:7px;border:1px solid rgba(37,65,58,.10);border-radius:10px;padding:7px;background:#fff}
+.collector-selected-vehicle{display:flex;align-items:center;gap:8px;border:1px solid #8fc0e6;border-radius:12px;padding:9px;background:#f0f7ff;color:#235f8e}
 .collector-selected-vehicle[hidden]{display:none}
-.selected-vehicle-icon{width:30px;height:30px;border-radius:9px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center}
+.selected-vehicle-icon{width:34px;height:34px;border-radius:10px;background:#dceeff;color:#2b74ad;display:flex;align-items:center;justify-content:center}
 .collector-selected-vehicle>div{min-width:0;display:flex;flex-direction:column}
-.collector-selected-vehicle strong{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.collector-selected-vehicle small{font-size:8px;color:#899590}
+.collector-selected-vehicle strong{font-size:calc(13px * var(--collector-form-scale));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.collector-selected-vehicle small{font-size:calc(10px * var(--collector-form-scale));color:#5f7e96}
 .collector-selected-vehicle button{margin-right:auto;border-radius:8px;font-size:9px;padding:5px 7px}
 .collector-inline-actions{display:flex;gap:5px;flex-wrap:wrap}
 .collector-inline-actions .btn{border-radius:9px;padding:6px 8px;font-size:9px;font-weight:850}
@@ -71,13 +71,14 @@
 .direction-choice.entry input:checked+span{background:#eff9f3;border-color:#8fd1a8;color:#197247}
 .direction-choice.exit input:checked+span{background:#fff2f1;border-color:#e5a7a2;color:#bb4841}
 .collector-submit-row{display:grid;grid-template-columns:1fr auto;gap:6px}
- .collector-submit{min-height:48px;border-radius:10px;font-size:14px;font-weight:950}
+.collector-submit{min-height:50px;border-radius:11px;font-size:calc(15px * var(--collector-form-scale));font-weight:950}
 .collector-submit.loading{pointer-events:none;opacity:.85}
 .collector-reset{min-height:44px;width:44px;padding:0;border-radius:10px}
 .collector-optional-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .amount-box{display:flex;flex-direction:column;gap:4px}
-.amount-box .input-group-text{font-size:9px;padding-inline:8px}
-.collector-note{min-height:58px!important;resize:vertical}
+.amount-box .input-group-text{font-size:calc(10px * var(--collector-form-scale));padding-inline:10px}
+.collector-note{min-height:62px!important;resize:vertical}
+.collector-amount-words{font-size:calc(18px * var(--collector-form-scale))!important;font-weight:950!important;line-height:1.5;color:#d62828!important;text-align:center;min-height:28px;margin-top:4px}
 .collector-recent{margin-top:8px}
 .collector-recent-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px}
 .collector-recent-head h3{font-size:11px;margin:0}
@@ -135,7 +136,7 @@
         <input type="hidden" id="client_phone" name="client_phone">
         <input type="hidden" id="client_address" name="client_address">
         <input type="hidden" id="client_notes" name="client_notes">
-        <div id="client-suggestions" class="client-suggestion-list">
+        <div id="client-suggestions" class="client-suggestion-list" hidden>
           {% for c in initial_clients %}
           <button type="button" class="client-suggestion" data-client-index="{{loop.index0}}">
             <span class="client-suggestion-icon"><i class="bi bi-person"></i></span>
@@ -179,7 +180,7 @@
         <div class="amount-box">
           <label class="form-label">المبلغ</label>
           <div class="input-group"><input name="amount" id="amount" class="form-control text-center fw-bold" inputmode="decimal" required autocomplete="off" data-money-words="collector-amount-words" data-currency="{{currency}}"><span class="input-group-text">{{currency}}</span></div>
-          <div id="collector-amount-words" class="text-muted" style="font-size:8px" aria-live="polite"></div>
+          <div id="collector-amount-words" aria-live="polite"></div>
         </div>
       </div>
 
@@ -316,36 +317,78 @@ function chooseVehicleResult(x){
 function renderClientSuggestions(rows){
   rows=rows||[];
   clientSug.hidden=false;
-  if(!rows.length){clientSug.innerHTML='<div style="padding:10px;font-size:12px">لا يوجد عملاء مطابقون.</div>';return;}
-  clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-client-temp="'+i+'"><span class="client-suggestion-icon"><i class="bi bi-person"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة')+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
-  clientSug.querySelectorAll('.client-suggestion').forEach((btn,i)=>btn.onclick=()=>chooseCustomer(rows[i]));
+  if(!rows.length){
+    clientSug.innerHTML='<div style="padding:10px;font-size:12px;color:#7d8a90">لا يوجد عميل مطابق.</div>';
+    return;
+  }
+  clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi bi-person"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة')+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
+  clientSug.querySelectorAll('.client-suggestion').forEach((btn,i)=>btn.onclick=()=>{
+    const x=rows[i];
+    if(x.kind==='vehicle') chooseVehicleResult(x); else chooseCustomer(x);
+  });
 }
-function filterInitialClients(query){
+function filterLocalClients(query){
   const needle=String(query||'').trim().toLowerCase();
-  const rows=INITIAL_CLIENTS.filter(x=>(String(x.name||'')+' '+String(x.phone||'')).toLowerCase().includes(needle));
-  renderClientSuggestions(rows);
-  return rows.length;
+  return INITIAL_CLIENTS.filter(x=>{
+    const hay=(String(x.name||'')+' '+String(x.phone||'')).toLowerCase();
+    return hay.includes(needle);
+  });
 }
-function loadClientSuggestions(q=''){
-  const query=String(q??'').trim();
-  clearTimeout(searchTimer);
-  if(!query){filterInitialClients('');return;}
-  if(filterInitialClients(query)>0)return;
+function searchClients(query){
+  const local=filterLocalClients(query);
+  if(local.length){
+    renderClientSuggestions(local);
+    return;
+  }
   clientSug.hidden=false;
   clientSug.innerHTML='<div style="padding:10px;font-size:11px;color:#8c9693">جارٍ البحث...</div>';
+  clearTimeout(searchTimer);
   searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query))
     .then(r=>r.ok?r.json():Promise.reject(new Error('search failed')))
     .then(renderClientSuggestions)
-    .catch(()=>{clientSug.innerHTML='<div style="padding:10px;font-size:11px">تعذر البحث، جرّب مرة أخرى.</div>';});},70);
+    .catch(()=>{clientSug.innerHTML='<div style="padding:10px;font-size:11px">تعذر البحث، حاول مرة أخرى.</div>';})
+  ,120);
 }
-client?.addEventListener('focus',()=>{clientSug.hidden=false;filterInitialClients(client.value);});
+function chooseCustomer(x){
+  client.value=x.name||'';
+  clientId.value=x.id||'';
+  clientPhone.value=x.phone||'';
+  clientAddress.value=x.address||'';
+  clientNotes.value='';
+  client.classList.add('customer-selected');
+  document.getElementById('agent_id').value='';
+  clearVehicle();
+  const vehicles=x.vehicles||[];
+  renderVehicles(vehicles);
+  if(vehicles.length===1) setSelectedVehicle(vehicles[0]);
+  else if(!vehicles.length) setSelectedVehicle({id:'',plate:'0',separator:'0',vehicle_type_id:DEFAULT_VEHICLE_TYPE_ID,vehicle_type:'افتراضي',registration_status:'registered',is_default:true});
+  clientSug.innerHTML='';
+  clientSug.hidden=true;
+}
+function chooseVehicleResult(x){
+  client.value=x.name||'';
+  clientId.value=x.id||'';
+  clientPhone.value=x.phone||'';
+  clientAddress.value=x.address||'';
+  client.classList.add('customer-selected');
+  setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type,registration_status:x.registration_status,is_default:x.is_default});
+  clientSug.innerHTML='';
+  clientSug.hidden=true;
+}
+client?.addEventListener('focus',()=>{ /* suggestions stay hidden until typing */ });
 client?.addEventListener('input',()=>{
-  clientId.value='';clearVehicle();
+  clientId.value='';
+  clearVehicle();
+  client.classList.remove('customer-selected');
   const q=client.value.trim();
-  if(!q){vehiclePanel.hidden=true;filterInitialClients('');return;}
-  loadClientSuggestions(q);
+  clearTimeout(searchTimer);
+  if(!q){
+    clientSug.hidden=true;
+    return;
+  }
+  searchClients(q);
 });
-window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{client?.focus();filterInitialClients(client?.value||'');},40));
+window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>client?.focus(),40));
 document.getElementById('add-real-vehicle')?.addEventListener('click',showRealVehicle);
 document.getElementById('cancel-real-vehicle')?.addEventListener('click',()=>{newVehiclePanel.hidden=true;vehiclePanel.hidden=false;});
 document.getElementById('use-real-vehicle')?.addEventListener('click',useRealVehicle);
