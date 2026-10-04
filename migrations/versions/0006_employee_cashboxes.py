@@ -16,23 +16,26 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    employee_cashbox_column = sa.Column(
-        "cashbox_account_id",
-        sa.Integer(),
-        sa.ForeignKey("accounts.id", ondelete="SET NULL"),
-        nullable=True,
-    )
     if conn.dialect.name == "sqlite":
         # SQLite cannot ALTER an existing table to add UNIQUE/FK constraints.
         # Alembic batch mode recreates the table safely for the test database.
+        sqlite_column = sa.Column(
+            "cashbox_account_id",
+            sa.Integer(),
+            sa.ForeignKey("accounts.id", ondelete="SET NULL"),
+            nullable=True,
+        )
         with op.batch_alter_table("employees", recreate="always") as batch_op:
-            batch_op.add_column(employee_cashbox_column)
+            batch_op.add_column(sqlite_column)
             batch_op.create_unique_constraint(
                 "uq_employees_cashbox_account_id",
                 ["cashbox_account_id"],
             )
     else:
-        op.add_column("employees", employee_cashbox_column)
+        op.add_column(
+            "employees",
+            sa.Column("cashbox_account_id", sa.Integer(), nullable=True),
+        )
         op.create_unique_constraint(
             "uq_employees_cashbox_account_id",
             "employees",
