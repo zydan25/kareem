@@ -119,9 +119,10 @@ class Vehicle(TimestampMixin,db.Model):
     client_id=db.Column(db.Integer,db.ForeignKey("clients.id",ondelete="SET NULL"))
     notes=db.Column(db.Text)
     active=db.Column(db.Boolean,nullable=False,default=True)
+    is_default=db.Column(db.Boolean,nullable=False,default=False)
     vehicle_type=db.relationship("VehicleType")
     client=db.relationship("Client",back_populates="vehicles")
-    __table_args__=(CheckConstraint("registration_status IN ('registered','without_customs')",name="ck_vehicle_registration_status"),UniqueConstraint("plate_number","plate_separator",name="uq_vehicle_plate"),Index("ix_vehicle_plate_search","plate_number","plate_separator"))
+    __table_args__=(CheckConstraint("registration_status IN ('registered','without_customs')",name="ck_vehicle_registration_status"),UniqueConstraint("client_id","plate_number","plate_separator",name="uq_vehicle_client_plate"),Index("ix_vehicle_plate_search","plate_number","plate_separator"))
 
 class VehicleAgent(TimestampMixin,db.Model):
     __tablename__="vehicle_agents"
