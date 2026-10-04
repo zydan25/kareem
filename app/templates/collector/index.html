@@ -378,6 +378,7 @@ function chooseCustomer(x){
   client.value=x.name||'';clientId.value=x.id||'';clientPhone.value=x.phone||'';
   clientAddress.value=x.address||'';clientNotes.value='';
   client.classList.add('customer-selected');
+  syncCollectorVehicleLink();
   clearTimeout(searchTimer);clearVehicle();
   const vehicles=x.vehicles||[];
   currentVehicles=vehicles;
@@ -395,7 +396,7 @@ function chooseCustomer(x){
 }
 function chooseVehicleResult(x){
   client.value=x.name||'';clientId.value=x.id||'';clientPhone.value=x.phone||'';
-  clientAddress.value=x.address||'';client.classList.add('customer-selected');currentVehicles=[];
+  clientAddress.value=x.address||'';client.classList.add('customer-selected');syncCollectorVehicleLink();currentVehicles=[];
   setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type,registration_status:x.registration_status,is_default:!!x.is_default});
   vehiclePanel.hidden=true;clientSug.innerHTML='';clientSug.hidden=true;
 }
