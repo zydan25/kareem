@@ -10,7 +10,7 @@ from ..models import Agent, AgentLease, AgentRent, AuditLog, Client, ClientAgent
 from ..permissions import can, permission_required
 from ..services.accounting import account_balance, create_posted_entry, get_system_account
 from ..services.audit import audit
-from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_payroll_account
+from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_cashbox, ensure_employee_payroll_account
 from ..services.setup import ensure_employees_for_users
 
 bp=Blueprint("master_data",__name__)
@@ -456,7 +456,7 @@ def employees():
                 monthly_salary=D(request.form.get("monthly_salary","0")),
                 hire_date=date.fromisoformat(request.form.get("hire_date") or date.today().isoformat()),
                 work_days="0,1,2,3,4,5",notes=request.form.get("notes"))
-            db.session.add(emp); db.session.flush(); ensure_employee_account(emp); ensure_employee_payroll_account(emp)
+            db.session.add(emp); db.session.flush(); ensure_employee_account(emp); ensure_employee_cashbox(emp); ensure_employee_payroll_account(emp)
             _save_identity_image(emp); _save_employee_login(emp)
             audit("create","employee",emp.id,emp.full_name); db.session.commit()
             flash("تم إضافة الموظف والملف المالي وحساب الدخول إن تم إدخاله","success")
@@ -534,7 +534,7 @@ def edit_employee(employee_id):
             emp.weekly_hours=D(request.form.get("weekly_hours","48")); emp.job_title=request.form.get("job_title") or "موظف"
             emp.monthly_salary=D(request.form.get("monthly_salary","0")); emp.hire_date=date.fromisoformat(request.form.get("hire_date") or date.today().isoformat())
             emp.notes=request.form.get("notes")
-            ensure_employee_account(emp); ensure_employee_payroll_account(emp)
+            ensure_employee_account(emp); ensure_employee_cashbox(emp); ensure_employee_payroll_account(emp)
             _save_identity_image(emp); _save_employee_login(emp)
             if emp.user: emp.user.full_name=emp.full_name; emp.user.phone=emp.phone; emp.user.active=emp.active
             audit("update","employee",emp.id,emp.full_name); db.session.commit()
