@@ -232,6 +232,6 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
         assert reverse_id is not None
         db.session.remove()
         voucher=db.session.get(Voucher,voucher_id)
-        assert voucher.status=="posted"
+        assert voucher.status=="void"
         assert voucher.journal_entry.status=="void"
         assert voucher.journal_entry.reversed_entry_id is not None
