@@ -14,18 +14,40 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("employees", sa.Column("cashbox_account_id", sa.Integer(), nullable=True))
-    op.create_unique_constraint("uq_employees_cashbox_account_id", "employees", ["cashbox_account_id"])
-    op.create_foreign_key(
-        "fk_employees_cashbox_account_id_accounts",
-        "employees",
-        "accounts",
-        ["cashbox_account_id"],
-        ["id"],
-        ondelete="SET NULL",
-    )
-
     conn = op.get_bind()
+
+    employee_cashbox_column = sa.Column(
+        "cashbox_account_id",
+        sa.Integer(),
+        sa.ForeignKey("accounts.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    if conn.dialect.name == "sqlite":
+        # SQLite cannot ALTER an existing table to add UNIQUE/FK constraints.
+        # Alembic batch mode recreates the table safely for the test database.
+        with op.batch_alter_table("employees", recreate="always") as batch_op:
+            batch_op.add_column(employee_cashbox_column)
+            batch_op.create_unique_constraint(
+                "uq_employees_cashbox_account_id",
+                ["cashbox_account_id"],
+            )
+    else:
+        op.add_column("employees", employee_cashbox_column)
+        op.create_unique_constraint(
+            "uq_employees_cashbox_account_id",
+            "employees",
+            ["cashbox_account_id"],
+        )
+
+    if conn.dialect.name != "sqlite":
+        op.create_foreign_key(
+            "fk_employees_cashbox_account_id_accounts",
+            "employees",
+            "accounts",
+            ["cashbox_account_id"],
+            ["id"],
+            ondelete="SET NULL",
+        )
     accounts = sa.table(
         "accounts",
         sa.column("id", sa.Integer()),
@@ -294,6 +316,14 @@ def downgrade():
         accounts.delete().where(accounts.c.system_key == "employee_accounts_root")
     )
 
-    op.drop_constraint("fk_employees_cashbox_account_id_accounts", "employees", type_="foreignkey")
-    op.drop_constraint("uq_employees_cashbox_account_id", "employees", type_="unique")
-    op.drop_column("employees", "cashbox_account_id")
+    if conn.dialect.name == "sqlite":
+        with op.batch_alter_table("employees", recreate="always") as batch_op:
+            batch_op.drop_constraint(
+                "uq_employees_cashbox_account_id",
+                type_="unique",
+            )
+            batch_op.drop_column("cashbox_account_id")
+    else:
+        op.drop_constraint("fk_employees_cashbox_account_id_accounts", "employees", type_="foreignkey")
+        op.drop_constraint("uq_employees_cashbox_account_id", "employees", type_="unique")
+        op.drop_column("employees", "cashbox_account_id")
