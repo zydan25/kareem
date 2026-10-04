@@ -76,6 +76,11 @@ def permission_required(permission):
 
 def seed_permissions():
     for key,name,group in PERMISSIONS:
-        if not db.session.query(Permission).filter_by(key=key).first():
-            db.session.add(Permission(key=key,name=name,group_name=group,active=True))
+        row=db.session.query(Permission).filter_by(key=key).first()
+        if not row:
+            row=Permission(key=key)
+            db.session.add(row)
+        row.name=name
+        row.group_name=group
+        row.active=True
     db.session.flush()
