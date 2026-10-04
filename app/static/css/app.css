@@ -895,3 +895,42 @@
   .voucher-card-actions .btn,.voucher-card-actions .inline-action{flex:1}
   .voucher-card-actions .btn{width:100%}
 }
+
+/* Voucher UI: restore the compact receipt/payment workflow */
+.voucher-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 12px}
+.voucher-quick-btn{border:1px solid transparent;border-radius:13px;min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;font:inherit;font-size:12px;font-weight:900;cursor:pointer;transition:.16s}
+.voucher-quick-btn i{font-size:17px}
+.voucher-quick-btn.receipt{background:#eaf8ef;border-color:#bfe6cc;color:#15834a}
+.voucher-quick-btn.receipt:hover{background:#dff3e7}
+.voucher-quick-btn.payment{background:#fff0f0;border-color:#f2c5c5;color:#bd3e3e}
+.voucher-quick-btn.payment:hover{background:#ffe5e5}
+.voucher-kind-tabs-primary{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:7px}
+.voucher-kind-tabs-primary .voucher-kind{min-height:66px;justify-content:center;text-align:center;flex-direction:column;gap:3px;padding:9px 8px}
+.voucher-kind-tabs-primary .voucher-kind i{font-size:20px}
+.voucher-kind-tabs-primary .voucher-kind span{font-size:13px}
+.voucher-kind-tabs-primary .voucher-kind small{width:auto;padding:0;font-size:9px}
+.voucher-kind-tabs-primary .voucher-kind-receipt.active{background:#eaf8ef;border-color:#bfe6cc;color:#15834a}
+.voucher-kind-tabs-primary .voucher-kind-receipt i{color:#15834a}
+.voucher-kind-tabs-primary .voucher-kind-payment.active{background:#fff0f0;border-color:#f2c5c5;color:#bd3e3e}
+.voucher-kind-tabs-primary .voucher-kind-payment i{color:#bd3e3e}
+.voucher-kind-general{width:100%;border:1px dashed var(--border);background:#fafcfb;color:var(--muted);border-radius:11px;min-height:34px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:10px;font-weight:800;cursor:pointer;margin-bottom:10px}
+.voucher-kind-general.active{background:#f4f0ff;border-color:#ded3ff;color:#6e4fc2}
+.voucher-flow-hint{justify-content:center;text-align:center}
+.voucher-flow-hint.receipt{background:#eaf8ef;border-color:#bfe6cc;color:#15834a}
+.voucher-flow-hint.receipt i{color:#15834a}
+.voucher-flow-hint.payment{background:#fff0f0;border-color:#f2c5c5;color:#bd3e3e}
+.voucher-flow-hint.payment i{color:#bd3e3e}
+.voucher-flow-hint.general{background:#f4f0ff;border-color:#ded3ff;color:#6e4fc2}
+.voucher-flow-hint.general i{color:#6e4fc2}
+.voucher-small-input{height:38px;padding:7px 10px;font-size:12px}
+.voucher-extra-fields .form-label{font-size:11px;margin-bottom:4px}
+.voucher-extra-fields{margin-top:1px}
+.voucher-amount-field .form-label,.voucher-cash-field .form-label,.voucher-counterpart-field .form-label{font-size:11px;margin-bottom:4px}
+.voucher-amount-input{font-size:16px!important}
+.voucher-form .account-picker-toggle{min-height:38px!important;font-size:11px!important}
+@media(max-width:650px){
+  .voucher-quick-actions{grid-template-columns:1fr 1fr}
+  .voucher-kind-tabs-primary{grid-template-columns:1fr 1fr!important}
+  .voucher-kind-tabs-primary .voucher-kind{display:flex!important;min-height:64px}
+  .voucher-kind-tabs-primary .voucher-kind small{display:block!important;width:auto!important;grid-column:auto!important}
+}
