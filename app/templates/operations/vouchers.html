@@ -245,7 +245,11 @@
         : 'سيتم إصدار سند قبض وترحيل القيد مباشرة.';
     if(submit){
       const label=submit.querySelector('span');
-      if(label) label.textContent={{'transfer':'{{"حفظ التعديل" if editing_voucher else "إصدار سند عام"}}','receipt':'{{"حفظ التعديل" if editing_voucher else "إصدار سند قبض"}}','payment':'{{"حفظ التعديل" if editing_voucher else "إصدار سند صرف"}}'}[type];
+      if(label) label.textContent = type==='transfer'
+          ? '{{"حفظ التعديل" if editing_voucher else "إصدار سند عام"}}'
+          : type==='payment'
+            ? '{{"حفظ التعديل" if editing_voucher else "إصدار سند صرف"}}'
+            : '{{"حفظ التعديل" if editing_voucher else "إصدار سند قبض"}}';
     }
   }
 
