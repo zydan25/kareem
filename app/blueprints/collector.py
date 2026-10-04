@@ -200,6 +200,7 @@ def search():
         "client_address":v.client.address if v.client else None,
         "vehicle_type_id":v.vehicle_type_id,
         "vehicle_type":v.vehicle_type.name if v.vehicle_type else None,
+        "is_default":bool(v.is_default),
         "suggested_agents":[{"id":a.id,"name":a.name} for a in recent_suggestions(v)]
     } for v in rows])
 
