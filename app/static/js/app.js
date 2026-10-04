@@ -258,7 +258,10 @@
       leaves.forEach(leaf=>leaf.addEventListener("click",()=>{
         value.value=leaf.dataset.accountId||"";
         label.textContent=leaf.dataset.accountLabelDisplay||leaf.dataset.accountLabelText||"اختر الحساب";
-        leaves.forEach(x=>x.classList.remove("selected"));
+        leaves.forEach(x=>{
+          x.classList.remove("selected");
+          delete x.dataset.accountSelected;
+        });
         leaf.classList.add("selected");
         leaf.dataset.accountSelected="1";
         panel.hidden=true;
