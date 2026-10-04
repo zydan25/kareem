@@ -3,7 +3,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from ..extensions import db
 from ..models import (
-    Account, Agent, AgentLease, AgentRent, Employee, PayrollLine, PayrollRun,
+    Account, Agent, AgentLease, AgentRent, Employee, JournalEntry, PayrollLine, PayrollRun,
     Settlement, SettlementStatus, Shift, Voucher, VoucherType,
 )
 from ..permissions import can, permission_required
@@ -155,7 +155,15 @@ def reverse_voucher(voucher_id):
         if not entry or entry.status!="posted" or entry.reversed_entry_id:
             raise ValueError("السند غير مرحّل أو تم عكس قيده مسبقًا")
         reverse=reverse_entry(entry,current_user.id,request.form.get("reason","عكس السند"))
-        # JournalEntry is the accounting source of truth for reversal state.
+        # Persist both sides explicitly: the original journal becomes void and
+        # points to the reversal entry; the voucher is synchronized with it.
+        db.session.query(JournalEntry).filter(JournalEntry.id==entry.id).update(
+            {"status":"void","reversed_entry_id":reverse.id},synchronize_session=False
+        )
+        db.session.query(Voucher).filter(Voucher.id==voucher.id).update(
+            {"status":VoucherStatus.VOID.value},synchronize_session=False
+        )
+        db.session.flush()
         audit("reverse_voucher","voucher",voucher.id,f"{voucher.number} -> {reverse.number}")
         db.session.commit()
         flash(f"تم عكس السند {voucher.number} وإنشاء القيد {reverse.number}","success")
