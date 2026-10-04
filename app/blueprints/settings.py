@@ -3,8 +3,9 @@ import time
 from pathlib import Path
 
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
+from sqlalchemy import func
 from ..extensions import db
-from ..models import Setting, VehicleType
+from ..models import Setting, Vehicle, VehicleType
 from ..permissions import can, permission_required
 from ..services.audit import audit
 
@@ -95,21 +96,18 @@ def index():
             _save_brand_image(request.files.get("brand_icon"),"brand_icon")
             _save_setting("brand_version",str(int(time.time())),"string","نسخة الهوية")
 
-            if vehicle_type_name and not VehicleType.query.filter_by(name=vehicle_type_name).first():
-                row=VehicleType(name=vehicle_type_name,is_system=False,active=True)
-                db.session.add(row)
-                db.session.flush()
-                audit("create","vehicle_type",row.id,row.name)
-
             db.session.commit()
             flash("تم حفظ إعدادات الهوية والموقع","success")
         except Exception as exc:
             db.session.rollback()
             flash(str(exc),"danger")
 
+    types=VehicleType.query.order_by(VehicleType.active.desc(),VehicleType.name).all()
+    vehicle_counts={t.id:Vehicle.query.filter_by(vehicle_type_id=t.id).count() for t in types}
     return render_template(
         "settings/index.html",
         vehicle_types=types,
+        vehicle_counts=vehicle_counts,
         can_manage=can("settings.manage"),
         settings=Setting.query.order_by(Setting.key).all(),
         brand_color=_setting("brand_color","#0b6e4f"),
@@ -120,6 +118,83 @@ def index():
         project_name=_setting("project_name","إدارة السوق والمحاسبة"),
         currency_name=_setting("currency_name","ريال يمني"),
     )
+
+@bp.post("/vehicle-types")
+@permission_required("settings.manage")
+def add_vehicle_type():
+    name=request.form.get("vehicle_type_name","").strip()
+    if not name:
+        flash("اكتب اسم نوع المركبة","danger")
+        return redirect(url_for("settings.index"))
+    try:
+        existing=VehicleType.query.filter(func.lower(VehicleType.name)==name.lower()).first()
+        if existing: raise ValueError("نوع المركبة موجود بالفعل")
+        row=VehicleType(name=name,is_system=False,active=True)
+        db.session.add(row); db.session.flush()
+        audit("create","vehicle_type",row.id,row.name)
+        db.session.commit()
+        flash(f"تم إضافة نوع المركبة: {name}","success")
+    except Exception as exc:
+        db.session.rollback(); flash(str(exc),"danger")
+    return redirect(url_for("settings.index"))
+
+@bp.post("/vehicle-types/<int:type_id>/edit")
+@permission_required("settings.manage")
+def edit_vehicle_type(type_id):
+    row=db.session.get(VehicleType,type_id)
+    if not row: return ("غير موجود",404)
+    if row.is_system:
+        flash("لا يمكن تعديل نوع مركبة نظامي","warning")
+        return redirect(url_for("settings.index"))
+    name=request.form.get("name","").strip()
+    if not name:
+        flash("اسم النوع مطلوب","danger")
+        return redirect(url_for("settings.index"))
+    try:
+        other=VehicleType.query.filter(func.lower(VehicleType.name)==name.lower(),VehicleType.id!=row.id).first()
+        if other: raise ValueError("يوجد نوع مركبة بهذا الاسم")
+        old=row.name
+        row.name=name
+        audit("update","vehicle_type",row.id,f"{old}->{row.name}")
+        db.session.commit(); flash("تم تعديل نوع المركبة","success")
+    except Exception as exc:
+        db.session.rollback(); flash(str(exc),"danger")
+    return redirect(url_for("settings.index"))
+
+@bp.post("/vehicle-types/<int:type_id>/delete")
+@permission_required("settings.manage")
+def delete_vehicle_type(type_id):
+    row=db.session.get(VehicleType,type_id)
+    if not row: return ("غير موجود",404)
+    if row.is_system:
+        flash("لا يمكن حذف نوع مركبة نظامي","warning")
+        return redirect(url_for("settings.index"))
+    linked=Vehicle.query.filter_by(vehicle_type_id=row.id).count()
+    if linked:
+        flash(f"لا يمكن حذف النوع لأنه مرتبط بـ {linked} مركبة. عطّل النوع بدلًا من الحذف.","warning")
+        return redirect(url_for("settings.index"))
+    try:
+        audit("delete","vehicle_type",row.id,row.name)
+        db.session.delete(row); db.session.commit()
+        flash("تم حذف نوع المركبة","success")
+    except Exception as exc:
+        db.session.rollback(); flash(str(exc),"danger")
+    return redirect(url_for("settings.index"))
+
+@bp.post("/brand/logo/remove")
+@permission_required("settings.manage")
+def remove_brand_logo():
+    old=_setting("brand_logo","")
+    if old:
+        path=Path(current_app.config["UPLOAD_FOLDER"])/"site_brand"/old
+        if path.exists():
+            try: path.unlink()
+            except OSError: pass
+    _save_setting("brand_logo","")
+    _save_setting("brand_version",str(int(time.time())),"string","نسخة الهوية")
+    db.session.commit()
+    flash("تم حذف الشعار وسيظهر اسم المنشأة بدون صورة لتخفيف التحميل","success")
+    return redirect(url_for("settings.index"))
 
 @bp.get("/brand/<kind>")
 def brand_asset(kind):
