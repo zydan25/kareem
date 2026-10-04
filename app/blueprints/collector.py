@@ -165,11 +165,38 @@ def index():
     employee=current_user.employee
     custody_balance=account_balance(employee.account_id) if employee and employee.account_id else D(0)
 
+    initial_clients=[]
+    default_type=default_vehicle_type(db.session)
+    for c in (Client.query.filter(Client.active.is_(True)).order_by(Client.name).limit(50).all()):
+        vehicles=(Vehicle.query
+            .filter(Vehicle.client_id==c.id,Vehicle.active.is_(True))
+            .order_by(Vehicle.is_default.desc(),Vehicle.id).all())
+        if not vehicles:
+            vehicles=[None]
+        initial_clients.append({
+            "kind":"client",
+            "id":c.id,
+            "name":c.name,
+            "phone":c.phone,
+            "address":c.address,
+            "vehicles":[{
+                "id":v.id if v else None,
+                "plate":v.plate_number if v else "0",
+                "separator":v.plate_separator if v else "0",
+                "letters":v.plate_letters if v else None,
+                "registration_status":v.registration_status if v else "registered",
+                "vehicle_type_id":v.vehicle_type_id if v else default_type.id,
+                "vehicle_type":v.vehicle_type.name if v and v.vehicle_type else default_type.name,
+                "notes":v.notes if v else "مركبة افتراضية",
+                "is_default":bool(v.is_default) if v else True,
+            } for v in vehicles],
+        })
+
     return render_template("collector/index.html",
         vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all(),
         default_vehicle_type_id=default_vehicle_type(db.session).id,
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
-        recent=day_rows[:20],current_shift=current_shift(),
+        recent=day_rows[:20],current_shift=current_shift(),initial_clients=initial_clients,
         daily_total=daily_total,daily_count=daily_count,daily_entries=daily_entries,
         daily_exits=daily_exits,custody_balance=custody_balance,today=today)
 
