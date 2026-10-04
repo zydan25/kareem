@@ -196,8 +196,9 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
     receipt=client.post("/operations/vouchers",data={
         "voucher_type":"receipt","account_id":str(revenue.id),"cash_account_id":str(cash.id),
         "amount":"100","beneficiary":"اختبار","description":"قبض اختبار"
-    },follow_redirects=False)
-    assert receipt.status_code==302
+    },follow_redirects=True)
+    assert receipt.status_code==200
+    assert "تم إصدار السند" in receipt.get_data(as_text=True)
 
     with app.app_context():
         voucher=Voucher.query.order_by(Voucher.id.desc()).first()
@@ -210,8 +211,9 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
     general=client.post("/operations/vouchers",data={
         "voucher_type":"transfer","from_account_id":str(cash.id),"to_account_id":str(revenue.id),
         "amount":"25","beneficiary":"","description":"سند عام اختبار"
-    },follow_redirects=False)
-    assert general.status_code==302
+    },follow_redirects=True)
+    assert general.status_code==200
+    assert "تم إصدار السند" in general.get_data(as_text=True)
 
     reverse=client.post(f"/operations/vouchers/{voucher_id}/reverse",data={"reason":"اختبار العكس"},follow_redirects=True)
     assert reverse.status_code==200
