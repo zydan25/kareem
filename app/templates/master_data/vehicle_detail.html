@@ -1,8 +1,94 @@
 {% extends 'base.html' %}
-{% block title %}{{vehicle.plate_number or "بدون رقم جمركي"}} - {{app_name}}{% endblock %}
+{% block title %}ملف المركبة - {{vehicle.plate_number or "بدون رقم"}} - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">ملف المركبة</span><h1>{{vehicle.plate_number}}{% if vehicle.plate_separator %} / {{vehicle.plate_separator}}{% endif %}</h1><p>{{vehicle.vehicle_type.name}} · {{'بدون جمارك' if vehicle.registration_status=='without_customs' else 'جمركية'}} · {{vehicle.client.name if vehicle.client else 'بدون عميل'}}</p></div><div class="d-flex gap-2 flex-wrap"><a class="btn btn-light" href="{{url_for('master_data.vehicles')}}">المركبات</a>{% if can("vehicles.manage") %}<a class="btn btn-outline-primary" href="{{url_for('master_data.edit_vehicle',vehicle_id=vehicle.id)}}">تعديل</a>{% endif %}<button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div></div>
-<div class="stat-grid mb-4"><div class="stat-card primary"><span>الحالة</span><strong>{{'نشطة' if vehicle.active else 'موقوفة'}}</strong><small>{{'بدون جمارك' if vehicle.registration_status=='without_customs' else 'جمركية'}} · {{vehicle.vehicle_type.name}}</small></div><div class="stat-card"><span>العميل</span><strong>{{vehicle.client.name if vehicle.client else '—'}}</strong><small>الربط الحالي</small></div><div class="stat-card"><span>الوكلاء</span><strong>{{agents|length}}</strong><small>اقتراحات مرتبطة</small></div><div class="stat-card"><span>الحركات</span><strong>{{transactions|length}}</strong><small>آخر الحركات</small></div></div>
-<div class="card-soft mb-4"><div class="section-title"><h3>الوكلاء المحتملون</h3></div>{% for a in agents %}<span class="badge-soft me-1 mb-1">{{a.name}}</span>{% else %}<span class="text-muted">لا يوجد.</span>{% endfor %}</div>
-<div class="card-soft table-wrap"><div class="section-title"><h3>سجل الحركة</h3></div><table class="table"><thead><tr><th>الوقت</th><th>الحركة</th><th>العميل</th><th>الوكيل</th><th>المتحصل</th><th>المبلغ</th></tr></thead><tbody>{% for x in transactions %}<tr><td>{{x.transaction_date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{'دخول' if x.direction=='entry' else 'خروج'}}</td><td>{{x.client.name if x.client else '—'}}</td><td>{{x.agent.name if x.agent else '—'}}</td><td>{{x.collector.full_name}}</td><td>{{'{:,.2f}'.format(x.amount)}} {{currency}}</td></tr>{% else %}<tr><td colspan="6" class="text-center py-4 text-muted">لا توجد حركات.</td></tr>{% endfor %}</tbody></table></div>
+<style>
+.vehicle-detail-page{max-width:1050px;margin:auto}
+.vehicle-detail-head h1{font-size:1.35rem;margin:.1rem 0}
+.vehicle-detail-head p{display:none}
+.vehicle-detail-actions{display:flex;gap:5px;flex-wrap:wrap}
+.vehicle-detail-actions .btn{border-radius:9px;font-size:9px;font-weight:900;padding:6px 8px}
+.detail-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+.detail-stat{border:1px solid rgba(37,65,58,.09);border-radius:11px;padding:8px;background:#fff;min-width:0}
+.detail-stat span{font-size:7.5px;color:#899590;display:block}
+.detail-stat strong{display:block;font-size:12px;font-weight:950;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vehicle-detail-card{border:1px solid rgba(37,65,58,.09);background:#fff;border-radius:12px;padding:9px}
+.vehicle-detail-card h3{font-size:11px;margin:0}
+.agent-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.agent-chip{padding:4px 7px;border-radius:8px;background:#eef6ff;color:#47729f;font-size:8px;font-weight:850}
+.movement-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.movement-card{border:1px solid rgba(37,65,58,.09);border-radius:10px;padding:7px;background:#fff}
+.movement-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.movement-top strong{font-size:9px}
+.movement-time{font-size:7.5px;color:#8b9693}
+.movement-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px}
+.movement-meta div{background:#f8faf9;border-radius:7px;padding:5px}
+.movement-meta span{display:block;font-size:6.5px;color:#8d9794}
+.movement-meta strong{display:block;font-size:8px;margin-top:1px}
+.movement-entry{color:#23774d;background:#edf9f2}
+.movement-exit{color:#ad5049;background:#fff1f0}
+@media(max-width:700px){
+ .vehicle-detail-page{padding-bottom:10px}
+ .vehicle-detail-head h1{font-size:1.15rem}
+ .vehicle-detail-actions .btn{font-size:8px;padding:5px 7px}
+ .detail-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ .detail-stat{padding:6px;border-radius:9px}
+ .detail-stat span{font-size:6.5px}
+ .detail-stat strong{font-size:9.5px}
+ .vehicle-detail-card{padding:7px;border-radius:10px}
+ .movement-list{grid-template-columns:1fr 1fr;gap:5px}
+ .movement-card{padding:6px}
+ .movement-meta{grid-template-columns:1fr}
+}
+</style>
+<div class="vehicle-detail-page">
+<div class="page-head vehicle-detail-head">
+ <div><span class="eyebrow">ملف المركبة{% if vehicle.is_default %} · افتراضية{% endif %}</span><h1>{{vehicle.plate_number or "بدون رقم"}}{% if vehicle.plate_separator %} / {{vehicle.plate_separator}}{% endif %}</h1></div>
+ <div class="vehicle-detail-actions">
+  <a class="btn btn-light" href="{{url_for('master_data.vehicles')}}"><i class="bi bi-arrow-right"></i></a>
+  {% if can("vehicles.manage") %}<a class="btn btn-outline-primary" href="{{url_for('master_data.edit_vehicle',vehicle_id=vehicle.id)}}"><i class="bi bi-pencil"></i> تعديل</a>{% endif %}
+  <a class="btn btn-outline-primary" href="{{url_for('reports.vehicle_report',vehicle_id=vehicle.id)}}"><i class="bi bi-bar-chart"></i> تقرير</a>
+  <button class="btn btn-light" onclick="window.print()"><i class="bi bi-printer"></i></button>
+ </div>
+</div>
+
+<div class="detail-stats">
+ <div class="detail-stat"><span>العميل</span><strong>{{vehicle.client.name if vehicle.client else "غير مربوط"}}</strong></div>
+ <div class="detail-stat"><span>النوع</span><strong>{{vehicle.vehicle_type.name}}</strong></div>
+ <div class="detail-stat"><span>الوكلاء</span><strong>{{agents|length}}</strong></div>
+ <div class="detail-stat"><span>الحركات</span><strong>{{transactions|length}}</strong></div>
+</div>
+
+<div class="vehicle-detail-card mb-2">
+ <div class="d-flex align-items-center justify-content-between gap-2"><h3>بيانات المركبة</h3><span class="vehicle-tag {% if vehicle.active %}status-on{% else %}status-off{% endif %}">{{"نشطة" if vehicle.active else "موقوفة"}}</span></div>
+ <div class="agent-chips">
+  <span class="agent-chip">{{vehicle.vehicle_type.name}}</span>
+  <span class="agent-chip">{{"بدون جمارك" if vehicle.registration_status=="without_customs" else "جمركية"}}</span>
+  {% if vehicle.client %}<a class="agent-chip" href="{{url_for('master_data.client_detail',client_id=vehicle.client.id)}}">العميل: {{vehicle.client.name}}</a>{% endif %}
+  {% if vehicle.is_default %}<span class="agent-chip" style="background:#fff6dd;color:#9a7616">مركبة افتراضية</span>{% endif %}
+ </div>
+</div>
+
+<div class="vehicle-detail-card mb-2">
+ <h3>الوكلاء المحتملون</h3>
+ <div class="agent-chips">{% for a in agents %}<span class="agent-chip">{{a.name}}</span>{% else %}<span class="text-muted" style="font-size:8px">لا يوجد وكلاء مرتبطون.</span>{% endfor %}</div>
+</div>
+
+<div class="vehicle-detail-card">
+ <div class="d-flex align-items-center justify-content-between gap-2 mb-2"><h3>سجل الحركات</h3><small style="font-size:8px;color:#8c9793">{{transactions|length}} حركة معروضة</small></div>
+ <div class="movement-list">
+ {% for x in transactions %}
+ <article class="movement-card">
+  <div class="movement-top"><strong>{{x.transaction_date.strftime('%Y-%m-%d %H:%M')}}</strong><span class="vehicle-tag {% if x.direction=='entry' %}movement-entry{% else %}movement-exit{% endif %}">{{"دخول" if x.direction=="entry" else "خروج"}}</span></div>
+  <div class="movement-meta">
+   <div><span>العميل</span><strong>{{x.client.name if x.client else "—"}}</strong></div>
+   <div><span>الوكيل</span><strong>{{x.agent.name if x.agent else "العهدة"}}</strong></div>
+   <div><span>المتحصل</span><strong>{{x.collector.full_name if x.collector else "—"}}</strong></div>
+   <div><span>المبلغ</span><strong>{{'{:,.2f}'.format(x.amount)}} {{currency}}</strong></div>
+  </div>
+  <div class="mt-1" style="font-size:7.5px;color:#83908c">{{x.notes or "بدون ملاحظات"}}</div>
+ </article>
+ {% else %}<div class="empty-state" style="grid-column:1/-1">لا توجد حركات لهذه المركبة.</div>{% endfor %}
+ </div>
+</div>
+</div>
 {% endblock %}
