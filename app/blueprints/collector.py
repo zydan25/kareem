@@ -11,6 +11,7 @@ from ..services.accounting import D, account_balance, create_posted_entry, get_s
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_user_collector_account
 from ..services.audit import audit
 from ..services.operations import ensure_user_shift
+from ..services.vehicles import default_vehicle_type, ensure_default_vehicle
 
 bp=Blueprint("collector",__name__,url_prefix="/collector")
 LOCAL_TZ=ZoneInfo("Asia/Aden")
@@ -61,24 +62,6 @@ def index():
             if amount<=0:
                 raise ValueError("المبلغ يجب أن يكون أكبر من صفر في الدخول والخروج")
 
-            vehicle=db.session.get(Vehicle,vehicle_id) if vehicle_id else None
-            if vehicle:
-                if not vehicle.active:
-                    raise ValueError("المركبة موقوفة ولا يمكن تسجيل حركة عليها")
-            elif plate_number:
-                vehicle=Vehicle.query.filter_by(plate_number=plate_number,plate_separator=separator).first()
-                if vehicle and not vehicle.active:
-                    raise ValueError("المركبة موقوفة ولا يمكن تسجيل حركة عليها")
-            if not vehicle:
-                if registration_status=="registered" and not plate_number:
-                    raise ValueError("أدخل رقم اللوحة أو اختر «بدون جمارك»")
-                if not type_id:
-                    raise ValueError("اختر نوع المركبة عند إضافة مركبة جديدة")
-                vehicle=Vehicle(plate_number=plate_number,plate_separator=separator,
-                    vehicle_type_id=type_id,registration_status=registration_status,active=True)
-                db.session.add(vehicle)
-                db.session.flush()
-
             client=None
             if client_id:
                 client=db.session.get(Client,client_id)
@@ -92,6 +75,36 @@ def index():
                     db.session.add(client)
                     db.session.flush()
                     ensure_client_account(client)
+
+            vehicle=db.session.get(Vehicle,vehicle_id) if vehicle_id else None
+            if vehicle and not vehicle.active:
+                raise ValueError("المركبة موقوفة ولا يمكن تسجيل حركة عليها")
+
+            if not vehicle and plate_number:
+                vehicle_query=Vehicle.query.filter_by(plate_number=plate_number,plate_separator=separator)
+                if client:
+                    vehicle_query=vehicle_query.filter(Vehicle.client_id==client.id)
+                vehicle=vehicle_query.first()
+                if vehicle and not vehicle.active:
+                    raise ValueError("المركبة موقوفة ولا يمكن تسجيل حركة عليها")
+
+            is_default_request=request.form.get("is_default_vehicle")=="1"
+            if not vehicle:
+                if client and is_default_request:
+                    vehicle=ensure_default_vehicle(client)
+                elif client and not plate_number and not type_id:
+                    vehicle=ensure_default_vehicle(client)
+                else:
+                    if registration_status=="registered" and not plate_number:
+                        raise ValueError("أدخل رقم اللوحة أو اختر «بدون جمارك»")
+                    if not type_id:
+                        raise ValueError("اختر نوع المركبة عند إضافة مركبة جديدة")
+                    vehicle=Vehicle(plate_number=plate_number,plate_separator=separator,
+                        vehicle_type_id=type_id,registration_status=registration_status,active=True,
+                        client_id=client.id if client else None,is_default=False)
+                    db.session.add(vehicle)
+                    db.session.flush()
+
             if client:
                 if vehicle.client_id and vehicle.client_id != client.id:
                     raise ValueError("المركبة المحددة مرتبطة بعميل آخر")
@@ -210,17 +223,12 @@ def search_clients():
         .order_by(Client.name)
         .limit(10).all())
 
+    default_type=default_vehicle_type(db.session)
     for client in client_rows:
         vehicles=(Vehicle.query
             .filter(Vehicle.client_id==client.id,Vehicle.active.is_(True))
-            .order_by(Vehicle.id).all())
-        results.append({
-            "kind":"client",
-            "id":client.id,
-            "name":client.name,
-            "phone":client.phone,
-            "address":client.address,
-            "vehicles":[{
+            .order_by(Vehicle.is_default.desc(),Vehicle.id).all())
+        vehicle_payload=[{
                 "id":v.id,
                 "plate":v.plate_number,
                 "separator":v.plate_separator,
@@ -229,7 +237,27 @@ def search_clients():
                 "vehicle_type_id":v.vehicle_type_id,
                 "vehicle_type":v.vehicle_type.name if v.vehicle_type else None,
                 "notes":v.notes,
-            } for v in vehicles],
+                "is_default":bool(v.is_default),
+            } for v in vehicles]
+        if not vehicle_payload:
+            vehicle_payload=[{
+                "id":None,
+                "plate":"0",
+                "separator":"0",
+                "letters":None,
+                "registration_status":"registered",
+                "vehicle_type_id":default_type.id,
+                "vehicle_type":default_type.name,
+                "notes":"مركبة افتراضية",
+                "is_default":True,
+            }]
+        results.append({
+            "kind":"client",
+            "id":client.id,
+            "name":client.name,
+            "phone":client.phone,
+            "address":client.address,
+            "vehicles":vehicle_payload,
         })
 
     # A plate may be typed without spaces/slashes/dashes; compare against a
