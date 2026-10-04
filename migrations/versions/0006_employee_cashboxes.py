@@ -48,9 +48,14 @@ def upgrade():
         sa.column("cashbox_account_id", sa.Integer()),
     )
 
-    assets_id = conn.execute(sa.select(accounts.c.id).where(accounts.c.system_key == "root_assets")).scalar_one()
-    cash_root_id = conn.execute(sa.select(accounts.c.id).where(accounts.c.system_key == "cash_root")).scalar_one()
-    collector_root_id = conn.execute(sa.select(accounts.c.id).where(accounts.c.system_key == "collector_root")).scalar_one()
+    assets_id = conn.execute(sa.select(accounts.c.id).where(accounts.c.system_key == "root_assets")).scalar_one_or_none()
+    cash_root_id = conn.execute(sa.select(accounts.c.id).where(accounts.c.system_key == "cash_root")).scalar_one_or_none()
+    collector_root_id = conn.execute(sa.select(accounts.c.id).where(accounts.c.system_key == "collector_root")).scalar_one_or_none()
+
+    # On a fresh database the system account tree is created by seed() after
+    # migrations. There is nothing to migrate here yet.
+    if assets_id is None or cash_root_id is None or collector_root_id is None:
+        return
 
     employee_root_id = conn.execute(
         sa.select(accounts.c.id).where(accounts.c.system_key == "employee_accounts_root")
