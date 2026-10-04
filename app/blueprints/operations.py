@@ -124,7 +124,8 @@ def vouchers():
 
     return render_template("operations/vouchers.html",
         account_options=account_options,counterpart_ids=counterpart_ids,
-        cash_ids=cash_ids,vouchers=rows,selected_type=selected_type,
+        cash_ids=cash_ids,postable_ids={a.id for a in postable},
+        vouchers=rows,selected_type=selected_type,
         editing_voucher=editing_voucher)
 
 @bp.post("/vouchers/<int:voucher_id>/reverse")
