@@ -24,8 +24,8 @@
 .collector-form-compact{display:flex;flex-direction:column;gap:8px}
 .collector-field{display:flex;flex-direction:column;gap:4px}
 .collector-field-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.collector-field .form-label{font-size:10px;font-weight:900;margin:0;color:#5d6b66}
-.collector-field .form-control,.collector-field .form-select{min-height:40px;border-radius:10px;font-size:11px}
+.collector-field .form-label{font-size:12px;font-weight:900;margin:0;color:#5d6b66}
+.collector-field .form-control,.collector-field .form-select{min-height:44px;border-radius:10px;font-size:13px}
 .client-search-box{position:relative}
 .client-search-box .search-icon{position:absolute;right:10px;top:12px;color:#8b9893;font-size:13px;z-index:2}
 .client-search-box input{padding-right:32px!important}
@@ -36,8 +36,8 @@
 .client-suggestion:hover{background:#f7fbf9}
 .client-suggestion-icon{width:28px;height:28px;border-radius:8px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center;flex:0 0 28px}
 .client-suggestion span:nth-child(2){min-width:0;display:flex;flex-direction:column}
-.client-suggestion strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-suggestion small{font-size:8.5px;color:#8d9895;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-suggestion strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-suggestion small{font-size:10px;color:#8d9895;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .client-suggestion>i{font-size:11px;color:#9aa4a1;margin-right:auto}
 .customer-vehicles-panel{border:1px solid rgba(11,110,79,.12);background:#f8fbfa;border-radius:11px;padding:8px}
 .customer-vehicles-panel[hidden]{display:none}
@@ -49,8 +49,8 @@
 .customer-vehicle-option.active{border-color:rgba(11,110,79,.34);background:#eff8f4}
 .customer-vehicle-icon{width:27px;height:27px;border-radius:8px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center;flex:0 0 27px}
 .customer-vehicle-option span:nth-child(2){min-width:0;display:flex;flex-direction:column}
-.customer-vehicle-option strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.customer-vehicle-option small{font-size:7.5px;color:#899590}
+.customer-vehicle-option strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.customer-vehicle-option small{font-size:9px;color:#899590}
 .customer-vehicle-option>i{margin-right:auto;font-size:9px;color:#9aa5a2}
 .collector-selected-vehicle{display:flex;align-items:center;gap:7px;border:1px solid rgba(37,65,58,.10);border-radius:10px;padding:7px;background:#fff}
 .collector-selected-vehicle[hidden]{display:none}
@@ -71,7 +71,7 @@
 .direction-choice.entry input:checked+span{background:#eff9f3;border-color:#8fd1a8;color:#197247}
 .direction-choice.exit input:checked+span{background:#fff2f1;border-color:#e5a7a2;color:#bb4841}
 .collector-submit-row{display:grid;grid-template-columns:1fr auto;gap:6px}
-.collector-submit{min-height:44px;border-radius:10px;font-size:12px;font-weight:950}
+ .collector-submit{min-height:48px;border-radius:10px;font-size:14px;font-weight:950}
 .collector-submit.loading{pointer-events:none;opacity:.85}
 .collector-reset{min-height:44px;width:44px;padding:0;border-radius:10px}
 .collector-optional-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
@@ -211,6 +211,7 @@
 {% block scripts %}
 <script>
 const DEFAULT_VEHICLE_TYPE_ID={{default_vehicle_type_id|int}};
+const INITIAL_CLIENTS={{initial_clients|tojson}};
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>client?.focus(),40));
 const plateHidden=document.getElementById('plate_number');
 const sep=document.getElementById('plate_separator');
@@ -304,33 +305,29 @@ function chooseVehicleResult(x){
   setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type,registration_status:x.registration_status,is_default:x.is_default});
   clientSug.innerHTML='';clientSug.hidden=true;
 }
-async function loadClientSuggestions(q='',autoOpen=true){
+function renderClientSuggestions(rows){
+  rows=rows||[];
+  clientSug.hidden=false;
+  if(!rows.length){clientSug.innerHTML='<div style="padding:10px;font-size:12px">لا يوجد عملاء مسجلون.</div>';return;}
+  clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi bi-person"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة')+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
+  clientSug.querySelectorAll('.client-suggestion').forEach(btn=>btn.onclick=()=>{const x=rows[Number(btn.dataset.index)];chooseCustomer(x);});
+}
+function loadClientSuggestions(q=''){
   const query=String(q??'').trim();
   clearTimeout(searchTimer);
-  clientSug.hidden=!autoOpen;
-  if(autoOpen) clientSug.innerHTML='<div style="padding:8px;font-size:9px;color:#8c9693">جارٍ تحميل العملاء...</div>';
-  searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query))
-    .then(r=>r.ok?r.json():Promise.reject(new Error('search failed')))
-    .then(rows=>{
-      if(!rows.length){
-        clientSug.innerHTML='<div style="padding:9px;font-size:9px">لا يوجد عملاء مسجلون.</div>';
-        return;
-      }
-      clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi '+(x.kind==='vehicle'?'bi-truck-front':'bi-person')+'"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc(x.kind==='vehicle'?('لوحة '+(x.plate||'0')):((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة'))+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
-      clientSug.querySelectorAll('.client-suggestion').forEach(b=>b.onclick=()=>{
-        const x=rows[Number(b.dataset.index)];
-        x.kind==='vehicle'?chooseVehicleResult(x):chooseCustomer(x);
-      });
-    })
-    .catch(()=>{clientSug.innerHTML='<div style="padding:9px;font-size:9px">تعذر تحميل العملاء.</div>';});},70);
+  if(!query){renderClientSuggestions(INITIAL_CLIENTS);return;}
+  clientSug.hidden=false;
+  clientSug.innerHTML='<div style="padding:10px;font-size:11px;color:#8c9693">جارٍ البحث...</div>';
+  searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query)).then(r=>r.ok?r.json():Promise.reject(new Error('search failed'))).then(renderClientSuggestions).catch(()=>{clientSug.innerHTML='<div style="padding:10px;font-size:11px">تعذر البحث، جرّب مرة أخرى.</div>';})},70);
 }
-client?.addEventListener('focus',()=>loadClientSuggestions(client.value,true));
+client?.addEventListener('focus',()=>{if(!client.value.trim())renderClientSuggestions(INITIAL_CLIENTS);});
 client?.addEventListener('input',()=>{
   clientId.value='';clearVehicle();
   const q=client.value.trim();
-  if(!q){vehiclePanel.hidden=true;loadClientSuggestions('',true);return;}
-  loadClientSuggestions(q,true);
+  if(!q){vehiclePanel.hidden=true;renderClientSuggestions(INITIAL_CLIENTS);return;}
+  loadClientSuggestions(q);
 });
+window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{client?.focus();renderClientSuggestions(INITIAL_CLIENTS);},40));
 document.getElementById('add-real-vehicle')?.addEventListener('click',showRealVehicle);
 document.getElementById('cancel-real-vehicle')?.addEventListener('click',()=>{newVehiclePanel.hidden=true;vehiclePanel.hidden=false;});
 document.getElementById('use-real-vehicle')?.addEventListener('click',useRealVehicle);
