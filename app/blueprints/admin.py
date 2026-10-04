@@ -46,7 +46,7 @@ def edit_user(user_id):
                     job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,"موظف"),
                     monthly_salary=0,hire_date=date.today(),active=u.active)
                 db.session.add(emp); db.session.flush(); u.employee_id=emp.id
-                ensure_employee_account(emp); ensure_employee_payroll_account(emp)
+                ensure_employee_account(emp); ensure_employee_cashbox(emp); ensure_employee_payroll_account(emp)
             audit("update","user",u.id,u.username); db.session.commit(); flash("تم تحديث المستخدم وملفه المالي","success"); return redirect(url_for("admin.users"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
