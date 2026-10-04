@@ -21,13 +21,6 @@ def ensure_default_vehicle(client, session=None):
     if not client:
         raise ValueError("العميل مطلوب للمركبة الافتراضية")
 
-    active = (session.query(Vehicle)
-        .filter_by(client_id=client.id, active=True)
-        .order_by(Vehicle.id)
-        .first())
-    if active:
-        return active
-
     vehicle_type = default_vehicle_type(session)
     existing = (session.query(Vehicle)
         .filter_by(client_id=client.id, is_default=True)
