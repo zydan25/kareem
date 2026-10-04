@@ -22,7 +22,7 @@ def upgrade():
         sqlite_column = sa.Column(
             "cashbox_account_id",
             sa.Integer(),
-            sa.ForeignKey("accounts.id", ondelete="SET NULL"),
+            sa.ForeignKey("accounts.id", name="fk_employees_cashbox_account_id_accounts", ondelete="SET NULL"),
             nullable=True,
         )
         with op.batch_alter_table("employees", recreate="always") as batch_op:
