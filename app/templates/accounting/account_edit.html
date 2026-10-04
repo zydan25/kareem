@@ -12,7 +12,14 @@
   <div class="col-12 col-md-4"><label class="form-label">الحساب الأب</label><select name="parent_id" class="form-select" {% if account.system_key %}disabled{% endif %} required>{% for p in parents %}<option value="{{p.id}}" {% if p.id==account.parent_id %}selected{% endif %}>{{p.name}}</option>{% endfor %}</select></div>
   {% if not account.is_group and not account.system_key %}<div class="col-12 col-md-3"><label class="form-label">السماح بالقيد اليدوي</label><select name="allow_manual_posting" class="form-select"><option value="1" {% if account.allow_manual_posting %}selected{% endif %}>نعم</option><option value="0" {% if not account.allow_manual_posting %}selected{% endif %}>لا</option></select></div>{% endif %}
   {% if not account.system_key %}<div class="col-12 col-md-3"><label class="form-label">الحالة</label><select name="active" class="form-select"><option value="1" {% if account.active %}selected{% endif %}>نشط</option><option value="0" {% if not account.active %}selected{% endif %}>موقوف</option></select></div>{% endif %}
-  {% if not account.system_key %}<div class="col-12"><button class="btn btn-primary">حفظ التعديلات</button></div>{% endif %}
+  {% if not account.system_key %}
+  <div class="col-12 d-flex gap-2 flex-wrap">
+    <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ التعديلات</button>
+    <form method="post" action="{{url_for('accounting.account_delete',account_id=account.id)}}" onsubmit="return confirm('سيتم حذف الحساب نهائيًا فقط إذا لم يكن مستخدمًا. متابعة؟')">
+      <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash3"></i> حذف الحساب</button>
+    </form>
+  </div>
+  {% endif %}
 </form>
 </div>
 {% endblock %}
