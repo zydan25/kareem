@@ -1,13 +1,94 @@
 {% extends 'base.html' %}
 {% block title %}إضافة حساب - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>إضافة حساب</h1><p>اختر الحساب الأب واكتب الاسم فقط؛ النظام ينشئ الرمز تلقائيًا.</p></div><a class="btn btn-light" href="{{url_for('accounting.accounts')}}">رجوع</a></div>
-<div class="card-soft">
-<form method="post" class="row g-3">
-<div class="col-12"><label class="form-label">الحساب الأب</label><select name="parent_id" class="form-select form-select-lg" required>{% for p in parents %}<option value="{{p.id}}" {% if selected_parent and p.id==selected_parent.id %}selected{% endif %}>📁 {{p.name}}</option>{% endfor %}</select></div>
-<div class="col-12"><label class="form-label">اسم الحساب</label><input name="name" class="form-control form-control-lg" required autofocus placeholder="مثال: كهرباء، صيانة، مورد..."></div>
-<div class="col-12"><label class="form-check"><input class="form-check-input" type="checkbox" name="is_group" value="1"><span class="form-check-label">إنشاء مجموعة فرعية غير قابلة للقيد</span></label></div>
-<div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check2"></i> إنشاء الحساب</button></div>
+<style>
+.account-form-card{max-width:760px;margin:auto}
+.opening-balance-box{border:1px solid rgba(11,110,79,.14);background:linear-gradient(180deg,#f7fbf9,#fff);border-radius:14px;padding:12px}
+.opening-balance-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.opening-balance-head i{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(11,110,79,.10);color:var(--primary)}
+.opening-balance-head strong{font-size:12px}
+.opening-balance-head small{display:block;font-size:9px;color:#8a9893}
+.form-label{font-size:11px;font-weight:850;color:#52635e;margin-bottom:5px}
+.form-control,.form-select{border-radius:11px;min-height:42px;font-size:12px}
+.form-actions{display:flex;gap:6px;flex-wrap:wrap}
+.form-actions .btn{border-radius:11px;font-size:12px;font-weight:850}
+@media(max-width:700px){
+ .form-actions .btn{flex:1}
+ .opening-balance-box{padding:10px}
+}
+</style>
+<div class="page-head">
+  <div><span class="eyebrow">المحاسبة</span><h1>حساب جديد</h1><p>أنشئ الحساب وحدد رصيده الابتدائي من نفس الشاشة.</p></div>
+  <a class="btn btn-light" href="{{url_for('accounting.accounts')}}"><i class="bi bi-arrow-right"></i> الشجرة</a>
+</div>
+<div class="card-soft account-form-card">
+<form method="post" class="row g-3" id="account-form">
+  <div class="col-12">
+    <label class="form-label">الحساب الأب</label>
+    <select name="parent_id" id="account-parent" class="form-select" required>
+      {% for p in parents %}<option value="{{p.id}}" data-type="{{p.account_type}}" {% if selected_parent and p.id==selected_parent.id %}selected{% endif %}>📁 {{p.name}} · {{p.code}}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-7">
+    <label class="form-label">اسم الحساب</label>
+    <input name="name" class="form-control" required autofocus placeholder="مثال: الكهرباء أو عميل جديد">
+  </div>
+  <div class="col-12 col-md-5">
+    <label class="form-label">نوع الحساب</label>
+    <div class="form-control d-flex align-items-center bg-light-subtle"><span class="small">يرث النوع من الحساب الأب</span></div>
+  </div>
+
+  <div class="col-12">
+    <div class="opening-balance-box">
+      <div class="opening-balance-head">
+        <i class="bi bi-cash-coin"></i>
+        <div><strong>الرصيد الافتتاحي</strong><small>سيُرحّل تلقائيًا كقيد افتتاحي، ويُستخدم في رصيد الحساب من أول يوم.</small></div>
+      </div>
+      <div class="row g-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label">المبلغ</label>
+          <input name="opening_balance" id="opening-balance" class="form-control" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label">طبيعة الرصيد</label>
+          <select name="opening_side" id="opening-side" class="form-select">
+            <option value="auto" {% if default_opening_side not in ['debit','credit'] %}selected{% endif %}>حسب طبيعة الحساب</option>
+            <option value="debit" {% if default_opening_side=='debit' %}selected{% endif %}>مدين</option>
+            <option value="credit" {% if default_opening_side=='credit' %}selected{% endif %}>دائن</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-text mt-2" id="opening-help">رصيد الأصول والمصروفات يُقترح مدينًا، والخصوم وحقوق الملكية والإيرادات دائنًا. يمكنك تغيير الاتجاه.</div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <label class="form-check">
+      <input class="form-check-input" type="checkbox" name="is_group" id="is-group" value="1">
+      <span class="form-check-label">إنشاء مجموعة فرعية غير قابلة للقيد</span>
+    </label>
+  </div>
+
+  <div class="col-12 form-actions">
+    <a class="btn btn-light" href="{{url_for('accounting.accounts')}}">إلغاء</a>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> إنشاء الحساب</button>
+  </div>
 </form>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+const groupCheck=document.getElementById('is-group');
+const opening=document.getElementById('opening-balance');
+const side=document.getElementById('opening-side');
+function syncOpening(){
+  const disabled=!!groupCheck?.checked;
+  if(opening){opening.disabled=disabled; if(disabled)opening.value='0';}
+  if(side){side.disabled=disabled;}
+  const help=document.getElementById('opening-help');
+  if(help)help.textContent=disabled?'المجموعة للتجميع فقط؛ الرصيد الافتتاحي يُسجل على الحساب التفصيلي.':'رصيد الأصول والمصروفات يُقترح مدينًا، والخصوم وحقوق الملكية والإيرادات دائنًا. يمكنك تغيير الاتجاه.';
+}
+groupCheck?.addEventListener('change',syncOpening);
+syncOpening();
+</script>
 {% endblock %}
