@@ -130,7 +130,7 @@ def vouchers():
             db.session.rollback()
             flash(str(exc),"danger")
 
-    selected_type=request.args.get("type") or request.form.get("voucher_type") or (editing_voucher.voucher_type if editing_voucher else VoucherType.RECEIPT.value)
+    selected_type=request.args.get("type") or request.form.get("voucher_type") or (editing_voucher.voucher_type if editing_voucher else "")
     if selected_type not in {
         VoucherType.RECEIPT.value,VoucherType.PAYMENT.value,VoucherType.TRANSFER.value
     }:
