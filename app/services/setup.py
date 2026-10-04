@@ -75,6 +75,8 @@ def ensure_employees_for_users():
         db.session.flush()
         user.employee_id=emp.id
         ensure_employee_account(emp)
+        from .accounts import ensure_employee_cashbox
+        ensure_employee_cashbox(emp)
         ensure_employee_payroll_account(emp)
 
 def seed():
