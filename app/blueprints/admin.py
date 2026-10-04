@@ -5,7 +5,7 @@ from ..extensions import db
 from ..models import Employee, Permission, User, UserPermission, Role
 from ..permissions import can, permission_required
 from ..services.audit import audit
-from ..services.accounts import ensure_employee_account, ensure_employee_payroll_account
+from ..services.accounts import ensure_employee_account, ensure_employee_cashbox, ensure_employee_payroll_account
 
 ROLE_LABELS={"admin":"مدير النظام","manager":"مدير","accountant":"محاسب","collector":"متحصل","auditor":"مراجع"}
 
