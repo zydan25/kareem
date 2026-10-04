@@ -53,8 +53,12 @@ def vouchers():
         if not editing_voucher:
             flash("السند المطلوب تعديله غير موجود","warning")
             return redirect(url_for("operations.vouchers"))
-        if editing_voucher.status!="posted":
-            flash("لا يمكن تعديل سند غير مرحّل أو تم عكسه","warning")
+        if editing_voucher.status!="posted" or (
+            editing_voucher.journal_entry and (
+                editing_voucher.journal_entry.status!="posted" or editing_voucher.journal_entry.reversed_entry_id
+            )
+        ):
+            flash("لا يمكن تعديل سند غير مرحّل أو تم عكس قيده","warning")
             return redirect(url_for("operations.vouchers"))
 
     if request.method=="POST":
@@ -87,8 +91,13 @@ def vouchers():
                 raise ValueError("نوع السند غير صالح")
 
             edit_target=db.session.get(Voucher,request.form.get("edit_id",type=int)) if request.form.get("edit_id") else None
-            if edit_target and edit_target.status!="posted":
-                raise ValueError("لا يمكن تعديل سند غير مرحّل أو تم عكسه")
+            if edit_target and (
+                edit_target.status!="posted" or
+                (edit_target.journal_entry and (
+                    edit_target.journal_entry.status!="posted" or edit_target.journal_entry.reversed_entry_id
+                ))
+            ):
+                raise ValueError("لا يمكن تعديل سند غير مرحّل أو تم عكس قيده")
 
             if edit_target:
                 old_entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,edit_target.journal_entry_id)
@@ -142,12 +151,11 @@ def reverse_voucher(voucher_id):
             raise ValueError("السند غير موجود")
         if voucher.status!=VoucherStatus.POSTED.value:
             raise ValueError("السند غير مرحّل أو تم عكسه مسبقًا")
-        entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,voucher.journal_entry_id)
+        entry=voucher.journal_entry
+        if not entry or entry.status!="posted" or entry.reversed_entry_id:
+            raise ValueError("السند غير مرحّل أو تم عكس قيده مسبقًا")
         reverse=reverse_entry(entry,current_user.id,request.form.get("reason","عكس السند"))
-        db.session.query(Voucher).filter(Voucher.id==voucher.id).update(
-            {"status":VoucherStatus.VOID.value},synchronize_session=False
-        )
-        db.session.flush()
+        # JournalEntry is the accounting source of truth for reversal state.
         audit("reverse_voucher","voucher",voucher.id,f"{voucher.number} -> {reverse.number}")
         db.session.commit()
         flash(f"تم عكس السند {voucher.number} وإنشاء القيد {reverse.number}","success")
