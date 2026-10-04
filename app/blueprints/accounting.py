@@ -115,8 +115,48 @@ def account_toggle(account_id):
 @bp.get("/journal")
 @permission_required("accounting.view")
 def journal():
-    entries=JournalEntry.query.order_by(JournalEntry.entry_date.desc(),JournalEntry.id.desc()).limit(500).all()
-    return render_template("accounting/journal.html",entries=entries)
+    source=request.args.get("source","").strip()
+    query=request.args.get("q","").strip()
+    sort=request.args.get("sort","latest")
+
+    q=JournalEntry.query
+    if source:
+        q=q.filter(JournalEntry.source_type==source)
+    if query:
+        like=f"%{query}%"
+        q=q.filter((JournalEntry.number.ilike(like)) | (JournalEntry.description.ilike(like)))
+
+    if sort=="oldest":
+        q=q.order_by(JournalEntry.entry_date.asc(),JournalEntry.id.asc())
+    elif sort=="highest":
+        rows=q.all()
+        rows.sort(key=lambda e:e.totals()[0],reverse=True)
+        entries=rows[:500]
+    elif sort=="lowest":
+        rows=q.all()
+        rows.sort(key=lambda e:e.totals()[0])
+        entries=rows[:500]
+    else:
+        q=q.order_by(JournalEntry.entry_date.desc(),JournalEntry.id.desc())
+        entries=q.limit(500).all()
+
+    if sort not in {"highest","lowest"}:
+        entries=entries[:500]
+
+    source_labels={
+        "voucher":"سند",
+        "expense":"مصروف",
+        "settlement":"تسوية",
+        "payroll":"رواتب",
+        "rent":"إيجار",
+        "rent_payment":"تحصيل إيجار",
+        "salary_payment":"صرف راتب",
+        "gate":"البوابة",
+        "manual":"قيد يدوي",
+        "reverse":"قيد عكسي",
+    }
+    return render_template("accounting/journal.html",
+        entries=entries,source=source,query=query,sort=sort,source_labels=source_labels)
 
 @bp.get("/journal/<int:entry_id>")
 @permission_required("accounting.view")
