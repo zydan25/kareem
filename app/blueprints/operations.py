@@ -93,6 +93,8 @@ def expenses():
     cash_accounts=Account.query.filter_by(account_type="asset",is_group=False,active=True,allow_manual_posting=True).order_by(Account.code).all()
     default_expense=get_system_account("operating_expense")
     default_cash=get_system_account("main_cash")
+    expense_account_ids={a.id for a in expense_accounts}
+    cash_account_ids={a.id for a in cash_accounts if is_cash_account(a)}
     rows=Expense.query.order_by(Expense.expense_date.desc(),Expense.id.desc()).limit(250).all()
     if request.method=="POST":
         try:
@@ -108,7 +110,9 @@ def expenses():
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     return render_template("operations/expenses.html",rows=rows,expense_accounts=expense_accounts,cash_accounts=cash_accounts,
-                           default_expense=default_expense,default_cash=default_cash,account_options=_account_picker())
+                           default_expense=default_expense,default_cash=default_cash,
+                           expense_account_ids=expense_account_ids,cash_account_ids=cash_account_ids,
+                           account_options=_account_picker())
 
 @bp.get("/expenses/<int:expense_id>")
 @permission_required("expenses.view")
