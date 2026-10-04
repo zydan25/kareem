@@ -78,7 +78,7 @@ def account_new():
     return render_template("accounting/account_form.html",parents=parents,selected_parent=selected_parent,auto_codes=auto_codes)
 
 @bp.route("/accounts/<int:account_id>/edit",methods=["GET","POST"])
-@permission_required("accounting.post")
+@permission_required("accounting.manage")
 def account_edit(account_id):
     account=db.session.get(Account,account_id)
     if not account: return ("غير موجود",404)
