@@ -61,5 +61,12 @@ builder?.addEventListener('change',e=>{
   if(e.target.classList.contains('vehicle-status')) setVehicleRequirement(e.target.closest('.client-vehicle-row'));
 });
 const firstVehicle=builder?.querySelector('.client-vehicle-row'); if(firstVehicle)setVehicleRequirement(firstVehicle);
+
+const openClientPanel=new URLSearchParams(window.location.search).get('open');
+if(openClientPanel==='add'){
+  const panel=document.getElementById('add-client');
+  if(panel) panel.classList.add('is-open');
+  document.getElementById('new-client-form')?.querySelector('input[name="name"]')?.focus();
+}
 </script>
 {% endblock %}
