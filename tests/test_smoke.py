@@ -220,8 +220,7 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
     assert "تم عكس السند" in reverse.get_data(as_text=True)
 
     with app.app_context():
-        db.session.rollback()
-        db.session.expire_all()
+        db.session.remove()
         voucher=db.session.get(Voucher,voucher_id)
         assert voucher.status=="posted"
         assert voucher.journal_entry.status=="void"
