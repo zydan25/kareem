@@ -51,12 +51,25 @@
  .employee-actions .btn{min-height:34px;font-size:10px}
  .employee-actions .btn span{display:inline}
 }
-</style>
+.employee-head-actions{display:flex;align-items:center;gap:8px}
+.employee-head-action{min-width:122px;min-height:48px;border:1px solid transparent;border-radius:13px;padding:8px 13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;font-size:12px;font-weight:950;cursor:pointer;box-shadow:0 5px 15px rgba(20,45,37,.07);transition:.16s ease}
+.employee-head-action i{font-size:18px}
+.employee-head-action.add{background:var(--primary);border-color:var(--primary);color:#fff}
+.employee-head-action.add:hover{background:var(--primary-dark);border-color:var(--primary-dark);transform:translateY(-1px)}
+.employee-head-action.fine{background:#fff5e9;border-color:#f1d7ad;color:#9b6714}
+.employee-head-action.fine:hover{background:#ffeed5;transform:translateY(-1px)}
+@media(max-width:700px){
+  .employee-head-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:6px;width:100%}
+  .employee-head-action{width:100%;min-height:50px;font-size:11px}
+}</style>
 
 <div class="employee-page">
 <div class="page-head employee-head">
   <div><span class="eyebrow">الموارد البشرية</span><h1>الموظفون</h1></div>
-  {% if can_manage %}<div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary" data-toggle-panel="employee-fine-panel"><i class="bi bi-exclamation-triangle"></i> مخالفة</button><button class="btn btn-primary" data-toggle-panel="add-employee"><i class="bi bi-plus-lg"></i> موظف</button></div>{% endif %}
+  {% if can_manage %}<div class="employee-head-actions">
+    <button class="employee-head-action fine" data-toggle-panel="employee-fine-panel"><i class="bi bi-exclamation-triangle"></i><span>مخالفة</span></button>
+    <button class="employee-head-action add" data-toggle-panel="add-employee"><i class="bi bi-person-plus"></i><span>إضافة موظف</span></button>
+  </div>{% endif %}
 </div>
 
 <div class="employee-toolbar">
