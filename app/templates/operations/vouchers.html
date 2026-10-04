@@ -1,158 +1,342 @@
 {% from 'components/account_picker.html' import picker %}
 {% extends 'base.html' %}
-{% block title %}السندات المالية - {{app_name}}{% endblock %}
+{% block title %}السندات - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head">
+<div class="page-head voucher-page-head">
   <div>
-    <span class="eyebrow">المحاسبة</span>
-    <h1>سند قبض / سند صرف</h1>
-    <p>سند مبسط: اختر نوع العملية، الحساب، المبلغ، والصندوق ثم أصدر السند.</p>
+    <span class="eyebrow">الحسابات</span>
+    <h1>السندات</h1>
+    <p>قبض، صرف، وسند عام مع ترحيل القيد مباشرة.</p>
   </div>
-  <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة القائمة</button>
+  <div class="voucher-toolbar">
+    {% if can("vouchers.post") %}
+    <button class="btn btn-primary" type="button" data-voucher-open>
+      <i class="bi bi-plus-lg"></i><span>إضافة سند</span>
+    </button>
+    {% endif %}
+    <a class="btn btn-outline-primary" href="{{url_for('accounting.journal',source='voucher')}}">
+      <i class="bi bi-bar-chart"></i><span>تقرير</span>
+    </a>
+    <div class="voucher-sort-wrap">
+      <select id="voucher-sort" class="form-select form-select-sm" aria-label="فرز السندات">
+        <option value="latest">الأحدث</option>
+        <option value="oldest">الأقدم</option>
+        <option value="highest">الأعلى مبلغًا</option>
+        <option value="lowest">الأقل مبلغًا</option>
+        <option value="receipt">سندات القبض</option>
+        <option value="payment">سندات الصرف</option>
+        <option value="transfer">السندات العامة</option>
+      </select>
+    </div>
+    <div class="voucher-live-search">
+      <i class="bi bi-search"></i>
+      <input id="voucher-filter" class="form-control form-control-sm" placeholder="بحث فوري..." autocomplete="off">
+    </div>
+  </div>
 </div>
 
-<div class="card-soft voucher-entry-card mb-4">
-  <form method="post" id="voucher-form" novalidate>
-    <input type="hidden" name="voucher_type" id="voucher-type" value="{{selected_type}}">
-
-    <div class="voucher-mode-switch" role="group" aria-label="نوع السند">
-      <button type="button" class="voucher-mode active" data-voucher-mode="receipt">
-        <i class="bi bi-box-arrow-in-down-left"></i><span>سند قبض</span><small>استلام مبلغ</small>
-      </button>
-      <button type="button" class="voucher-mode" data-voucher-mode="payment">
-        <i class="bi bi-box-arrow-up-right"></i><span>سند صرف</span><small>صرف مبلغ</small>
-      </button>
-    </div>
-
-    <div class="voucher-flow-hint" id="voucher-flow-hint">
-      <i class="bi bi-arrow-down-left"></i>
-      <span>من الحساب <strong>إلى الصندوق</strong></span>
-    </div>
-
-    <div class="row g-3 mt-1">
-      <div class="col-12 col-lg-6">
-        <label class="form-label" id="counterpart-label">الحساب</label>
-        {{picker('account_id','الحساب',account_options,None,'اختر الحساب',counterpart_ids)}}
+<div id="voucher-compose" class="voucher-compose" hidden>
+  <div class="voucher-compose-backdrop" data-voucher-close></div>
+  <section class="voucher-compose-sheet" role="dialog" aria-modal="true" aria-labelledby="voucher-compose-title">
+    <div class="voucher-compose-head">
+      <div>
+        <span class="eyebrow">إصدار مستند</span>
+        <h2 id="voucher-compose-title">{{'تعديل السند ' ~ editing_voucher.number if editing_voucher else 'سند جديد'}}</h2>
       </div>
-      <div class="col-12 col-lg-3">
-        <label class="form-label">المبلغ</label>
-        <div class="input-group input-group-lg">
-          <input name="amount" id="voucher-amount" class="form-control text-center fw-bold" inputmode="decimal" placeholder="0.00" required>
-          <span class="input-group-text">{{currency}}</span>
+      <button type="button" class="icon-button" data-voucher-close aria-label="إغلاق"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div class="voucher-kind-tabs" role="tablist">
+      <button type="button" class="voucher-kind {% if selected_type=='transfer' %}active{% endif %}" data-voucher-mode="transfer">
+        <i class="bi bi-arrow-left-right"></i><span>سند عام</span><small>من حساب إلى حساب</small>
+      </button>
+      <button type="button" class="voucher-kind {% if selected_type=='receipt' %}active{% endif %}" data-voucher-mode="receipt">
+        <i class="bi bi-box-arrow-in-down-left"></i><span>سند قبض</span><small>إلى الصندوق</small>
+      </button>
+      <button type="button" class="voucher-kind {% if selected_type=='payment' %}active{% endif %}" data-voucher-mode="payment">
+        <i class="bi bi-box-arrow-up-right"></i><span>سند صرف</span><small>من الصندوق</small>
+      </button>
+    </div>
+
+    <form method="post" id="voucher-form" class="voucher-form" novalidate>
+      {% if editing_voucher %}<input type="hidden" name="edit_id" value="{{editing_voucher.id}}">{% endif %}
+      <input type="hidden" name="voucher_type" id="voucher-type" value="{{selected_type}}">
+
+      <div class="voucher-flow-hint" id="voucher-flow-hint">
+        <i class="bi bi-arrow-left-right"></i><span>من الحساب إلى الحساب</span>
+      </div>
+
+      <div id="voucher-standard-fields" class="row g-3">
+        <div class="col-12 col-lg-6 voucher-field voucher-counterpart-field">
+          <label class="form-label" id="counterpart-label">الحساب</label>
+          {{picker('account_id','الحساب',account_options,
+              (editing_voucher.from_account_id if editing_voucher and editing_voucher.voucher_type=='receipt' else editing_voucher.to_account_id if editing_voucher and editing_voucher.voucher_type=='payment' else None),
+              'اختر الحساب',counterpart_ids)}}
+        </div>
+        <div class="col-12 col-lg-6 voucher-field voucher-cash-field">
+          <label class="form-label">الصندوق / الحساب النقدي</label>
+          {{picker('cash_account_id','الصندوق',account_options,
+              (editing_voucher.to_account_id if editing_voucher and editing_voucher.voucher_type=='receipt' else editing_voucher.from_account_id if editing_voucher and editing_voucher.voucher_type=='payment' else None),
+              'اختر الصندوق',cash_ids)}}
         </div>
       </div>
-      <div class="col-12 col-lg-3">
-        <label class="form-label">الصندوق / الحساب النقدي</label>
-        {{picker('cash_account_id','الصندوق',account_options,None,'اختر الصندوق',cash_ids)}}
+
+      <div id="voucher-transfer-fields" class="row g-3" hidden>
+        <div class="col-12 col-lg-6">
+          <label class="form-label">من حساب</label>
+          {{picker('from_account_id','من حساب',account_options,editing_voucher.from_account_id if editing_voucher and editing_voucher.voucher_type=='transfer' else None,'اختر الحساب المصدر',postable_ids)}}
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label">إلى حساب</label>
+          {{picker('to_account_id','إلى حساب',account_options,editing_voucher.to_account_id if editing_voucher and editing_voucher.voucher_type=='transfer' else None,'اختر الحساب الهدف',postable_ids)}}
+        </div>
       </div>
-      <div class="col-12 col-lg-5">
-        <label class="form-label">المستفيد / الطرف <span class="text-muted">(اختياري)</span></label>
-        <input name="beneficiary" class="form-control" placeholder="اسم الشخص أو الجهة">
-      </div>
-      <div class="col-12 col-lg-7">
-        <label class="form-label">البيان</label>
-        <input name="description" class="form-control" placeholder="سبب القبض أو الصرف" required>
-      </div>
-      <div class="col-12">
-        <div class="voucher-submit-row">
-          <div>
-            <span>المستند المحاسبي</span>
-            <strong id="voucher-submit-hint">سيتم إصدار سند قبض وترحيل القيد مباشرة.</strong>
+
+      <div class="row g-3">
+        <div class="col-12 col-lg-5">
+          <label class="form-label">المبلغ</label>
+          <div class="input-group input-group-lg">
+            <input name="amount" id="voucher-amount" class="form-control text-center fw-bold voucher-amount-input" inputmode="decimal" placeholder="0.00" value="{{editing_voucher.amount if editing_voucher else ''}}" required>
+            <span class="input-group-text">{{currency}}</span>
           </div>
-          <button class="btn btn-primary btn-lg px-4" id="voucher-submit">
-            <i class="bi bi-check2-circle"></i> إصدار سند قبض
-          </button>
+          <div id="voucher-amount-words" class="voucher-amount-words" aria-live="polite"></div>
+        </div>
+        <div class="col-12 col-lg-7">
+          <label class="form-label">المستفيد / الطرف <span class="text-muted">(اختياري)</span></label>
+          <input name="beneficiary" class="form-control form-control-lg" placeholder="اسم الشخص أو الجهة" value="{{editing_voucher.beneficiary if editing_voucher else ''}}">
+        </div>
+        <div class="col-12">
+          <label class="form-label">البيان</label>
+          <input name="description" class="form-control form-control-lg" placeholder="سبب القبض أو الصرف أو وصف السند" value="{{editing_voucher.description if editing_voucher else ''}}" required>
         </div>
       </div>
-    </div>
-  </form>
+
+      <div class="voucher-submit-row">
+        <div>
+          <span>المسار المحاسبي</span>
+          <strong id="voucher-submit-hint">سند عام من حساب إلى حساب.</strong>
+        </div>
+        {% if can("vouchers.post") %}
+        <button class="btn btn-primary btn-lg voucher-submit-btn" id="voucher-submit" type="submit">
+          <i class="bi bi-check2-circle"></i><span>{{'حفظ التعديل' if editing_voucher else 'إصدار السند'}}</span>
+        </button>
+        {% endif %}
+      </div>
+    </form>
+  </section>
 </div>
 
-<div class="card-soft">
-  <div class="section-title">
-    <div><h3>سجل السندات</h3><small class="text-muted">{{vouchers|length}} سند</small></div>
-    <input id="voucher-filter" class="form-control w-auto" placeholder="بحث في السندات">
+<div class="voucher-list-head">
+  <div>
+    <strong>سجل السندات</strong>
+    <span id="voucher-count">{{vouchers|length}} سند</span>
   </div>
-  <div class="entity-list">
-    {% for v in vouchers %}
-      <div class="entity-row">
-        <div class="entity-main">
-          <div class="entity-icon"><i class="bi bi-receipt-cutoff"></i></div>
-          <div>
-            <strong>{{v.number}}</strong>
-            <div class="entity-meta">
-              <span>{{'سند قبض' if v.voucher_type=='receipt' else 'سند صرف' if v.voucher_type=='payment' else 'تحويل'}}</span>
-              <span>{{v.voucher_date}}</span>
-              <span>{{v.beneficiary or 'بدون طرف'}}</span>
-            </div>
+</div>
+
+<div id="voucher-cards" class="voucher-cards">
+{% for v in vouchers %}
+  {% set is_void = v.status != 'posted' or (v.journal_entry and (v.journal_entry.status == 'void' or v.journal_entry.reversed_entry_id)) %}
+  <article class="voucher-card"
+    data-voucher-type="{{v.voucher_type}}"
+    data-voucher-amount="{{v.amount}}"
+    data-voucher-id="{{v.id}}"
+    data-search="{{v.number}} {{v.description}} {{v.beneficiary or ''}} {{v.from_account.name if v.from_account else ''}} {{v.to_account.name if v.to_account else ''}}">
+    <div class="voucher-card-top">
+      <div class="voucher-card-title">
+        <div class="entity-icon {% if v.voucher_type=='receipt' %}receipt{% elif v.voucher_type=='payment' %}expense{% else %}general{% endif %}">
+          <i class="bi {% if v.voucher_type=='receipt' %}bi-arrow-down-left-circle{% elif v.voucher_type=='payment' %}bi-arrow-up-right-circle{% else %}bi-arrow-left-right{% endif %}"></i>
+        </div>
+        <div>
+          <strong>{{v.number}}</strong>
+          <div class="entity-meta">
+            <span>{{'سند قبض' if v.voucher_type=='receipt' else 'سند صرف' if v.voucher_type=='payment' else 'سند عام'}}</span>
+            <span>{{v.voucher_date}}</span>
+            {% if v.beneficiary %}<span>{{v.beneficiary}}</span>{% endif %}
           </div>
         </div>
-        <div class="entity-balance">
-          <strong>{{'{:,.2f}'.format(v.amount)}} {{currency}}</strong>
-          <span>{{'مرحّل' if v.status=='posted' else 'ملغى'}}</span>
-        </div>
-        <a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.voucher_detail',voucher_id=v.id)}}">عرض</a>
       </div>
-    {% else %}
-      <div class="empty-state"><i class="bi bi-receipt"></i><strong>لا توجد سندات</strong><span>أصدر أول سند من النموذج أعلاه.</span></div>
-    {% endfor %}
-  </div>
+      <span class="voucher-status {% if not is_void %}posted{% else %}void{% endif %}">
+        {{'مرحّل' if not is_void else 'ملغى'}}
+      </span>
+    </div>
+
+    <div class="voucher-flow-card">
+      <div><small>من حساب</small><strong>{{v.from_account.name if v.from_account else '—'}}</strong></div>
+      <i class="bi bi-arrow-left"></i>
+      <div><small>إلى حساب</small><strong>{{v.to_account.name if v.to_account else '—'}}</strong></div>
+    </div>
+
+    <div class="voucher-card-bottom">
+      <div>
+        <small>المبلغ</small>
+        <strong>{{'{:,.2f}'.format(v.amount)}} {{currency}}</strong>
+        <span>{{v.description}}</span>
+      </div>
+      <div class="voucher-card-actions">
+        <a class="btn btn-sm btn-light" href="{{url_for('operations.voucher_detail',voucher_id=v.id)}}"><i class="bi bi-eye"></i><span>عرض</span></a>
+        <a class="btn btn-sm btn-light" href="{{url_for('operations.voucher_detail',voucher_id=v.id,print=1)}}"><i class="bi bi-printer"></i><span>طباعة</span></a>
+        {% if can("vouchers.post") and not is_void %}
+        <a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.vouchers',edit=v.id)}}"><i class="bi bi-pencil-square"></i><span>تعديل</span></a>
+        <form method="post" action="{{url_for('operations.reverse_voucher',voucher_id=v.id)}}" class="inline-action voucher-reverse-form">
+          <input type="hidden" name="reason" value="عكس السند من شاشة السندات">
+          <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-arrow-counterclockwise"></i><span>عكس</span></button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+{% else %}
+  <div class="empty-state voucher-empty"><i class="bi bi-receipt-cutoff"></i><strong>لا توجد سندات</strong><span>ابدأ من زر «سند» لإصدار أول سند.</span></div>
+{% endfor %}
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 (() => {
+  const compose=document.getElementById('voucher-compose');
   const form=document.getElementById('voucher-form');
   const typeInput=document.getElementById('voucher-type');
   const modes=[...document.querySelectorAll('[data-voucher-mode]')];
-  const flow=document.getElementById('voucher-flow-hint');
+  const flow= document.getElementById('voucher-flow-hint');
   const flowText=flow?.querySelector('span');
   const submit=document.getElementById('voucher-submit');
   const submitHint=document.getElementById('voucher-submit-hint');
+  const amountInput=document.getElementById('voucher-amount');
+  const amountWords=document.getElementById('voucher-amount-words');
+  const standardFields=document.getElementById('voucher-standard-fields');
+  const transferFields=document.getElementById('voucher-transfer-fields');
   const accountValue=document.querySelector('[data-account-picker][data-name="account_id"] [data-account-value]');
   const cashValue=document.querySelector('[data-account-picker][data-name="cash_account_id"] [data-account-value]');
+  const fromValue=document.querySelector('[data-account-picker][data-name="from_account_id"] [data-account-value]');
+  const toValue=document.querySelector('[data-account-picker][data-name="to_account_id"] [data-account-value]');
+
+  function setCompose(open){
+    if(!compose)return;
+    compose.hidden=!open;
+    document.body.classList.toggle('voucher-compose-open',open);
+    if(open){
+      setTimeout(()=>compose.querySelector('input:not([type=hidden]),button:not([data-voucher-close])')?.focus(),60);
+    }
+  }
+  document.querySelector('[data-voucher-open]')?.addEventListener('click',()=>setCompose(true));
+  document.querySelectorAll('[data-voucher-close]').forEach(x=>x.addEventListener('click',()=>setCompose(false)));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!compose?.hidden)setCompose(false);});
 
   function applyMode(type){
-    type=(type==='payment')?'payment':'receipt';
+    type=['receipt','payment','transfer'].includes(type)?type:'receipt';
     typeInput.value=type;
     modes.forEach(button=>button.classList.toggle('active',button.dataset.voucherMode===type));
-    const payment=type==='payment';
-    if(flow) flow.classList.toggle('payment',payment);
-    if(flowText) flowText.innerHTML=payment
-      ? 'من <strong>الصندوق</strong> إلى الحساب'
-      : 'من الحساب <strong>إلى الصندوق</strong>';
-    if(submit) submit.innerHTML=payment
-      ? '<i class="bi bi-check2-circle"></i> إصدار سند صرف'
-      : '<i class="bi bi-check2-circle"></i> إصدار سند قبض';
-    if(submitHint) submitHint.textContent=payment
-      ? 'سيتم إصدار سند صرف وترحيل القيد مباشرة.'
-      : 'سيتم إصدار سند قبض وترحيل القيد مباشرة.';
+    const transfer=type==='transfer';
+    if(standardFields) standardFields.hidden=transfer;
+    if(transferFields) transferFields.hidden=!transfer;
+    if(flow){
+      flow.classList.toggle('payment',type==='payment');
+      flow.classList.toggle('general',transfer);
+    }
+    if(flowText) flowText.innerHTML=transfer
+      ? '<strong>سند عام:</strong> من حساب إلى حساب'
+      : type==='payment'
+        ? 'من <strong>الصندوق</strong> إلى الحساب'
+        : 'من الحساب <strong>إلى الصندوق</strong>';
+    if(submitHint) submitHint.textContent=transfer
+      ? 'سيتم إنشاء قيد عام من الحساب المصدر إلى الحساب الهدف.'
+      : type==='payment'
+        ? 'سيتم إصدار سند صرف وترحيل القيد مباشرة.'
+        : 'سيتم إصدار سند قبض وترحيل القيد مباشرة.';
+    if(submit){
+      const label=submit.querySelector('span');
+      if(label) label.textContent = type==='transfer'
+          ? '{{"حفظ التعديل" if editing_voucher else "إصدار سند عام"}}'
+          : type==='payment'
+            ? '{{"حفظ التعديل" if editing_voucher else "إصدار سند صرف"}}'
+            : '{{"حفظ التعديل" if editing_voucher else "إصدار سند قبض"}}';
+    }
   }
 
   modes.forEach(button=>button.addEventListener('click',()=>applyMode(button.dataset.voucherMode)));
   applyMode(typeInput.value);
 
+  // Open by explicit action only; edit links count as explicit action.
+  {% if editing_voucher %}setCompose(true);{% endif %}
+
+  amountInput?.addEventListener('input',()=>{
+    const text=window.moneyToArabicWords?.(amountInput.value,'{{currency}}')||'';
+    if(amountWords) amountWords.textContent=text;
+  });
+
   form?.addEventListener('submit',event=>{
-    if(!accountValue?.value || !cashValue?.value){
+    const type=typeInput.value;
+    let valid=true;
+    if(type==='transfer'){
+      valid=!!fromValue?.value && !!toValue?.value;
+      if(fromValue?.value && toValue?.value && fromValue.value===toValue.value) valid=false;
+    }else{
+      valid=!!accountValue?.value && !!cashValue?.value;
+    }
+    const amount=Number.parseFloat((amountInput?.value||'').replace(/,/g,''));
+    if(!valid){
       event.preventDefault();
-      alert('اختر الحساب والصندوق قبل إصدار السند.');
+      alert(type==='transfer'?'اختر الحساب المصدر والحساب الهدف.':'اختر الحساب والصندوق قبل إصدار السند.');
       return;
     }
-    const amount=Number.parseFloat((document.getElementById('voucher-amount')?.value||'').replace(/,/g,''));
-    if(!Number.isFinite(amount) || amount<=0){
+    if(!Number.isFinite(amount)||amount<=0){
       event.preventDefault();
       alert('أدخل مبلغًا أكبر من صفر.');
+      return;
+    }
+    if(submit){
+      submit.disabled=true;
+      submit.classList.add('is-loading');
+      submit.innerHTML='<span class="voucher-spinner"></span><span>جارٍ الحفظ...</span>';
     }
   });
 
-  const vf=document.getElementById('voucher-filter');
-  vf?.addEventListener('input',()=>{
-    const q=vf.value.trim().toLowerCase();
-    document.querySelectorAll('.entity-list .entity-row').forEach(row=>{
-      row.style.display=row.innerText.toLowerCase().includes(q)?'':'none';
+  document.querySelectorAll('.voucher-reverse-form').forEach(reverseForm=>{
+    reverseForm.addEventListener('submit',event=>{
+      if(!confirm('سيتم عكس السند بقيد عكسي، ولن يتم حذف القيد الأصلي. هل تريد المتابعة؟')){
+        event.preventDefault();
+        return;
+      }
+      const button=reverseForm.querySelector('button');
+      if(button){
+        button.disabled=true;
+        button.innerHTML='<span class="voucher-spinner small"></span><span>جارٍ العكس...</span>';
+      }
     });
   });
+
+  const filter=document.getElementById('voucher-filter');
+  const sort=document.getElementById('voucher-sort');
+  const cards=[...document.querySelectorAll('.voucher-card')];
+  const count=document.getElementById('voucher-count');
+
+  function applyList(){
+    const q=(filter?.value||'').trim().toLowerCase();
+    const mode=sort?.value||'latest';
+    const visible=cards.filter(card=>{
+      const matchesSearch=!q || (card.dataset.search||'').toLowerCase().includes(q);
+      const matchesType=!['receipt','payment','transfer'].includes(mode) || card.dataset.voucherType===mode;
+      card.hidden=!(matchesSearch&&matchesType);
+      return matchesSearch&&matchesType;
+    });
+
+    const sorted=[...visible];
+    if(mode==='highest'||mode==='lowest'){
+      sorted.sort((a,b)=>{
+        const av=Number(a.dataset.voucherAmount||0),bv=Number(b.dataset.voucherAmount||0);
+        return mode==='highest'?bv-av:av-bv;
+      });
+    }else if(mode==='oldest'){
+      sorted.reverse();
+    }
+    const wrap=document.getElementById('voucher-cards');
+    sorted.forEach(card=>wrap?.appendChild(card));
+    if(count) count.textContent=visible.length+' سند';
+  }
+  filter?.addEventListener('input',applyList);
+  sort?.addEventListener('change',applyList);
+  applyList();
 })();
 </script>
 {% endblock %}

@@ -57,7 +57,7 @@ def test_settlements_page_and_admin_guide(client):
 def test_sidebar_contains_all_major_sections_and_report_links(client):
     login(client)
     body=client.get("/").get_data(as_text=True)
-    for text_value in ["الرئيسية","البوابة والتحصيل","البيانات الأساسية","الإدارة والموظفون","المحاسبة والمالية","التشغيل المالي","التقارير","الإعدادات"]:
+    for text_value in ["الرئيسية","البوابة والتحصيل","البيانات الأساسية","الإدارة والموظفون","الحسابات","التشغيل المالي","التقارير","الإعدادات"]:
         assert text_value in body
     for url in ["/reports/daily","/reports/weekly","/reports/monthly","/reports/clients","/reports/vehicles","/reports/employees","/reports/expenses","/reports/income-expenses","/reports/trial-balance"]:
         assert url in body
@@ -184,3 +184,54 @@ def test_employee_login_accepts_hidden_bidi_marks_in_phone_and_password(app):
     },follow_redirects=False)
     assert response.status_code==302
     assert response.headers["Location"].endswith("/dashboard")
+
+
+def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
+    login(client)
+    with app.app_context():
+        from app.models import Account, Voucher, JournalEntry
+        cash=db.session.query(Account).filter_by(system_key="main_cash").one()
+        revenue=db.session.query(Account).filter_by(system_key="entry_revenue").one()
+
+    receipt=client.post("/operations/vouchers",data={
+        "voucher_type":"receipt","account_id":str(revenue.id),"cash_account_id":str(cash.id),
+        "amount":"100","beneficiary":"اختبار","description":"قبض اختبار"
+    },follow_redirects=True)
+    assert receipt.status_code==200
+    assert "تم إصدار السند" in receipt.get_data(as_text=True)
+
+    with app.app_context():
+        voucher=Voucher.query.order_by(Voucher.id.desc()).first()
+        assert voucher.voucher_type=="receipt"
+        assert voucher.status=="posted"
+        voucher_id=voucher.id
+        entry_id=voucher.journal_entry_id
+        assert JournalEntry.query.get(entry_id).source_type=="voucher"
+
+    general=client.post("/operations/vouchers",data={
+        "voucher_type":"transfer","from_account_id":str(cash.id),"to_account_id":str(revenue.id),
+        "amount":"25","beneficiary":"","description":"سند عام اختبار"
+    },follow_redirects=True)
+    assert general.status_code==200
+    assert "تم إصدار السند" in general.get_data(as_text=True)
+
+    reverse=client.post(f"/operations/vouchers/{voucher_id}/reverse",data={"reason":"اختبار العكس"},follow_redirects=True)
+    assert reverse.status_code==200
+    assert "تم عكس السند" in reverse.get_data(as_text=True)
+
+    with app.app_context():
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            journal_status=conn.execute(
+                text("SELECT status FROM journal_entries WHERE id=:id"),{"id":entry_id}
+            ).scalar_one()
+            reverse_id=conn.execute(
+                text("SELECT reversed_entry_id FROM journal_entries WHERE id=:id"),{"id":entry_id}
+            ).scalar_one()
+        assert journal_status=="void"
+        assert reverse_id is not None
+        db.session.remove()
+        voucher=db.session.get(Voucher,voucher_id)
+        assert voucher.status=="void"
+        assert voucher.journal_entry.status=="void"
+        assert voucher.journal_entry.reversed_entry_id is not None

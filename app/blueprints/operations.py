@@ -3,11 +3,11 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from ..extensions import db
 from ..models import (
-    Account, Agent, AgentLease, AgentRent, Employee, PayrollLine, PayrollRun,
-    Settlement, SettlementStatus, Shift, Voucher, VoucherType,
+    Account, Agent, AgentLease, AgentRent, Employee, JournalEntry, PayrollLine, PayrollRun,
+    Settlement, SettlementStatus, Shift, Voucher, VoucherStatus, VoucherType,
 )
 from ..permissions import can, permission_required
-from ..services.accounting import D, account_balance, get_system_account, create_posted_entry
+from ..services.accounting import D, account_balance, get_system_account, create_posted_entry, reverse_entry
 from ..services.accounts import ensure_agent_account, ensure_employee_payroll_account, ensure_user_collector_account
 from ..services.audit import audit
 from ..services.operations import (
@@ -42,38 +42,135 @@ def vouchers():
     cash_accounts=[a for a in postable if is_cash_account(a)]
     cash_ids={a.id for a in cash_accounts}
     counterpart_ids={a.id for a in postable if a.id not in cash_ids}
-    rows=Voucher.query.order_by(Voucher.id.desc()).limit(200).all()
+    rows=Voucher.query.order_by(Voucher.id.desc()).limit(500).all()
+    editing_voucher=None
+
+    edit_id=request.args.get("edit",type=int)
+    if not edit_id and request.method=="POST":
+        edit_id=request.form.get("edit_id",type=int)
+    if edit_id:
+        editing_voucher=db.session.get(Voucher,edit_id)
+        if not editing_voucher:
+            flash("السند المطلوب تعديله غير موجود","warning")
+            return redirect(url_for("operations.vouchers"))
+        if editing_voucher.status!="posted" or (
+            editing_voucher.journal_entry and (
+                editing_voucher.journal_entry.status!="posted" or editing_voucher.journal_entry.reversed_entry_id
+            )
+        ):
+            flash("لا يمكن تعديل سند غير مرحّل أو تم عكس قيده","warning")
+            return redirect(url_for("operations.vouchers"))
+
     if request.method=="POST":
         try:
             if not can("vouchers.post"):
                 raise ValueError("ليست لديك صلاحية إصدار السندات")
+
             voucher_type=request.form.get("voucher_type","receipt")
-            account=db.session.get(Account,request.form.get("account_id",type=int))
-            cash_account=db.session.get(Account,request.form.get("cash_account_id",type=int))
-            if not account or not cash_account:
-                raise ValueError("اختر الحساب والصندوق")
+            description=request.form.get("description","سند محاسبي").strip() or "سند محاسبي"
+            beneficiary=request.form.get("beneficiary","").strip()
+
             if voucher_type==VoucherType.RECEIPT.value:
-                from_account,to_account=account,cash_account
+                counterpart=db.session.get(Account,request.form.get("account_id",type=int))
+                cash_account=db.session.get(Account,request.form.get("cash_account_id",type=int))
+                if not counterpart or not cash_account:
+                    raise ValueError("اختر الحساب والصندوق")
+                from_account,to_account=counterpart,cash_account
             elif voucher_type==VoucherType.PAYMENT.value:
-                from_account,to_account=cash_account,account
+                counterpart=db.session.get(Account,request.form.get("account_id",type=int))
+                cash_account=db.session.get(Account,request.form.get("cash_account_id",type=int))
+                if not counterpart or not cash_account:
+                    raise ValueError("اختر الحساب والصندوق")
+                from_account,to_account=cash_account,counterpart
+            elif voucher_type==VoucherType.TRANSFER.value:
+                from_account=db.session.get(Account,request.form.get("from_account_id",type=int))
+                to_account=db.session.get(Account,request.form.get("to_account_id",type=int))
+                if not from_account or not to_account:
+                    raise ValueError("اختر الحساب المصدر والحساب الهدف")
             else:
-                raise ValueError("استخدم سند قبض أو سند صرف من هذه الشاشة")
+                raise ValueError("نوع السند غير صالح")
+
+            edit_target=db.session.get(Voucher,request.form.get("edit_id",type=int)) if request.form.get("edit_id") else None
+            if edit_target and (
+                edit_target.status!="posted" or
+                (edit_target.journal_entry and (
+                    edit_target.journal_entry.status!="posted" or edit_target.journal_entry.reversed_entry_id
+                ))
+            ):
+                raise ValueError("لا يمكن تعديل سند غير مرحّل أو تم عكس قيده")
+
+            if edit_target:
+                old_entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,edit_target.journal_entry_id)
+                if not old_entry or old_entry.reversed_entry_id:
+                    raise ValueError("لا يمكن تعديل السند لأن قيده الأصلي غير قابل للعكس")
+                reverse_entry(old_entry,current_user.id,"تعديل السند وإنشاء النسخة الجديدة")
+
             voucher,entry=post_voucher(
                 voucher_type=voucher_type,amount=request.form.get("amount"),
                 from_account=from_account,to_account=to_account,
-                description=request.form.get("description","سند محاسبي"),
-                user_id=current_user.id,beneficiary=request.form.get("beneficiary",""),
+                description=description,user_id=current_user.id,beneficiary=beneficiary,
             )
-            audit("create_voucher","voucher",voucher.id,voucher.number)
-            db.session.commit(); flash(f"تم إصدار السند {voucher.number} والقيد {entry.number}","success")
+            db.session.flush()
+
+            if edit_target:
+                db.session.query(Voucher).filter(Voucher.id==edit_target.id).update(
+                    {"status":VoucherStatus.VOID.value},synchronize_session=False
+                )
+                db.session.flush()
+                audit("edit_voucher","voucher",edit_target.id,f"{edit_target.number} -> {voucher.number}")
+                message=f"تم تعديل السند {edit_target.number} وإصدار {voucher.number} مع إنشاء قيد عكسي آمن"
+            else:
+                audit("create_voucher","voucher",voucher.id,voucher.number)
+                message=f"تم إصدار السند {voucher.number} والقيد {entry.number}"
+
+            db.session.commit()
+            flash(message,"success")
             return redirect(url_for("operations.vouchers"))
         except Exception as exc:
-            db.session.rollback(); flash(str(exc),"danger")
-    selected_type=request.args.get("type","receipt")
-    if selected_type not in {VoucherType.RECEIPT.value,VoucherType.PAYMENT.value}: selected_type=VoucherType.RECEIPT.value
+            db.session.rollback()
+            flash(str(exc),"danger")
+
+    selected_type=request.args.get("type") or request.form.get("voucher_type") or (editing_voucher.voucher_type if editing_voucher else VoucherType.RECEIPT.value)
+    if selected_type not in {
+        VoucherType.RECEIPT.value,VoucherType.PAYMENT.value,VoucherType.TRANSFER.value
+    }:
+        selected_type=VoucherType.RECEIPT.value
+
     return render_template("operations/vouchers.html",
         account_options=account_options,counterpart_ids=counterpart_ids,
-        cash_ids=cash_ids,vouchers=rows,selected_type=selected_type)
+        cash_ids=cash_ids,postable_ids={a.id for a in postable},
+        vouchers=rows,selected_type=selected_type,
+        editing_voucher=editing_voucher)
+
+@bp.post("/vouchers/<int:voucher_id>/reverse")
+@permission_required("vouchers.post")
+def reverse_voucher(voucher_id):
+    voucher=db.session.get(Voucher,voucher_id)
+    try:
+        if not voucher:
+            raise ValueError("السند غير موجود")
+        if voucher.status!=VoucherStatus.POSTED.value:
+            raise ValueError("السند غير مرحّل أو تم عكسه مسبقًا")
+        entry=voucher.journal_entry
+        if not entry or entry.status!="posted" or entry.reversed_entry_id:
+            raise ValueError("السند غير مرحّل أو تم عكس قيده مسبقًا")
+        reverse=reverse_entry(entry,current_user.id,request.form.get("reason","عكس السند"))
+        # Persist both sides explicitly: the original journal becomes void and
+        # points to the reversal entry; the voucher is synchronized with it.
+        db.session.query(JournalEntry).filter(JournalEntry.id==entry.id).update(
+            {"status":"void","reversed_entry_id":reverse.id},synchronize_session=False
+        )
+        db.session.query(Voucher).filter(Voucher.id==voucher.id).update(
+            {"status":VoucherStatus.VOID.value},synchronize_session=False
+        )
+        db.session.flush()
+        audit("reverse_voucher","voucher",voucher.id,f"{voucher.number} -> {reverse.number}")
+        db.session.commit()
+        flash(f"تم عكس السند {voucher.number} وإنشاء القيد {reverse.number}","success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("operations.vouchers"))
 
 @bp.get("/vouchers/<int:voucher_id>")
 @permission_required("vouchers.view")
@@ -82,8 +179,6 @@ def voucher_detail(voucher_id):
     if not voucher: return ("السند غير موجود",404)
     entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,voucher.journal_entry_id) if voucher.journal_entry_id else None
     return render_template("operations/voucher_detail.html",voucher=voucher,entry=entry)
-
-
 
 @bp.route("/expenses",methods=["GET","POST"])
 @permission_required("expenses.view")

@@ -211,6 +211,7 @@ class Voucher(TimestampMixin,db.Model):
     created_by_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="RESTRICT"),nullable=False)
     from_account=db.relationship("Account",foreign_keys=[from_account_id])
     to_account=db.relationship("Account",foreign_keys=[to_account_id])
+    journal_entry=db.relationship("JournalEntry",foreign_keys=[journal_entry_id])
 
 class Shift(TimestampMixin,db.Model):
     __tablename__="shifts"
