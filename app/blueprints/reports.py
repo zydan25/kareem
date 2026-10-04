@@ -396,7 +396,8 @@ def employees_report():
         shifts=Shift.query.filter_by(collector_id=uid).filter(Shift.opened_at<end_dt).filter(
             (Shift.closed_at.is_(None)) | (Shift.closed_at>=start_dt)).all()
         rows.append({"employee":e,"gate_count":len(gates),"total":sum((D(x.amount) for x in gates),D(0)),"shifts":len(shifts),
-                     "custody":account_balance(e.account_id) if e.account_id else D(0)})
+                     "custody":account_balance(e.cashbox_account_id) if e.cashbox_account_id else D(0),
+                     "employee_balance":account_balance(e.account_id) if e.account_id else D(0)})
     return render_template("reports/employees.html",rows=rows,start=start,end=end)
 
 @bp.get("/expenses")
