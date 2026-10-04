@@ -184,3 +184,39 @@ def test_employee_login_accepts_hidden_bidi_marks_in_phone_and_password(app):
     },follow_redirects=False)
     assert response.status_code==302
     assert response.headers["Location"].endswith("/dashboard")
+
+
+def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
+    login(client)
+    with app.app_context():
+        from app.models import Account, Voucher, JournalEntry
+        cash=db.session.query(Account).filter_by(system_key="main_cash").one()
+        revenue=db.session.query(Account).filter_by(system_key="entry_revenue").one()
+
+    receipt=client.post("/operations/vouchers",data={
+        "voucher_type":"receipt","account_id":str(revenue.id),"cash_account_id":str(cash.id),
+        "amount":"100","beneficiary":"اختبار","description":"قبض اختبار"
+    },follow_redirects=False)
+    assert receipt.status_code==302
+
+    with app.app_context():
+        voucher=Voucher.query.order_by(Voucher.id.desc()).first()
+        assert voucher.voucher_type=="receipt"
+        assert voucher.status=="posted"
+        voucher_id=voucher.id
+        entry_id=voucher.journal_entry_id
+        assert JournalEntry.query.get(entry_id).source_type=="voucher"
+
+    general=client.post("/operations/vouchers",data={
+        "voucher_type":"transfer","from_account_id":str(cash.id),"to_account_id":str(revenue.id),
+        "amount":"25","beneficiary":"","description":"سند عام اختبار"
+    },follow_redirects=False)
+    assert general.status_code==302
+
+    reverse=client.post(f"/operations/vouchers/{voucher_id}/reverse",data={"reason":"اختبار العكس"},follow_redirects=False)
+    assert reverse.status_code==302
+
+    with app.app_context():
+        voucher=Voucher.query.get(voucher_id)
+        assert voucher.status=="void"
+        assert voucher.journal_entry.reversed_entry_id is not None
