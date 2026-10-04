@@ -129,9 +129,9 @@
         <div class="vehicle-type-name" title="{{t.name}}">{{t.name}}</div>
         <div class="vehicle-type-meta">{{'نظامي' if t.is_system else 'مخصص'}} · {{vehicle_counts.get(t.id,0)}} مركبة</div>
         <div class="vehicle-type-actions">
-          {% if can('vehicles.view') %}<a class="btn btn-outline-primary" href="{{url_for('master_data.vehicles',vehicle_type_id=t.id)}}" title="المركبات المرتبطة"><i class="bi bi-eye"></i></a>{% else %}<span></span>{% endif %}
-          {% if can_manage and not t.is_system %}<button type="button" class="btn btn-light" onclick='openVehicleTypeEdit({{t.id}}, {{t.name|tojson}})' title="تعديل"><i class="bi bi-pencil"></i></button>{% else %}<span></span>{% endif %}
-          {% if can_manage and not t.is_system %}<form method="post" action="{{url_for('settings.delete_vehicle_type',type_id=t.id)}}" onsubmit="return confirm('حذف نوع المركبة نهائيًا؟ لن يسمح بالحذف إذا كانت هناك مركبات مرتبطة به.')"><button class="btn btn-outline-danger" type="submit" title="حذف"><i class="bi bi-trash3"></i></button></form>{% else %}<span></span>{% endif %}
+          {% if can('vehicles.view') %}<a class="btn btn-outline-primary" href="{{url_for('master_data.vehicles',vehicle_type_id=t.id)}}" title="المركبات المرتبطة"><i class="bi bi-eye"></i><span>مركبات</span></a>{% else %}<span></span>{% endif %}
+          {% if can_manage and not t.is_system %}<button type="button" class="btn btn-light" onclick='openVehicleTypeEdit({{t.id}}, {{t.name|tojson}})' title="تعديل"><i class="bi bi-pencil"></i><span>تعديل</span></button>{% else %}<span></span>{% endif %}
+          {% if can_manage and not t.is_system %}<form method="post" action="{{url_for('settings.delete_vehicle_type',type_id=t.id)}}" onsubmit="return confirm('حذف نوع المركبة نهائيًا؟ لن يسمح بالحذف إذا كانت هناك مركبات مرتبطة به.')"><button class="btn btn-outline-danger" type="submit" title="حذف"><i class="bi bi-trash3"></i><span>حذف</span></button></form>{% else %}<span></span>{% endif %}
         </div>
         {% if can_manage and not t.is_system %}<form class="mt-1" method="post" action="{{url_for('settings.toggle_type',type_id=t.id)}}"><button class="btn btn-light w-100" type="submit"><i class="bi {{'bi-eye-slash' if t.active else 'bi-eye'}}"></i> {{'إيقاف' if t.active else 'تفعيل'}}</button></form>{% endif %}
       </div>
