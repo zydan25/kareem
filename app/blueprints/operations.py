@@ -7,7 +7,7 @@ from ..models import (
     Settlement, SettlementStatus, Shift, Voucher, VoucherType,
 )
 from ..permissions import can, permission_required
-from ..services.accounting import D, account_balance, get_system_account, create_posted_entry
+from ..services.accounting import D, account_balance, get_system_account, create_posted_entry, reverse_entry
 from ..services.accounts import ensure_agent_account, ensure_employee_payroll_account, ensure_user_collector_account
 from ..services.audit import audit
 from ..services.operations import (
@@ -140,9 +140,7 @@ def reverse_voucher(voucher_id):
         if voucher.status!=VoucherStatus.POSTED.value:
             raise ValueError("السند غير مرحّل أو تم عكسه مسبقًا")
         entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,voucher.journal_entry_id)
-        reverse=__import__("app.services.accounting",fromlist=["reverse_entry"]).reverse_entry(
-            entry,current_user.id,request.form.get("reason","عكس السند")
-        )
+        reverse=reverse_entry(entry,current_user.id,request.form.get("reason","عكس السند"))
         voucher.status=VoucherStatus.VOID.value
         audit("reverse_voucher","voucher",voucher.id,f"{voucher.number} -> {reverse.number}")
         db.session.commit()
