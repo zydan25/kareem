@@ -2,23 +2,157 @@
 {% extends 'base.html' %}
 {% block title %}السندات المالية - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>السندات المالية</h1><p>اختر «من» و«إلى» فقط؛ النظام يحدد نوع السند تلقائيًا ويمنع الحسابات الرئيسية.</p></div><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة القائمة</button></div>
-<div class="card-soft mb-4">
-<form method="post" class="row g-3">
-<div class="col-12 col-lg-5">{{picker('from_account_id','من حساب',account_options,None,'اختر الحساب الدائن')}}</div>
-<div class="col-12 col-lg-5">{{picker('to_account_id','إلى حساب',account_options,None,'اختر الحساب المدين')}}</div>
-<div class="col-12 col-md-3"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
-<div class="col-12 col-md-4"><label class="form-label">المستفيد / الطرف</label><input name="beneficiary" class="form-control"></div>
-<div class="col-12 col-md-5"><label class="form-label">البيان</label><input name="description" class="form-control" required></div>
-<div class="col-12"><div class="voucher-infer"><i class="bi bi-magic"></i><span>سيظهر تلقائيًا: <strong id="voucher-kind">تحويل</strong> حسب الحساب النقدي والحساب المقابل.</span></div></div>
-<div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check2-circle"></i> ترحيل السند</button></div>
-</form>
+<div class="page-head">
+  <div>
+    <span class="eyebrow">المحاسبة</span>
+    <h1>سند قبض / سند صرف</h1>
+    <p>سند مبسط: اختر نوع العملية، الحساب، المبلغ، والصندوق ثم أصدر السند.</p>
+  </div>
+  <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة القائمة</button>
 </div>
-<div class="card-soft"><div class="section-title"><div><h3>سجل السندات</h3><small class="text-muted">{{vouchers|length}} سند</small></div><input id="voucher-filter" class="form-control w-auto" placeholder="بحث"></div>
-<div class="entity-list">{% for v in vouchers %}<div class="entity-row"><div class="entity-main"><div class="entity-icon"><i class="bi bi-receipt"></i></div><div><strong>{{v.number}}</strong><div class="entity-meta"><span>{{{'receipt':'قبض','payment':'صرف','transfer':'تحويل','adjustment':'تسوية'}.get(v.voucher_type,v.voucher_type)}}</span><span>{{v.voucher_date}}</span><span>{{v.beneficiary or 'بدون طرف'}}</span></div></div></div><div class="entity-balance"><strong>{{'{:,.2f}'.format(v.amount)}} {{currency}}</strong><span>{{'مرحّل' if v.status=='posted' else 'ملغى'}}</span></div><a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.voucher_detail',voucher_id=v.id)}}">عرض</a></div>{% else %}<div class="empty-state"><i class="bi bi-receipt"></i><strong>لا توجد سندات</strong><span>أنشئ أول سند من النموذج أعلاه.</span></div>{% endfor %}</div></div>
+
+<div class="card-soft voucher-entry-card mb-4">
+  <form method="post" id="voucher-form" novalidate>
+    <input type="hidden" name="voucher_type" id="voucher-type" value="{{selected_type}}">
+
+    <div class="voucher-mode-switch" role="group" aria-label="نوع السند">
+      <button type="button" class="voucher-mode active" data-voucher-mode="receipt">
+        <i class="bi bi-box-arrow-in-down-left"></i><span>سند قبض</span><small>استلام مبلغ</small>
+      </button>
+      <button type="button" class="voucher-mode" data-voucher-mode="payment">
+        <i class="bi bi-box-arrow-up-right"></i><span>سند صرف</span><small>صرف مبلغ</small>
+      </button>
+    </div>
+
+    <div class="voucher-flow-hint" id="voucher-flow-hint">
+      <i class="bi bi-arrow-down-left"></i>
+      <span>من الحساب <strong>إلى الصندوق</strong></span>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-12 col-lg-6">
+        <label class="form-label" id="counterpart-label">الحساب</label>
+        {{picker('account_id','الحساب',account_options,None,'اختر الحساب',counterpart_ids)}}
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label">المبلغ</label>
+        <div class="input-group input-group-lg">
+          <input name="amount" id="voucher-amount" class="form-control text-center fw-bold" inputmode="decimal" placeholder="0.00" required>
+          <span class="input-group-text">{{currency}}</span>
+        </div>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label">الصندوق / الحساب النقدي</label>
+        {{picker('cash_account_id','الصندوق',account_options,None,'اختر الصندوق',cash_ids)}}
+      </div>
+      <div class="col-12 col-lg-5">
+        <label class="form-label">المستفيد / الطرف <span class="text-muted">(اختياري)</span></label>
+        <input name="beneficiary" class="form-control" placeholder="اسم الشخص أو الجهة">
+      </div>
+      <div class="col-12 col-lg-7">
+        <label class="form-label">البيان</label>
+        <input name="description" class="form-control" placeholder="سبب القبض أو الصرف" required>
+      </div>
+      <div class="col-12">
+        <div class="voucher-submit-row">
+          <div>
+            <span>المستند المحاسبي</span>
+            <strong id="voucher-submit-hint">سيتم إصدار سند قبض وترحيل القيد مباشرة.</strong>
+          </div>
+          <button class="btn btn-primary btn-lg px-4" id="voucher-submit">
+            <i class="bi bi-check2-circle"></i> إصدار سند قبض
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="card-soft">
+  <div class="section-title">
+    <div><h3>سجل السندات</h3><small class="text-muted">{{vouchers|length}} سند</small></div>
+    <input id="voucher-filter" class="form-control w-auto" placeholder="بحث في السندات">
+  </div>
+  <div class="entity-list">
+    {% for v in vouchers %}
+      <div class="entity-row">
+        <div class="entity-main">
+          <div class="entity-icon"><i class="bi bi-receipt-cutoff"></i></div>
+          <div>
+            <strong>{{v.number}}</strong>
+            <div class="entity-meta">
+              <span>{{'سند قبض' if v.voucher_type=='receipt' else 'سند صرف' if v.voucher_type=='payment' else 'تحويل'}}</span>
+              <span>{{v.voucher_date}}</span>
+              <span>{{v.beneficiary or 'بدون طرف'}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="entity-balance">
+          <strong>{{'{:,.2f}'.format(v.amount)}} {{currency}}</strong>
+          <span>{{'مرحّل' if v.status=='posted' else 'ملغى'}}</span>
+        </div>
+        <a class="btn btn-sm btn-outline-primary" href="{{url_for('operations.voucher_detail',voucher_id=v.id)}}">عرض</a>
+      </div>
+    {% else %}
+      <div class="empty-state"><i class="bi bi-receipt"></i><strong>لا توجد سندات</strong><span>أصدر أول سند من النموذج أعلاه.</span></div>
+    {% endfor %}
+  </div>
+</div>
 {% endblock %}
+
 {% block scripts %}
 <script>
-const vf=document.getElementById('voucher-filter');vf?.addEventListener('input',()=>{const q=vf.value.trim().toLowerCase();document.querySelectorAll('.entity-list .entity-row').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')});
+(() => {
+  const form=document.getElementById('voucher-form');
+  const typeInput=document.getElementById('voucher-type');
+  const modes=[...document.querySelectorAll('[data-voucher-mode]')];
+  const flow=document.getElementById('voucher-flow-hint');
+  const flowText=flow?.querySelector('span');
+  const submit=document.getElementById('voucher-submit');
+  const submitHint=document.getElementById('voucher-submit-hint');
+  const accountValue=document.querySelector('[data-account-picker][data-name="account_id"] [data-account-value]');
+  const cashValue=document.querySelector('[data-account-picker][data-name="cash_account_id"] [data-account-value]');
+
+  function applyMode(type){
+    type=(type==='payment')?'payment':'receipt';
+    typeInput.value=type;
+    modes.forEach(button=>button.classList.toggle('active',button.dataset.voucherMode===type));
+    const payment=type==='payment';
+    if(flow) flow.classList.toggle('payment',payment);
+    if(flowText) flowText.innerHTML=payment
+      ? 'من <strong>الصندوق</strong> إلى الحساب'
+      : 'من الحساب <strong>إلى الصندوق</strong>';
+    if(submit) submit.innerHTML=payment
+      ? '<i class="bi bi-check2-circle"></i> إصدار سند صرف'
+      : '<i class="bi bi-check2-circle"></i> إصدار سند قبض';
+    if(submitHint) submitHint.textContent=payment
+      ? 'سيتم إصدار سند صرف وترحيل القيد مباشرة.'
+      : 'سيتم إصدار سند قبض وترحيل القيد مباشرة.';
+  }
+
+  modes.forEach(button=>button.addEventListener('click',()=>applyMode(button.dataset.voucherMode)));
+  applyMode(typeInput.value);
+
+  form?.addEventListener('submit',event=>{
+    if(!accountValue?.value || !cashValue?.value){
+      event.preventDefault();
+      alert('اختر الحساب والصندوق قبل إصدار السند.');
+      return;
+    }
+    const amount=Number.parseFloat((document.getElementById('voucher-amount')?.value||'').replace(/,/g,''));
+    if(!Number.isFinite(amount) || amount<=0){
+      event.preventDefault();
+      alert('أدخل مبلغًا أكبر من صفر.');
+    }
+  });
+
+  const vf=document.getElementById('voucher-filter');
+  vf?.addEventListener('input',()=>{
+    const q=vf.value.trim().toLowerCase();
+    document.querySelectorAll('.entity-list .entity-row').forEach(row=>{
+      row.style.display=row.innerText.toLowerCase().includes(q)?'':'none';
+    });
+  });
+})();
 </script>
 {% endblock %}
