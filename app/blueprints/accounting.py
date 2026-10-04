@@ -1,10 +1,14 @@
+from datetime import date
+from decimal import Decimal
+
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from ..extensions import db
 from ..models import Account, JournalEntry
+from sqlalchemy import or_
 from ..permissions import can, permission_required
-from ..services.accounting import account_balance, create_posted_entry, reverse_entry
+from ..services.accounting import account_balance, create_posted_entry, get_system_account, reverse_entry
 from ..services.audit import audit
 
 bp=Blueprint("accounting",__name__,url_prefix="/accounting")
@@ -25,6 +29,29 @@ def _children_tree(accounts):
             result.append({"account":account,"depth":depth,"children":children,"balance":balance})
         return result
     return build(None)
+
+def _account_references(account_id):
+    """Return a human-readable direct reference that prevents safe deletion."""
+    from ..models import Agent, Client, Employee, Expense, JournalLine, Settlement, Voucher
+    checks=[
+        (JournalLine, "account_id", "قيد محاسبي"),
+        (Voucher, "from_account_id", "سند"),
+        (Voucher, "to_account_id", "سند"),
+        (Expense, "expense_account_id", "مصروف"),
+        (Expense, "cash_account_id", "مصروف"),
+        (Settlement, "source_account_id", "تسوية"),
+        (Settlement, "target_account_id", "تسوية"),
+        (Agent, "account_id", "وكيل"),
+        (Client, "account_id", "عميل"),
+        (Employee, "account_id", "حساب موظف"),
+        (Employee, "cashbox_account_id", "صندوق موظف"),
+        (Employee, "payroll_account_id", "مستحق راتب"),
+    ]
+    for model,column_name,label in checks:
+        column=getattr(model,column_name)
+        if db.session.query(model).filter(column==account_id).first():
+            return label
+    return None
 
 def _next_code(parent):
     existing=[a.code for a in Account.query.filter(Account.parent_id==parent.id).all() if a.code]
@@ -63,19 +90,50 @@ def account_new():
             name=request.form.get("name","").strip()
             if not name: raise ValueError("اسم الحساب مطلوب")
             is_group=request.form.get("is_group")=="1"
+            opening_balance=Decimal(str(request.form.get("opening_balance","0") or "0")).quantize(Decimal("0.01"))
+            if opening_balance < 0: raise ValueError("الرصيد الافتتاحي لا يمكن أن يكون سالبًا")
+            if is_group and opening_balance != 0: raise ValueError("الحساب التجميعي لا يحمل رصيدًا افتتاحيًا؛ استخدم حسابًا تفصيليًا")
+            opening_side=request.form.get("opening_side","auto")
             code=_next_code(parent)
             while Account.query.filter_by(code=code).first():
                 code=f"{parent.code}{int(code[len(parent.code):])+1:02d}"
             account=Account(code=code,name=name,account_type=parent.account_type,parent_id=parent.id,is_group=is_group,
                             active=True,allow_manual_posting=not is_group)
             db.session.add(account); db.session.flush()
-            audit("create","account",account.id,f"{account.code}|{account.name}")
-            db.session.commit(); flash(f"تم إنشاء الحساب {account.name} برمز {account.code}","success")
+
+            opening_entry_number=None
+            if opening_balance > 0:
+                opening_account=get_system_account("opening_balance_equity")
+                debit_by_nature=account.account_type in {"asset","expense"}
+                is_debit=(debit_by_nature if opening_side=="auto" else opening_side=="debit")
+                lines=[
+                    {"account":account,"debit":opening_balance if is_debit else Decimal("0"),"credit":opening_balance if not is_debit else Decimal("0"),
+                     "description":"الرصيد الافتتاحي"},
+                    {"account":opening_account,"debit":opening_balance if not is_debit else Decimal("0"),"credit":opening_balance if is_debit else Decimal("0"),
+                     "description":f"مقابل رصيد افتتاحي للحساب {account.code}"},
+                ]
+                opening_entry=create_posted_entry(
+                    description=f"رصيد افتتاحي — {account.name}",
+                    entry_date=date.today(),
+                    created_by_id=current_user.id,
+                    lines=lines,
+                    source_type="opening_balance",
+                    source_id=account.id,
+                    prefix="OPEN",
+                    audit=f"الرصيد الافتتاحي للحساب {account.code}: {opening_balance}",
+                )
+                opening_entry_number=opening_entry.number
+            audit("create","account",account.id,f"{account.code}|{account.name}|opening={opening_balance}")
+            db.session.commit()
+            message=f"تم إنشاء الحساب {account.name} برمز {account.code}"
+            if opening_entry_number: message += f" وترحيل الرصيد الافتتاحي في {opening_entry_number}"
+            flash(message,"success")
             return redirect(url_for("accounting.accounts"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     auto_codes={p.id:_next_code(p) for p in parents}
-    return render_template("accounting/account_form.html",parents=parents,selected_parent=selected_parent,auto_codes=auto_codes)
+    default_opening_side="debit" if (selected_parent and selected_parent.account_type in {"asset","expense"}) else "credit"
+    return render_template("accounting/account_form.html",parents=parents,selected_parent=selected_parent,auto_codes=auto_codes,default_opening_side=default_opening_side)
 
 @bp.route("/accounts/<int:account_id>/edit",methods=["GET","POST"])
 @permission_required("accounting.manage")
@@ -100,6 +158,31 @@ def account_edit(account_id):
             db.session.rollback(); flash(str(exc),"danger")
     parents=Account.query.filter(Account.is_group.is_(True),Account.active.is_(True),Account.id!=account.id).order_by(Account.code).all()
     return render_template("accounting/account_edit.html",account=account,parents=parents)
+
+@bp.post("/accounts/<int:account_id>/delete")
+@permission_required("accounting.manage")
+def account_delete(account_id):
+    account=db.session.get(Account,account_id)
+    if not account: return ("غير موجود",404)
+    if account.system_key:
+        flash("الحساب النظامي محمي ولا يمكن حذفه","warning")
+        return redirect(url_for("accounting.accounts"))
+    if account.children:
+        flash("لا يمكن حذف حساب يحتوي على فروع. احذف الفروع أو عطّل الحساب بدلًا من ذلك","warning")
+        return redirect(url_for("accounting.accounts"))
+    reference=_account_references(account.id)
+    if reference:
+        flash(f"لا يمكن حذف الحساب لأنه مستخدم في {reference}. يمكن إيقافه بدلًا من الحذف.","warning")
+        return redirect(url_for("accounting.accounts"))
+    try:
+        audit("delete","account",account.id,f"{account.code}|{account.name}")
+        db.session.delete(account)
+        db.session.commit()
+        flash("تم حذف الحساب نهائيًا لأنه لم يُستخدم في أي حركة","success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(f"تعذر حذف الحساب بأمان: {exc}","danger")
+    return redirect(url_for("accounting.accounts"))
 
 @bp.post("/accounts/<int:account_id>/toggle")
 @permission_required("accounting.manage")
@@ -154,6 +237,7 @@ def journal():
         "gate":"البوابة",
         "manual":"قيد يدوي",
         "reverse":"قيد عكسي",
+        "opening_balance":"رصيد افتتاحي",
     }
     return render_template("accounting/journal.html",
         entries=entries,source=source,query=query,sort=sort,source_labels=source_labels)
