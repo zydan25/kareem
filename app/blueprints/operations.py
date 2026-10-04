@@ -46,6 +46,8 @@ def vouchers():
     editing_voucher=None
 
     edit_id=request.args.get("edit",type=int)
+    if not edit_id and request.method=="POST":
+        edit_id=request.form.get("edit_id",type=int)
     if edit_id:
         editing_voucher=db.session.get(Voucher,edit_id)
         if not editing_voucher:
@@ -116,7 +118,7 @@ def vouchers():
             db.session.rollback()
             flash(str(exc),"danger")
 
-    selected_type=request.args.get("type") or (editing_voucher.voucher_type if editing_voucher else VoucherType.RECEIPT.value)
+    selected_type=request.args.get("type") or request.form.get("voucher_type") or (editing_voucher.voucher_type if editing_voucher else VoucherType.RECEIPT.value)
     if selected_type not in {
         VoucherType.RECEIPT.value,VoucherType.PAYMENT.value,VoucherType.TRANSFER.value
     }:
