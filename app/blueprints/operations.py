@@ -104,7 +104,10 @@ def vouchers():
             db.session.flush()
 
             if edit_target:
-                edit_target.status=VoucherStatus.VOID.value
+                db.session.query(Voucher).filter(Voucher.id==edit_target.id).update(
+                    {"status":VoucherStatus.VOID.value},synchronize_session=False
+                )
+                db.session.flush()
                 audit("edit_voucher","voucher",edit_target.id,f"{edit_target.number} -> {voucher.number}")
                 message=f"تم تعديل السند {edit_target.number} وإصدار {voucher.number} مع إنشاء قيد عكسي آمن"
             else:
@@ -141,7 +144,10 @@ def reverse_voucher(voucher_id):
             raise ValueError("السند غير مرحّل أو تم عكسه مسبقًا")
         entry=db.session.get(__import__("app.models",fromlist=["JournalEntry"]).JournalEntry,voucher.journal_entry_id)
         reverse=reverse_entry(entry,current_user.id,request.form.get("reason","عكس السند"))
-        voucher.status=VoucherStatus.VOID.value
+        db.session.query(Voucher).filter(Voucher.id==voucher.id).update(
+            {"status":VoucherStatus.VOID.value},synchronize_session=False
+        )
+        db.session.flush()
         audit("reverse_voucher","voucher",voucher.id,f"{voucher.number} -> {reverse.number}")
         db.session.commit()
         flash(f"تم عكس السند {voucher.number} وإنشاء القيد {reverse.number}","success")
