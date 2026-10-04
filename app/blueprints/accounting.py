@@ -48,7 +48,7 @@ def accounts():
         "balance":sum((account_balance(a.id) for a in all_accounts if not a.is_group),0),
     }
     return render_template("accounting/accounts.html",tree=tree,flat_accounts=all_accounts,stats=stats,
-                           account_type_labels=ACCOUNT_TYPE_LABELS,balance_func=account_balance,can_manage=can("accounting.post"))
+                           account_type_labels=ACCOUNT_TYPE_LABELS,balance_func=account_balance,can_manage=can("accounting.manage"))
 
 @bp.route("/accounts/new",methods=["GET","POST"])
 @permission_required("accounting.post")
