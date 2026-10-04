@@ -356,3 +356,17 @@
   else initMoneyWords();
 
 })();
+
+  // Floating success notifications are intentionally short-lived.
+  function initAutoToasts(){
+    document.querySelectorAll('[data-auto-toast="1"]').forEach(toast=>{
+      if(toast.dataset.autoToastReady==="1")return;
+      toast.dataset.autoToastReady="1";
+      setTimeout(()=>{
+        toast.classList.add("toast-leaving");
+        setTimeout(()=>toast.remove(),220);
+      },3200);
+    });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",initAutoToasts);
+  else initAutoToasts();
