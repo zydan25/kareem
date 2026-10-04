@@ -1,41 +1,145 @@
 {% extends 'base.html' %}
-{% block title %}إدارة المركبات - {{app_name}}{% endblock %}
+{% block title %}المركبات - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">السجل التشغيلي</span><h1>إدارة المركبات</h1><p>لكل عميل أكثر من مركبة، ويمكن تسجيل مركبة بدون رقم جمركي.</p></div>{% if can_manage %}<button class="btn btn-primary" data-toggle-panel="add-vehicle"><i class="bi bi-plus-lg"></i> إضافة مركبة</button>{% endif %}</div>
-<div class="toolbar-card"><form class="search-form" method="get">{% if selected_vehicle_type_id %}<input type="hidden" name="vehicle_type_id" value="{{selected_vehicle_type_id}}">{% endif %}<div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="بحث باللوحة أو العميل أو الحالة"></div><button class="btn btn-outline-primary">بحث</button></form></div>
-{% if can_manage %}<div id="add-vehicle" class="card-soft add-panel"><form method="post" class="row g-3">
-<div class="col-12 col-md-3"><label class="form-label">حالة المركبة</label><select name="registration_status" id="vehicle-registration-status" class="form-select"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div>
-<div class="col-12 col-md-3"><label class="form-label">رقم اللوحة</label><input name="plate_number" id="vehicle-plate-number" class="form-control" placeholder="اتركه فارغًا لبدون جمارك"></div>
-<div class="col-6 col-md-2"><label class="form-label">الفاصل</label><input name="plate_separator" class="form-control"></div>
+<style>
+.vehicle-page{max-width:1100px;margin:auto}
+.vehicle-head h1{font-size:1.35rem;margin:.1rem 0}
+.vehicle-head p{display:none}
+.vehicle-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 180px auto auto;gap:6px;align-items:center;margin-bottom:8px}
+.vehicle-toolbar .form-control,.vehicle-toolbar .form-select{min-height:40px;border-radius:10px;font-size:11px}
+.vehicle-toolbar .btn{min-height:40px;border-radius:10px;font-size:10px;font-weight:900}
+.vehicle-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.vehicle-card{border:1px solid rgba(37,65,58,.10);border-radius:13px;background:#fff;padding:9px;box-shadow:0 3px 12px rgba(22,43,37,.035);display:flex;flex-direction:column;gap:7px;min-width:0}
+.vehicle-card.inactive{opacity:.68}
+.vehicle-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:7px}
+.vehicle-number{min-width:0}
+.vehicle-number strong{display:block;font-size:14px;font-weight:950;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vehicle-number small{display:block;font-size:8.5px;color:#8b9793;margin-top:2px}
+.vehicle-default{display:inline-flex;align-items:center;gap:3px;padding:3px 6px;border-radius:7px;background:#fff6dd;color:#9b7618;font-size:7.5px;font-weight:900;white-space:nowrap}
+.vehicle-meta{display:flex;flex-direction:column;gap:3px;padding:7px;background:#f8faf9;border-radius:9px}
+.vehicle-meta-row{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.vehicle-meta-row span:first-child{font-size:8px;color:#8b9692}
+.vehicle-meta-row span:last-child{font-size:9.5px;font-weight:850;color:#324640;min-width:0;text-align:left}
+.vehicle-client-link{color:#1877b8!important;text-decoration:none;font-weight:950!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vehicle-client-link:hover{text-decoration:underline}
+.vehicle-tags{display:flex;gap:4px;flex-wrap:wrap}
+.vehicle-tag{font-size:7.5px;padding:3px 6px;border-radius:7px;background:#eef5ff;color:#4d709c}
+.vehicle-tag.status-on{background:#edf9f1;color:#27764e}
+.vehicle-tag.status-off{background:#fff0ef;color:#aa5049}
+.vehicle-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.vehicle-actions .btn{min-height:30px;padding:4px;border-radius:8px;font-size:8.5px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:3px}
+.vehicle-actions form{margin:0}
+.vehicle-type-panel{margin-top:8px}
+.add-panel{display:none}
+.add-panel.is-open{display:block}
+.vehicle-form-compact{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.vehicle-form-compact .form-label{font-size:9px;font-weight:900;margin-bottom:4px}
+.vehicle-form-compact .form-control,.vehicle-form-compact .form-select{min-height:38px;border-radius:9px;font-size:10px}
+.vehicle-form-wide{grid-column:1/-1}
+.vehicle-form-actions{grid-column:1/-1;display:flex;gap:5px}
+.vehicle-form-actions .btn{border-radius:9px;font-size:10px;font-weight:900}
+.vehicle-filter-note{font-size:8px;color:#8c9693;margin-right:auto}
+@media(max-width:900px){.vehicle-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.vehicle-toolbar{grid-template-columns:minmax(0,1fr) 150px auto}}
+@media(max-width:700px){
+ .vehicle-page{padding-bottom:10px}
+ .vehicle-head{margin-bottom:7px}
+ .vehicle-head h1{font-size:1.18rem}
+ .vehicle-toolbar{grid-template-columns:1fr 1fr;gap:5px}
+ .vehicle-toolbar .search-wrap{grid-column:1/-1}
+ .vehicle-toolbar .btn{min-height:37px}
+ .vehicle-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .vehicle-card{padding:7px;border-radius:11px;gap:5px}
+ .vehicle-number strong{font-size:11.5px}
+ .vehicle-number small{font-size:7px}
+ .vehicle-meta{padding:6px;border-radius:8px}
+ .vehicle-meta-row span:first-child{font-size:7px}
+ .vehicle-meta-row span:last-child{font-size:8.5px}
+ .vehicle-actions .btn{min-height:27px;font-size:7px;padding:3px}
+ .vehicle-actions .btn span{display:none}
+ .vehicle-form-compact{grid-template-columns:1fr 1fr}
+}
+</style>
 
-<div class="col-12 col-md-2"><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" required>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
-<div class="col-12 col-lg-6"><label class="form-label">العميل</label><select name="client_id" class="form-select">{% set sel=selected_client_id %}<option value="">غير مربوط</option>{% for c in clients %}<option value="{{c.id}}" {% if c.id==sel %}selected{% endif %}>{{c.name}}</option>{% endfor %}</select></div>
-<div class="col-12 col-lg-6"><label class="form-label">الوكلاء المحتملون</label><select name="agent_ids" class="form-select" multiple size="3">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
-<div class="col-12"><textarea name="notes" class="form-control" placeholder="وصف أو ملاحظات المركبة"></textarea></div>
-<div class="col-12"><button class="btn btn-primary">حفظ المركبة</button></div>
-</form></div>{% endif %}
-{% if can_manage %}
-<div class="card-soft mb-3 vehicle-types-panel">
-  <div class="section-title"><div><h3>أنواع المركبات</h3><small class="text-muted">يمكنك إضافة أي نوع تحتاجه، مثل خصوصي، نقل، قلاب، صهريج، معدات وغيرها.</small></div></div>
-  <form method="post" action="{{url_for('master_data.add_vehicle_type')}}" class="row g-2 align-items-end mb-3">
-    <div class="col-12 col-md-8"><label class="form-label">نوع مركبة جديد</label><input name="name" class="form-control" required placeholder="مثال: باص صغير"></div>
-    <div class="col-12 col-md-4"><button class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> إضافة النوع</button></div>
+<div class="vehicle-page">
+<div class="page-head vehicle-head">
+  <div><span class="eyebrow">البيانات الأساسية</span><h1>المركبات</h1></div>
+  {% if can_manage %}<button class="btn btn-primary" type="button" data-toggle-panel="add-vehicle"><i class="bi bi-plus-lg"></i> إضافة</button>{% endif %}
+</div>
+
+<div class="vehicle-toolbar">
+  <form class="search-wrap" method="get">
+    <div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث باللوحة أو العميل"></div>
+    {% if selected_vehicle_type_id %}<input type="hidden" name="vehicle_type_id" value="{{selected_vehicle_type_id}}">{% endif %}
   </form>
-  <div class="vehicle-type-chips">
-    {% for t in all_vehicle_types %}
-      <div class="vehicle-type-chip {{'inactive' if not t.active else ''}}"><span>{{t.name}}</span>{% if t.active %}<form method="post" action="{{url_for('master_data.toggle_vehicle_type',type_id=t.id)}}" onsubmit="return confirm('سيتم إخفاء هذا النوع من الاختيار الجديد مع إبقاء المركبات المسجلة عليه. متابعة؟')"><button title="تعطيل"><i class="bi bi-eye-slash"></i></button></form>{% else %}<form method="post" action="{{url_for('master_data.toggle_vehicle_type',type_id=t.id)}}"><button title="تفعيل"><i class="bi bi-eye"></i></button></form>{% endif %}</div>
-    {% endfor %}
-  </div>
+  <form method="get">
+    <select name="vehicle_type_id" class="form-select" onchange="this.form.submit()">
+      <option value="">كل الأنواع</option>
+      {% for t in all_vehicle_types %}<option value="{{t.id}}" {% if t.id==selected_vehicle_type_id %}selected{% endif %}>{{t.name}}</option>{% endfor %}
+    </select>
+    {% if q %}<input type="hidden" name="q" value="{{q}}">{% endif %}
+  </form>
+  <button type="button" class="btn btn-outline-primary" onclick="this.closest('.vehicle-toolbar').querySelector('.search-wrap')?.requestSubmit()"><i class="bi bi-search"></i> بحث</button>
+  <a class="btn btn-light" href="{{url_for('master_data.vehicles')}}"><i class="bi bi-arrow-counterclockwise"></i></a>
+</div>
+{% if selected_vehicle_type %}<div class="vehicle-filter-note mb-2">الفرز الحالي: {{selected_vehicle_type.name}} · {{vehicles|length}} مركبة</div>{% endif %}
+
+{% if can_manage %}
+<div id="add-vehicle" class="card-soft add-panel">
+<form method="post" class="vehicle-form-compact">
+ <div><label class="form-label">الحالة</label><select name="registration_status" id="vehicle-registration-status" class="form-select"><option value="registered">جمركية</option><option value="without_customs">بدون جمارك</option></select></div>
+ <div><label class="form-label">الرقم</label><input name="plate_number" id="vehicle-plate-number" class="form-control" inputmode="numeric"></div>
+ <div><label class="form-label">الفاصل</label><input name="plate_separator" class="form-control"></div>
+ <div><label class="form-label">النوع</label><select name="vehicle_type_id" class="form-select" required><option value="">اختر</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
+ <div><label class="form-label">العميل</label><select name="client_id" class="form-select"><option value="">غير مربوط</option>{% for c in clients %}<option value="{{c.id}}" {% if c.id==selected_client_id %}selected{% endif %}>{{c.name}}</option>{% endfor %}</select></div>
+ <div><label class="form-label">الوكلاء</label><select name="agent_ids" class="form-select" multiple size="2">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
+ <div class="vehicle-form-wide"><label class="form-label">ملاحظات</label><input name="notes" class="form-control" placeholder="ملاحظة مختصرة"></div>
+ <div class="vehicle-form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ</button></div>
+</form>
 </div>
 {% endif %}
 
-<div class="card-soft"><div class="section-title"><div><h3>قائمة المركبات</h3><small class="text-muted">{{vehicles|length}} مركبة{% if selected_vehicle_type %} · {{selected_vehicle_type.name}}{% endif %}</small></div></div><div class="entity-list">
-{% for v in vehicles %}<div class="entity-row"><div class="entity-main"><div class="entity-icon vehicle"><i class="bi bi-truck-front"></i></div><div><strong>{{v.plate_number or 'بدون رقم جمركي'}}</strong><div class="entity-meta"><span>{{v.vehicle_type.name}}</span><span>{{v.client.name if v.client else 'بدون عميل'}}</span><span>{{'بدون جمارك' if v.registration_status=='without_customs' else 'جمركية'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if v.active else 'off'}}"></span>{{'نشطة' if v.active else 'موقوفة'}}</div><div class="more-menu"><button type="button" class="more-trigger" data-more-toggle aria-expanded="false" aria-haspopup="menu" aria-label="خيارات المركبة"><i class="bi bi-three-dots-vertical"></i></button><div class="more-pop" hidden><a href="{{url_for('master_data.vehicle_detail',vehicle_id=v.id)}}"><i class="bi bi-eye"></i> تفاصيل</a><a href="{{url_for('reports.vehicle_report',vehicle_id=v.id)}}"><i class="bi bi-bar-chart"></i> تقرير الدخول</a>{% if can_manage %}<a href="{{url_for('master_data.edit_vehicle',vehicle_id=v.id)}}"><i class="bi bi-pencil"></i> تعديل</a><form method="post" action="{{url_for('master_data.delete_vehicle',vehicle_id=v.id)}}" onsubmit="return confirm('سيتم إيقاف المركبة وحفظ تاريخها. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}</div></details></div></div>
-{% else %}<div class="empty-state"><i class="bi bi-truck"></i><strong>لا توجد مركبات</strong><span>أضف أول مركبة.</span></div>{% endfor %}
-</div></div>
+<div class="vehicle-grid mt-2">
+{% for v in vehicles %}
+<article class="vehicle-card {% if not v.active %}inactive{% endif %}">
+  <div class="vehicle-card-head">
+    <div class="vehicle-number">
+      <strong>{{v.plate_number or 'بدون رقم' }}{% if v.plate_separator %} <span style="color:#72817c">/ {{v.plate_separator}}</span>{% endif %}</strong>
+      <small>{{v.vehicle_type.name}}</small>
+    </div>
+    {% if v.is_default %}<span class="vehicle-default"><i class="bi bi-star-fill"></i> افتراضية</span>{% endif %}
+  </div>
+  <div class="vehicle-meta">
+    <div class="vehicle-meta-row"><span>العميل</span>{% if v.client %}<a class="vehicle-client-link" href="{{url_for('master_data.client_detail',client_id=v.client.id)}}">{{v.client.name}}</a>{% else %}<span>غير مربوط</span>{% endif %}</div>
+    <div class="vehicle-meta-row"><span>الفاصل</span><span>{{v.plate_separator or '—'}}</span></div>
+  </div>
+  <div class="vehicle-tags">
+    <span class="vehicle-tag">{{'بدون جمارك' if v.registration_status=='without_customs' else 'جمركية'}}</span>
+    <span class="vehicle-tag {% if v.active %}status-on{% else %}status-off{% endif %}">{{'نشطة' if v.active else 'موقوفة'}}</span>
+  </div>
+  <div class="vehicle-actions">
+    <a class="btn btn-outline-primary" href="{{url_for('master_data.vehicle_detail',vehicle_id=v.id)}}" title="مشاهدة"><i class="bi bi-eye"></i><span>مشاهدة</span></a>
+    {% if can_manage %}<a class="btn btn-light" href="{{url_for('master_data.edit_vehicle',vehicle_id=v.id)}}" title="تعديل"><i class="bi bi-pencil"></i><span>تعديل</span></a>{% endif %}
+    <a class="btn btn-outline-primary" href="{{url_for('reports.vehicle_report',vehicle_id=v.id)}}" title="تقرير"><i class="bi bi-bar-chart"></i><span>تقرير</span></a>
+    {% if can_manage %}<form method="post" action="{{url_for('master_data.delete_vehicle',vehicle_id=v.id)}}" onsubmit="return confirm('سيتم إيقاف المركبة مع حفظ جميع حركاتها. متابعة؟')"><button class="btn btn-outline-danger w-100" title="حذف"><i class="bi bi-trash3"></i><span>حذف</span></button></form>{% endif %}
+  </div>
+</article>
+{% else %}<div class="empty-state" style="grid-column:1/-1"><i class="bi bi-truck"></i><strong>لا توجد مركبات</strong><span>غيّر الفرز أو أضف مركبة.</span></div>{% endfor %}
+</div>
+
+<div class="card-soft vehicle-type-panel">
+  <div class="section-title"><div><h3>أنواع المركبات</h3><small class="text-muted">إدارة سريعة للأنواع المخصصة</small></div></div>
+  <div class="vehicle-tags">
+    {% for t in all_vehicle_types %}
+      <a href="{{url_for('master_data.vehicles',vehicle_type_id=t.id)}}" class="vehicle-tag {% if not t.active %}status-off{% endif %}">{{t.name}}</a>
+    {% endfor %}
+  </div>
+</div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script>
+document.getElementById('add-vehicle')?.classList.remove('is-open');
+document.querySelector('[data-toggle-panel="add-vehicle"]')?.addEventListener('click',()=>document.getElementById('add-vehicle')?.classList.toggle('is-open'));
 const rs=document.getElementById('vehicle-registration-status'),plate=document.getElementById('vehicle-plate-number');
 function syncVehiclePlate(){if(rs&&plate)plate.required=rs.value==='registered';}
 rs?.addEventListener('change',syncVehiclePlate);syncVehiclePlate();
