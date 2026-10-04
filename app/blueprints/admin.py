@@ -37,6 +37,7 @@ def edit_user(user_id):
                 u.employee.active=u.active
                 u.employee.job_title={"admin":"مدير النظام","manager":"مدير","collector":"متحصل","accountant":"محاسب","auditor":"مراجع"}.get(u.role,u.employee.job_title or "موظف")
                 ensure_employee_account(u.employee)
+                ensure_employee_cashbox(u.employee)
                 ensure_employee_payroll_account(u.employee)
             else:
                 last=Employee.query.order_by(Employee.id.desc()).first()
