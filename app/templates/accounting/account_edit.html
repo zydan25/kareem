@@ -15,9 +15,7 @@
   {% if not account.system_key %}
   <div class="col-12 d-flex gap-2 flex-wrap">
     <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ التعديلات</button>
-    <form method="post" action="{{url_for('accounting.account_delete',account_id=account.id)}}" onsubmit="return confirm('سيتم حذف الحساب نهائيًا فقط إذا لم يكن مستخدمًا. متابعة؟')">
-      <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash3"></i> حذف الحساب</button>
-    </form>
+    <button class="btn btn-outline-danger" type="submit" formaction="{{url_for('accounting.account_delete',account_id=account.id)}}" formmethod="post" onclick="return confirm('سيتم حذف الحساب نهائيًا فقط إذا لم يكن مستخدمًا. متابعة؟')"><i class="bi bi-trash3"></i> حذف الحساب</button>
   </div>
   {% endif %}
 </form>
