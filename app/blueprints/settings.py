@@ -93,9 +93,9 @@ def index():
             font_size=request.form.get("setting_font_size","100")
             if font_size not in {"100","110","120","130"}: font_size="100"
             _save_setting("font_size",font_size,"string","حجم الخط العام")
-            font_size=request.form.get("setting_font_size","100")
-            if font_size not in {"100","110","120","130"}: font_size="100"
-            _save_setting("font_size",font_size,"string","حجم الخط العام")
+            collector_font_size=request.form.get("setting_collector_font_size","100")
+            if collector_font_size not in {"100","110","120","130","140"}: collector_font_size="110"
+            _save_setting("collector_font_size",collector_font_size,"string","حجم خط نموذج التحصيل")
             _save_setting("customer_portal",request.form.get("setting_customer_portal","0"),"boolean","إتاحة لوحة العميل")
             _save_setting("brand_icon_enabled","1" if request.form.get("setting_brand_icon_enabled")=="1" else "0","boolean","تفعيل أيقونة التطبيق")
             _save_brand_image(request.files.get("brand_logo"),"brand_logo")
