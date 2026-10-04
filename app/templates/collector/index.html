@@ -102,6 +102,79 @@
   .collector-field-row,.collector-optional-grid,.collector-recent-list{grid-template-columns:1fr 1fr}
   .customer-vehicles-list{grid-template-columns:1fr 1fr}
 }
+/* حجم خط نموذج التحصيل مستقل عن حجم خط التطبيق */
+.collector-form-compact{
+  --collector-form-scale:{{collector_font_scale|default('1.1')}};
+}
+.collector-form-compact .form-label{
+  font-size:calc(13px * var(--collector-form-scale))!important;
+  line-height:1.35;
+}
+.collector-form-compact .form-control,
+.collector-form-compact .form-select{
+  font-size:calc(14px * var(--collector-form-scale))!important;
+  min-height:calc(46px * var(--collector-form-scale))!important;
+}
+.collector-form-compact #client_name{
+  font-size:calc(15px * var(--collector-form-scale))!important;
+  font-weight:800;
+}
+.collector-form-compact .client-suggestion{
+  font-size:calc(13px * var(--collector-form-scale))!important;
+  padding:calc(10px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .client-suggestion strong{
+  font-size:calc(14px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .client-suggestion small{
+  font-size:calc(10px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .customer-vehicle-option strong{
+  font-size:calc(13px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .customer-vehicle-option small{
+  font-size:calc(10px * var(--collector-form-scale))!important;
+}
+.collector-form-compact #amount{
+  font-size:calc(20px * var(--collector-form-scale))!important;
+  font-weight:950!important;
+  min-height:calc(50px * var(--collector-form-scale))!important;
+}
+#collector-amount-words{
+  font-size:calc(19px * var(--collector-form-scale))!important;
+  font-weight:950!important;
+  line-height:1.55!important;
+  color:#d62828!important;
+  text-align:center!important;
+  min-height:calc(30px * var(--collector-form-scale));
+  margin-top:6px;
+}
+.collector-form-compact .direction-choice span{
+  min-height:calc(46px * var(--collector-form-scale));
+}
+.collector-form-compact .direction-choice b{
+  font-size:calc(13px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .collector-submit{
+  min-height:calc(52px * var(--collector-form-scale))!important;
+  font-size:calc(15px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .collector-reset{
+  min-height:calc(52px * var(--collector-form-scale))!important;
+  width:calc(52px * var(--collector-form-scale));
+}
+.collector-form-compact .customer-vehicles-head strong{
+  font-size:calc(13px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .customer-vehicles-head small{
+  font-size:calc(10px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .collector-selected-vehicle strong{
+  font-size:calc(16px * var(--collector-form-scale))!important;
+}
+.collector-form-compact .collector-selected-vehicle small{
+  font-size:calc(11px * var(--collector-form-scale))!important;
+}
 </style>
 
 <div class="collector-mobile-page">
