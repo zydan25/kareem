@@ -57,7 +57,7 @@ def test_settlements_page_and_admin_guide(client):
 def test_sidebar_contains_all_major_sections_and_report_links(client):
     login(client)
     body=client.get("/").get_data(as_text=True)
-    for text_value in ["الرئيسية","البوابة والتحصيل","البيانات الأساسية","الإدارة والموظفون","المحاسبة والمالية","التشغيل المالي","التقارير","الإعدادات"]:
+    for text_value in ["الرئيسية","البوابة والتحصيل","البيانات الأساسية","الإدارة والموظفون","الحسابات","التشغيل المالي","التقارير","الإعدادات"]:
         assert text_value in body
     for url in ["/reports/daily","/reports/weekly","/reports/monthly","/reports/clients","/reports/vehicles","/reports/employees","/reports/expenses","/reports/income-expenses","/reports/trial-balance"]:
         assert url in body
@@ -213,8 +213,9 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
     },follow_redirects=False)
     assert general.status_code==302
 
-    reverse=client.post(f"/operations/vouchers/{voucher_id}/reverse",data={"reason":"اختبار العكس"},follow_redirects=False)
-    assert reverse.status_code==302
+    reverse=client.post(f"/operations/vouchers/{voucher_id}/reverse",data={"reason":"اختبار العكس"},follow_redirects=True)
+    assert reverse.status_code==200
+    assert "تم عكس السند" in reverse.get_data(as_text=True)
 
     with app.app_context():
         voucher=Voucher.query.get(voucher_id)
