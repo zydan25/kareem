@@ -220,9 +220,18 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
     assert "تم عكس السند" in reverse.get_data(as_text=True)
 
     with app.app_context():
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            journal_status=conn.execute(
+                text("SELECT status FROM journal_entries WHERE id=:id"),{"id":entry_id}
+            ).scalar_one()
+            reverse_id=conn.execute(
+                text("SELECT reversed_entry_id FROM journal_entries WHERE id=:id"),{"id":entry_id}
+            ).scalar_one()
+        assert journal_status=="void"
+        assert reverse_id is not None
         db.session.remove()
         voucher=db.session.get(Voucher,voucher_id)
         assert voucher.status=="posted"
         assert voucher.journal_entry.status=="void"
-        assert voucher.journal_entry.reversed_entry_id is not None
         assert voucher.journal_entry.reversed_entry_id is not None
