@@ -102,7 +102,7 @@ def account_edit(account_id):
     return render_template("accounting/account_edit.html",account=account,parents=parents)
 
 @bp.post("/accounts/<int:account_id>/toggle")
-@permission_required("accounting.post")
+@permission_required("accounting.manage")
 def account_toggle(account_id):
     account=db.session.get(Account,account_id)
     if not account: return ("غير موجود",404)
