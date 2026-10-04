@@ -1,60 +1,177 @@
 {% extends 'base.html' %}
 {% block title %}الإعدادات - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الإعدادات</span><h1>إعدادات النظام والهوية</h1><p>يمكن للمدير تغيير اسم النظام واللون والشعار والأيقونة وإعدادات الواجهة من مكان واحد.</p></div><a class="btn btn-outline-primary" href="{{url_for('auth.account')}}">حسابي</a></div>
+<style>
+.settings-page .page-head p{display:none}
+.settings-section{margin-bottom:10px}
+.settings-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.settings-section-head h3{font-size:14px;margin:0;font-weight:950}
+.settings-section-head small{font-size:9px;color:#889590}
+.settings-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.setting-field{border:1px solid rgba(37,65,58,.09);border-radius:12px;padding:8px;background:#fff}
+.setting-field label{display:block;font-size:10px;font-weight:900;color:#566761;margin-bottom:5px}
+.setting-field .form-control,.setting-field .form-select{min-height:40px;border-radius:10px;font-size:11px}
+.setting-field-wide{grid-column:1/-1}
+.brand-color-input{display:grid;grid-template-columns:42px minmax(0,1fr);gap:6px;align-items:center}
+.brand-color-input input[type=color]{width:42px;height:40px;border:1px solid rgba(37,65,58,.12);border-radius:10px;padding:3px;background:#fff}
+.settings-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.settings-actions .btn{border-radius:10px;font-size:11px;font-weight:900}
+.brand-preview-compact{display:flex;align-items:center;gap:9px;border:1px solid rgba(11,110,79,.14);background:linear-gradient(180deg,#f7fbf9,#fff);border-radius:13px;padding:10px}
+.brand-preview-mark{width:42px;height:42px;border-radius:12px;background:var(--preview-color,#0b6e4f);display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden;font-weight:950}
+.brand-preview-mark img{width:100%;height:100%;object-fit:contain}
+.brand-preview-copy{min-width:0;display:flex;flex-direction:column}
+.brand-preview-copy strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-preview-copy span{font-size:9px;color:#87938f}
+.current-brand{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:7px;padding:7px 8px;border:1px solid rgba(37,65,58,.08);border-radius:10px}
+.current-brand img{width:52px;height:35px;object-fit:contain;border-radius:7px;background:#f7f8f7}
+.current-brand strong{font-size:9px;color:#697772}
+.current-brand-actions{display:flex;gap:4px}
+.current-brand-actions .btn{height:28px;width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px}
+.vehicle-types-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.vehicle-type-card{border:1px solid rgba(37,65,58,.10);border-radius:12px;padding:8px;background:#fff;min-width:0;display:flex;flex-direction:column;gap:7px;box-shadow:0 2px 7px rgba(24,45,39,.025)}
+.vehicle-type-card.is-off{opacity:.72;background:#f7f8f8}
+.vehicle-type-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.vehicle-type-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(11,110,79,.08);color:var(--primary);font-size:13px}
+.vehicle-type-name{font-size:11px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vehicle-type-meta{font-size:8.5px;color:#8b9692}
+.vehicle-type-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.vehicle-type-actions .btn,.vehicle-type-actions form .btn{min-height:29px;padding:4px;border-radius:8px;font-size:9px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:3px}
+.vehicle-type-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px}
+.vehicle-type-add .form-control{min-height:40px;border-radius:10px;font-size:11px}
+.vehicle-type-add .btn{border-radius:10px;font-size:10px;font-weight:900}
+.settings-policy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.policy-mini{border:1px solid rgba(37,65,58,.08);border-radius:11px;padding:8px;display:flex;flex-direction:column;gap:3px;background:#fff}
+.policy-mini i{font-size:14px;color:var(--primary)}
+.policy-mini strong{font-size:10px}
+.policy-mini span{font-size:8px;line-height:1.5;color:#87938f}
+.type-modal-backdrop{position:fixed;inset:0;background:rgba(17,31,27,.38);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.type-modal-backdrop[hidden]{display:none}
+.type-modal{width:min(360px,100%);background:#fff;border-radius:16px;padding:12px;box-shadow:0 18px 50px rgba(15,34,29,.22)}
+.type-modal h4{font-size:14px;margin:0}
+.type-modal .form-control{border-radius:10px;min-height:42px;font-size:12px}
+.type-modal-actions{display:flex;gap:6px;margin-top:8px}
+.type-modal-actions .btn{flex:1;border-radius:10px;font-size:11px;font-weight:900}
+@media(max-width:900px){.vehicle-types-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){
+  .settings-page{padding-bottom:18px}
+  .settings-form-grid{grid-template-columns:1fr}
+  .setting-field-wide{grid-column:auto}
+  .settings-section-head h3{font-size:13px}
+  .settings-section-head small{font-size:8px}
+  .vehicle-types-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .vehicle-type-card{padding:7px;border-radius:11px}
+  .vehicle-type-actions{grid-template-columns:repeat(3,1fr)}
+  .vehicle-type-actions .btn,.vehicle-type-actions form .btn{font-size:8px;min-height:28px}
+  .settings-policy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
 
-<div class="settings-grid">
+<div class="settings-page">
+<div class="page-head">
+  <div><span class="eyebrow">الإعدادات</span><h1>إعدادات النظام والهوية</h1></div>
+  <a class="btn btn-outline-primary" href="{{url_for('auth.account')}}"><i class="bi bi-person-circle"></i> حسابي</a>
+</div>
+
+<div class="settings-section">
   <div class="card-soft">
-    <div class="section-title"><div><h3>الهوية البصرية</h3><small class="text-muted">تظهر في الموقع وصفحة الدخول والتطبيق المثبت.</small></div></div>
-    <form method="post" enctype="multipart/form-data" class="row g-3">
-      <div class="col-12 col-md-6"><label class="form-label">اسم المنشأة / اسم النظام</label><input name="setting_organization_name" class="form-control form-control-lg" value="{{organization_name}}" required></div>
-      <div class="col-12 col-md-6"><label class="form-label">الوصف تحت الاسم</label><input name="setting_project_name" class="form-control" value="{{project_name}}"></div>
-      <div class="col-12 col-md-6"><label class="form-label">العملة</label><input name="setting_currency_name" class="form-control" value="{{currency_name}}"></div>
-      <div class="col-12 col-md-6"><label class="form-label">اللون الرئيسي للموقع</label><div class="brand-color-input"><input type="color" id="brand-color-picker" value="{{brand_color}}" aria-label="اختيار اللون"><input id="brand-color-text" name="setting_brand_color" class="form-control" value="{{brand_color}}" maxlength="7" oninput="syncColorFromText()"></div></div>
-      <div class="col-12 col-md-6"><label class="form-label">الشعار الرئيسي</label><input type="file" name="brand_logo" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted">اختياري — PNG/JPG/WEBP</small></div>
-      <div class="col-12 col-md-6"><label class="form-label">أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted">اختياري — تُضغط وتُصغّر تلقائيًا. ويمكن إيقاف تحميلها من الخيار أدناه.</small></div>
-      <div class="col-12 col-md-6"><label class="form-label">المظهر</label><select name="setting_ui_theme" class="form-select">{% set theme = settings|selectattr('key','equalto','ui_theme')|map(attribute='value')|first %}<option value="light" {% if theme!='dark' %}selected{% endif %}>فاتح</option><option value="dark" {% if theme=='dark' %}selected{% endif %}>داكن</option></select></div>
-      <div class="col-12 col-md-6"><label class="form-label">تحميل الأيقونة</label><select name="setting_brand_icon_enabled" class="form-select"><option value="1" {% if brand_icon_enabled %}selected{% endif %}>مفعلة</option><option value="0" {% if not brand_icon_enabled %}selected{% endif %}>متوقفة</option></select><small class="text-muted">عند الإيقاف لا يطلب الموقع صورة الأيقونة، ويعرض مكانها علامة ثابتة خفيفة.</small></div>
-      <div class="col-12 col-md-6"><label class="form-label">لوحة العميل</label><select name="setting_customer_portal" class="form-select">{% set portal = settings|selectattr('key','equalto','customer_portal')|map(attribute='value')|first %}<option value="1" {% if portal=='1' %}selected{% endif %}>مفعلة</option><option value="0" {% if portal!='1' %}selected{% endif %}>غير مفعلة</option></select></div>
-      <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-palette"></i> حفظ الهوية والإعدادات</button></div>
+    <div class="settings-section-head"><div><h3>الهوية والمظهر</h3><small>حقول مختصرة ومناسبة للهاتف، والصورة اختيارية.</small></div></div>
+    <form method="post" enctype="multipart/form-data">
+      <div class="settings-form-grid">
+        <div class="setting-field"><label>اسم المنشأة / اسم النظام</label><input name="setting_organization_name" class="form-control" value="{{organization_name}}" required></div>
+        <div class="setting-field"><label>الوصف تحت الاسم</label><input name="setting_project_name" class="form-control" value="{{project_name}}"></div>
+        <div class="setting-field"><label>العملة</label><input name="setting_currency_name" class="form-control" value="{{currency_name}}"></div>
+        <div class="setting-field"><label>اللون الرئيسي</label><div class="brand-color-input"><input type="color" id="brand-color-picker" value="{{brand_color}}" aria-label="اختيار اللون"><input id="brand-color-text" name="setting_brand_color" class="form-control" value="{{brand_color}}" maxlength="7" oninput="syncColorFromText()"></div></div>
+        <div class="setting-field"><label>الشعار الرئيسي</label><input type="file" name="brand_logo" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size:8px">اختياري. عند الحذف سيبقى الاسم كنص بدون تحميل صورة.</small></div>
+        <div class="setting-field"><label>أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size:8px">تُضغط تلقائيًا لتقليل الحجم.</small></div>
+        <div class="setting-field"><label>المظهر</label><select name="setting_ui_theme" class="form-select">{% set theme=settings|selectattr('key','equalto','ui_theme')|map(attribute='value')|first %}<option value="light" {% if theme!='dark' %}selected{% endif %}>فاتح</option><option value="dark" {% if theme=='dark' %}selected{% endif %}>داكن</option></select></div>
+        <div class="setting-field"><label>تحميل الأيقونة</label><select name="setting_brand_icon_enabled" class="form-select"><option value="1" {% if brand_icon_enabled %}selected{% endif %}>مفعلة</option><option value="0" {% if not brand_icon_enabled %}selected{% endif %}>متوقفة</option></select></div>
+        <div class="setting-field"><label>لوحة العميل</label><select name="setting_customer_portal" class="form-select">{% set portal=settings|selectattr('key','equalto','customer_portal')|map(attribute='value')|first %}<option value="1" {% if portal=='1' %}selected{% endif %}>مفعلة</option><option value="0" {% if portal!='1' %}selected{% endif %}>غير مفعلة</option></select></div>
+      </div>
+      <div class="settings-actions">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ الإعدادات</button>
+        {% if brand_logo and can_manage %}<button type="submit" formaction="{{url_for('settings.remove_brand_logo')}}" class="btn btn-outline-danger" onclick="return confirm('حذف صورة الشعار وإبقاء اسم المنشأة كنص؟')"><i class="bi bi-trash3"></i> حذف الشعار</button>{% endif %}
+      </div>
     </form>
   </div>
+</div>
 
-  <div class="card-soft branding-preview">
-    <div class="section-title"><div><h3>المعاينة</h3><small class="text-muted">المظهر بعد حفظ الإعدادات.</small></div></div>
-    <div class="brand-preview-box" style="--preview-color:{{brand_color}}">
-      <div class="brand-preview-mark">{% if brand_logo %}<img src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt="">{% else %}<span>س</span>{% endif %}</div>
-      <div><strong>{{organization_name}}</strong><small>{{project_name}}</small></div>
-    </div>
-    {% if brand_logo %}<div class="brand-current"><span>الشعار الحالي</span><img src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></div>{% endif %}
-    {% if brand_icon %}<div class="brand-current"><span>الأيقونة الحالية</span><img class="brand-icon-preview" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></div>{% endif %}
-    {% if can_manage %}
-    <div class="brand-option-card mt-3">
-      <div class="brand-option-preview"><img src="{{url_for('static',filename='icons/souq-aljumla.svg')}}" alt="أيقونة سوق الجملة"></div>
-      <div class="brand-option-info"><strong>أيقونة مقترحة: سوق الجملة</strong><span>أيقونة SVG خفيفة جدًا، مناسبة للموقع وPWA ولا تعتمد على صورة مرفوعة كبيرة.</span></div>
-      <div class="d-flex gap-2 flex-wrap">
-        <form method="post" action="{{url_for('settings.use_default_brand_icon')}}">
-          <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle"></i> اعتماد الأيقونة المقترحة</button>
-        </form>
-        {% if brand_icon %}<form method="post" action="{{url_for('settings.reset_brand_icon')}}">
-          <button class="btn btn-outline-danger" type="submit" onclick="return confirm('استعادة الأيقونة التقليدية للنظام؟')"><i class="bi bi-arrow-counterclockwise"></i> استعادة التقليدية</button>
-        </form>{% endif %}
+<div class="settings-section">
+  <div class="card-soft">
+    <div class="settings-section-head"><div><h3>المعاينة</h3><small>بدون الحاجة لصورة كبيرة عند عدم استخدامها.</small></div></div>
+    <div class="brand-preview-compact" style="--preview-color:{{brand_color}}">
+      <div class="brand-preview-mark">
+        {% if brand_logo %}<img src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt="">
+        {% else %}<span>{{organization_name[:1]}}</span>{% endif %}
       </div>
+      <div class="brand-preview-copy"><strong>{{organization_name}}</strong><span>{{project_name}}</span></div>
     </div>
-    {% endif %}
-    <div class="policy-item mt-3"><i class="bi bi-brush"></i><strong>الهوية موحدة</strong><span>الاسم واللون والأيقونة تتغير في رأس الموقع وملف PWA والهوية العامة بعد الحفظ.</span></div>
+    {% if brand_logo %}<div class="current-brand"><strong>الشعار الحالي</strong><img src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></div>{% endif %}
+    {% if brand_icon %}<div class="current-brand"><strong>الأيقونة الحالية</strong><img src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></div>{% endif %}
   </div>
 </div>
 
-<div class="card-soft mt-4">
-  <div class="section-title"><div><h3>أنواع المركبات</h3><small class="text-muted">أنواع النظام + الأنواع المخصصة.</small></div></div>
-  {% if can_manage %}<form method="post" class="d-flex gap-2 mb-3"><input type="text" name="vehicle_type_name" class="form-control" placeholder="نوع جديد مثل: تريلا"><button class="btn btn-primary">إضافة</button></form>{% endif %}
-  <div class="entity-list">{% for t in vehicle_types %}<div class="entity-row"><div class="entity-main"><div class="entity-icon vehicle"><i class="bi bi-truck-front"></i></div><div><strong>{{t.name}}</strong><div class="entity-meta"><span>{{'نظامي' if t.is_system else 'مخصص'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if t.active else 'off'}}"></span>{{'نشط' if t.active else 'موقوف'}}</div>{% if can_manage and not t.is_system %}<form method="post" action="{{url_for('settings.toggle_type',type_id=t.id)}}"><button class="btn btn-sm btn-outline-secondary">{{'إيقاف' if t.active else 'تفعيل'}}</button></form>{% endif %}</div>{% else %}<div class="empty-state"><span>لا توجد أنواع.</span></div>{% endfor %}</div>
+<div class="settings-section">
+  <div class="card-soft">
+    <div class="settings-section-head"><div><h3>أنواع المركبات</h3><small>بطاقات صغيرة؛ يظهر نوعان في الصف على الهاتف مع أهم الإجراءات.</small></div></div>
+    {% if can_manage %}
+    <form method="post" action="{{url_for('settings.add_vehicle_type')}}" class="vehicle-type-add">
+      <input type="text" name="vehicle_type_name" class="form-control" placeholder="نوع جديد مثل: تريلا" required>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-plus-lg"></i> إضافة</button>
+    </form>
+    {% endif %}
+    <div class="vehicle-types-grid">
+      {% for t in vehicle_types %}
+      <div class="vehicle-type-card {% if not t.active %}is-off{% endif %}">
+        <div class="vehicle-type-top">
+          <div class="vehicle-type-icon"><i class="bi bi-truck-front"></i></div>
+          <span class="status-dot {{'on' if t.active else 'off'}}" title="{{'نشط' if t.active else 'موقوف'}}"></span>
+        </div>
+        <div class="vehicle-type-name" title="{{t.name}}">{{t.name}}</div>
+        <div class="vehicle-type-meta">{{'نظامي' if t.is_system else 'مخصص'}} · {{vehicle_counts.get(t.id,0)}} مركبة</div>
+        <div class="vehicle-type-actions">
+          {% if can('vehicles.view') %}<a class="btn btn-outline-primary" href="{{url_for('master_data.vehicles',vehicle_type_id=t.id)}}" title="المركبات المرتبطة"><i class="bi bi-eye"></i></a>{% else %}<span></span>{% endif %}
+          {% if can_manage and not t.is_system %}<button type="button" class="btn btn-light" onclick='openVehicleTypeEdit({{t.id}}, {{t.name|tojson}})' title="تعديل"><i class="bi bi-pencil"></i></button>{% else %}<span></span>{% endif %}
+          {% if can_manage and not t.is_system %}<form method="post" action="{{url_for('settings.delete_vehicle_type',type_id=t.id)}}" onsubmit="return confirm('حذف نوع المركبة نهائيًا؟ لن يسمح بالحذف إذا كانت هناك مركبات مرتبطة به.')"><button class="btn btn-outline-danger" type="submit" title="حذف"><i class="bi bi-trash3"></i></button></form>{% else %}<span></span>{% endif %}
+        </div>
+        {% if can_manage and not t.is_system %}<form class="mt-1" method="post" action="{{url_for('settings.toggle_type',type_id=t.id)}}"><button class="btn btn-light w-100" type="submit"><i class="bi {{'bi-eye-slash' if t.active else 'bi-eye'}}"></i> {{'إيقاف' if t.active else 'تفعيل'}}</button></form>{% endif %}
+      </div>
+      {% else %}<div class="empty-state">لا توجد أنواع مركبات.</div>{% endfor %}
+    </div>
+  </div>
 </div>
 
-<div class="card-soft mt-4"><div class="section-title"><div><h3>السياسات والجهة المطورة</h3></div></div><div class="policy-grid">
-<div class="policy-item"><i class="bi bi-lock"></i><strong>الحسابات</strong><span>الرئيسية للتجميع والفروع للقيد.</span></div><div class="policy-item"><i class="bi bi-receipt"></i><strong>السندات</strong><span>نوع السند يستنتج من «من» و«إلى».</span></div><div class="policy-item"><i class="bi bi-clock"></i><strong>الوردية</strong><span>تفتح تلقائيًا مع أول عملية مالية.</span></div><div class="policy-item"><i class="bi bi-safe2"></i><strong>العهدة</strong><span>المتحصل لا يقدم طلب إخلاء يدويًا؛ التسليم يمر بالمراجعة.</span></div><div class="policy-item"><i class="bi bi-phone"></i><strong>PWA</strong><span>الاسم والأيقونة ولون التطبيق قابلة للتغيير من الهوية البصرية.</span></div><div class="policy-item"><i class="bi bi-code-slash"></i><strong>برمجة وتصميم</strong><span>يمن كود للتقنيات الذكية · 774952665</span></div>
-</div></div>
+<div class="settings-section">
+  <div class="card-soft">
+    <div class="settings-section-head"><div><h3>السياسات</h3><small>معلومات مختصرة بدل نصوص طويلة على الهاتف.</small></div></div>
+    <div class="settings-policy-grid">
+      <div class="policy-mini"><i class="bi bi-diagram-3"></i><strong>الحسابات</strong><span>الرئيسية للتجميع والفروع للقيد.</span></div>
+      <div class="policy-mini"><i class="bi bi-receipt"></i><strong>السندات</strong><span>المعاملة تُرحّل عبر قيود متزنة.</span></div>
+      <div class="policy-mini"><i class="bi bi-clock"></i><strong>الوردية</strong><span>تفتح مع أول عملية تشغيلية حسب النظام.</span></div>
+      <div class="policy-mini"><i class="bi bi-safe2"></i><strong>العهدة</strong><span>التسوية تمر بالمراجعة والاعتماد.</span></div>
+      <div class="policy-mini"><i class="bi bi-phone"></i><strong>PWA</strong><span>الاسم واللون والأيقونة قابلة للإدارة.</span></div>
+      <div class="policy-mini"><i class="bi bi-code-slash"></i><strong>يمن كود</strong><span>برمجة وتصميم · 774952665</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="vehicle-type-modal-wrap" class="type-modal-backdrop" hidden>
+  <div class="type-modal" role="dialog" aria-modal="true" aria-labelledby="vehicle-type-modal-title">
+    <div class="d-flex align-items-center justify-content-between gap-2">
+      <h4 id="vehicle-type-modal-title">تعديل نوع المركبة</h4>
+      <button type="button" class="btn btn-light btn-sm" onclick="closeVehicleTypeEdit()" aria-label="إغلاق"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <form method="post" id="vehicle-type-edit-form">
+      <label class="form-label mt-2" style="font-size:10px">اسم النوع</label>
+      <input type="text" class="form-control" name="name" id="vehicle-type-edit-name" required>
+      <div class="type-modal-actions">
+        <button type="button" class="btn btn-light" onclick="closeVehicleTypeEdit()">إلغاء</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script>
@@ -62,5 +179,18 @@ const picker=document.getElementById('brand-color-picker');
 const textInput=document.getElementById('brand-color-text');
 picker?.addEventListener('input',()=>{textInput.value=picker.value;});
 function syncColorFromText(){if(/^#[0-9a-fA-F]{6}$/.test(textInput.value))picker.value=textInput.value;}
+const vehicleTypeModal=document.getElementById('vehicle-type-modal-wrap');
+const vehicleTypeEditForm=document.getElementById('vehicle-type-edit-form');
+const vehicleTypeEditName=document.getElementById('vehicle-type-edit-name');
+function openVehicleTypeEdit(id,name){
+  if(!vehicleTypeModal||!vehicleTypeEditForm)return;
+  vehicleTypeEditForm.action='/settings/vehicle-types/'+id+'/edit';
+  vehicleTypeEditName.value=name||'';
+  vehicleTypeModal.hidden=false;
+  setTimeout(()=>vehicleTypeEditName?.focus(),30);
+}
+function closeVehicleTypeEdit(){if(vehicleTypeModal)vehicleTypeModal.hidden=true;}
+vehicleTypeModal?.addEventListener('click',e=>{if(e.target===vehicleTypeModal)closeVehicleTypeEdit();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeVehicleTypeEdit();});
 </script>
 {% endblock %}
