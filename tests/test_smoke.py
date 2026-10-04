@@ -122,6 +122,10 @@ def test_vouchers_page_polished_receipt_payment_ui(app, client):
     assert 'id="voucher-type" value=""' in body
     assert "سند عام" not in body
     assert "إصدار سند" in body
+    receipt_pos=body.index('data-voucher-open-mode="receipt"')
+    payment_pos=body.index('data-voucher-open-mode="payment"')
+    sort_pos=body.index('id="voucher-sort"')
+    assert receipt_pos < payment_pos < sort_pos
 
 
 def test_voucher_route_requires_post_permission(app, client):
