@@ -787,3 +787,111 @@
 .permission-select-all:hover{border-color:var(--primary-border);color:var(--primary)}
 .permission-row input{width:18px;height:18px;accent-color:var(--primary)}
 @media(max-width:600px){.permission-toolbar{align-items:stretch}.permission-toolbar-actions{width:100%}.permission-toolbar-actions .btn{flex:1}.permission-group{padding:11px}.permission-row{padding:9px 6px}.permission-row span{font-size:11px}}
+
+
+/* Mobile-first vouchers and daily journal */
+.voucher-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:8px}
+.voucher-toolbar>.btn{min-height:40px}
+.voucher-live-search{position:relative;min-width:180px;flex:1}
+.voucher-live-search i{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);z-index:2}
+.voucher-live-search input{padding-right:34px;border-radius:12px}
+.voucher-sort-wrap{min-width:135px}
+.voucher-sort-wrap select{min-height:40px;border-radius:12px}
+.voucher-list-head{display:flex;justify-content:space-between;align-items:center;margin:0 2px 10px;color:var(--muted);font-size:11px}
+.voucher-list-head strong{font-size:15px;color:var(--text,#273535)}
+.voucher-list-head span{margin-right:7px}
+.voucher-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.voucher-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:13px;box-shadow:0 7px 24px rgba(15,35,30,.045)}
+.voucher-card[hidden]{display:none!important}
+.voucher-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.voucher-card-title{display:flex;gap:10px;min-width:0}
+.voucher-card-title>div:last-child{min-width:0}
+.voucher-card-title strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.voucher-card-title .entity-meta{margin-top:3px}
+.voucher-status,.journal-status{display:inline-flex;align-items:center;min-height:25px;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:800;white-space:nowrap}
+.voucher-status.posted,.journal-status.posted{background:#eaf7ef;color:#16824a}
+.voucher-status.void,.journal-status.void{background:#fff0f0;color:#bd3e3e}
+.voucher-flow-card{display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);gap:8px;align-items:center;margin:12px 0;padding:10px;background:var(--neutral-soft,#f7f9f8);border-radius:13px}
+.voucher-flow-card>div{min-width:0}
+.voucher-flow-card small{display:block;color:var(--muted);font-size:9px;margin-bottom:2px}
+.voucher-flow-card strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.voucher-flow-card>i{display:grid;place-items:center;color:var(--primary);font-size:15px}
+.voucher-card-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.voucher-card-bottom small,.journal-card-bottom small{display:block;color:var(--muted);font-size:9px}
+.voucher-card-bottom strong,.journal-card-bottom strong{display:block;font-size:14px;font-weight:900;margin:2px 0}
+.voucher-card-bottom>div:first-child{min-width:0}
+.voucher-card-bottom>div:first-child span{display:block;color:var(--muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}
+.voucher-card-actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.inline-action{display:inline-flex}
+.voucher-card-actions .btn{font-size:10px;border-radius:10px}
+.voucher-empty{grid-column:1/-1}
+.voucher-compose-open{overflow:hidden}
+.voucher-compose{position:fixed;inset:0;z-index:180}
+.voucher-compose[hidden]{display:none!important}
+.voucher-compose-backdrop{position:absolute;inset:0;background:rgba(15,34,29,.48);backdrop-filter:blur(3px)}
+.voucher-compose-sheet{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(820px,calc(100vw - 22px));max-height:min(92vh,860px);overflow:auto;background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:0 30px 80px rgba(15,35,30,.22);padding:16px}
+.voucher-compose-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.voucher-compose-head h2{font-size:20px;margin:2px 0 0}
+.voucher-kind-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+.voucher-kind{border:1px solid var(--border);background:#fbfcfc;border-radius:13px;padding:10px 8px;text-align:right;color:#5b6b6d;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.voucher-kind i{font-size:17px;color:var(--primary)}
+.voucher-kind span{font-size:12px;font-weight:900}
+.voucher-kind small{width:100%;font-size:9px;color:var(--muted);padding-right:24px}
+.voucher-kind.active{background:var(--primary-soft);border-color:var(--primary-border);color:var(--primary-dark)}
+.voucher-flow-hint{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:13px;background:var(--primary-faint);border:1px solid var(--primary-border);font-size:11px;margin-bottom:10px}
+.voucher-flow-hint i{font-size:17px;color:var(--primary)}
+.voucher-flow-hint.payment{background:#fff7ef;border-color:#f4d7b4}
+.voucher-flow-hint.payment i{color:#b96816}
+.voucher-flow-hint.general{background:#f4f0ff;border-color:#ded3ff}
+.voucher-flow-hint.general i{color:#6e4fc2}
+.voucher-amount-input{font-size:20px!important;letter-spacing:.4px}
+.voucher-amount-words{min-height:26px;padding:7px 4px 0;color:#ad2e2e;font-size:12px;font-weight:800;line-height:1.6}
+.voucher-submit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid #edf1ef}
+.voucher-submit-row>div{min-width:0}
+.voucher-submit-row span{display:block;color:var(--muted);font-size:9px}
+.voucher-submit-row strong{display:block;font-size:11px;margin-top:2px}
+.voucher-submit-btn{min-width:160px}
+.voucher-spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.42);border-top-color:#fff;border-radius:50%;animation:voucherSpin .7s linear infinite}
+.voucher-spinner.small{width:11px;height:11px}
+@keyframes voucherSpin{to{transform:rotate(360deg)}}
+.journal-tools{margin-bottom:13px}
+.journal-filter-grid{display:grid;grid-template-columns:minmax(0,1fr) 160px 140px auto;gap:8px}
+.journal-search{position:relative}
+.journal-search i{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);z-index:2}
+.journal-search input{padding-right:34px}
+.journal-list{display:grid;gap:10px}
+.journal-card{background:#fff;border:1px solid var(--border);border-radius:17px;padding:13px;box-shadow:0 6px 24px rgba(15,35,30,.04)}
+.journal-card-top,.journal-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.journal-number{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:800;color:var(--primary-dark)}
+.journal-source{display:inline-flex;margin-right:5px;padding:3px 7px;border-radius:999px;background:var(--neutral-soft,#f5f8f7);color:var(--muted);font-size:9px}
+.journal-date{font-size:10px;color:var(--muted)}
+.journal-description{display:block;font-size:13px;margin:9px 0}
+.journal-flow{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--neutral-soft,#f5f8f7);border-radius:11px;font-size:11px}
+.journal-flow span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.journal-flow i{color:var(--primary)}
+.journal-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.journal-actions form{display:inline-flex}
+.app-toast{position:fixed;top:76px;right:14px;z-index:220;width:min(390px,calc(100vw - 28px));margin:0;border-radius:14px;font-size:12px;box-shadow:0 14px 35px rgba(15,35,30,.18);animation:toastIn .22s ease}
+.app-toast.toast-leaving{opacity:0;transform:translateY(-8px);transition:all .18s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:700px){
+  .voucher-page-head{display:block}
+  .voucher-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .voucher-toolbar>.btn{justify-content:center}
+  .voucher-sort-wrap{min-width:0}
+  .voucher-live-search{grid-column:1/-1;min-width:0}
+  .voucher-cards{grid-template-columns:1fr}
+  .voucher-compose-sheet{top:auto;bottom:0;transform:translateX(-50%);max-height:94vh;border-radius:20px 20px 0 0;padding:14px}
+  .voucher-kind-tabs{grid-template-columns:1fr}
+  .voucher-kind{display:grid;grid-template-columns:24px minmax(0,1fr);text-align:right}
+  .voucher-kind i{grid-row:span 2}
+  .voucher-kind small{grid-column:2;padding-right:0}
+  .voucher-submit-row{align-items:stretch;flex-direction:column}
+  .voucher-submit-btn{width:100%}
+  .journal-filter-grid{grid-template-columns:1fr 1fr}
+  .journal-search{grid-column:1/-1}
+  .journal-filter-grid button{width:100%}
+  .voucher-card-actions{width:100%;justify-content:stretch}
+  .voucher-card-actions .btn,.voucher-card-actions .inline-action{flex:1}
+  .voucher-card-actions .btn{width:100%}
+}
