@@ -513,13 +513,14 @@ def employee_detail(employee_id):
     is_own_profile=bool(emp.user and emp.user.id==current_user.id)
     if not is_own_profile and not can("employees.view"):
         abort(403)
-    custody=account_balance(emp.account_id) if emp.account_id else D(0)
+    cashbox_balance=account_balance(emp.cashbox_account_id) if emp.cashbox_account_id else D(0)
+    employee_balance=account_balance(emp.account_id) if emp.account_id else D(0)
     payroll_due=account_balance(emp.payroll_account_id) if emp.payroll_account_id else D(0)
     shifts=Shift.query.filter_by(collector_id=emp.user.id if emp.user else -1).order_by(Shift.opened_at.desc()).limit(60).all()
     audits=AuditLog.query.filter_by(user_id=emp.user.id if emp.user else -1).order_by(AuditLog.created_at.desc()).limit(30).all()
     gates=GateTransaction.query.filter_by(collector_id=emp.user.id if emp.user else -1).order_by(GateTransaction.transaction_date.desc()).limit(30).all()
     payroll_lines=(PayrollLine.query.filter_by(employee_id=emp.id).order_by(PayrollLine.id.desc()).limit(24).all())
-    return render_template("master_data/employee_detail.html",employee=emp,custody=custody,payroll_due=payroll_due,shifts=shifts,audits=audits,gates=gates,payroll_lines=payroll_lines,fines=EmployeeFine.query.filter_by(employee_id=emp.id).order_by(EmployeeFine.fine_date.desc(),EmployeeFine.id.desc()).limit(30).all(),weekdays=WEEKDAYS,role_labels=ROLE_LABELS)
+    return render_template("master_data/employee_detail.html",employee=emp,custody=cashbox_balance,employee_balance=employee_balance,payroll_due=payroll_due,shifts=shifts,audits=audits,gates=gates,payroll_lines=payroll_lines,fines=EmployeeFine.query.filter_by(employee_id=emp.id).order_by(EmployeeFine.fine_date.desc(),EmployeeFine.id.desc()).limit(30).all(),weekdays=WEEKDAYS,role_labels=ROLE_LABELS)
 
 @bp.route("/employees/<int:employee_id>/edit",methods=["GET","POST"])
 @permission_required("employees.manage")
