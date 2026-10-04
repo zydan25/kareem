@@ -1,25 +1,46 @@
-{# Reusable Arabic account tree picker. Names only; account codes stay internal. #}
+{# Reusable RTL account-tree picker. Groups are expandable; only postable leaf accounts are selectable. #}
 {% macro picker(name, title, account_options, selected_id=None, placeholder='اختر الحساب', allowed_ids=None) %}
 <div class="account-tree-picker" data-account-picker data-name="{{name}}" data-title="{{title}}">
   <input type="hidden" name="{{name}}" value="{{selected_id or ''}}" required data-account-value>
-  <button type="button" class="account-picker-trigger" data-account-trigger>
+  <button type="button" class="account-picker-trigger" data-account-trigger aria-haspopup="tree" aria-expanded="false">
     <span data-account-label>{{placeholder}}</span>
-    <i class="bi bi-chevron-down"></i>
+    <i class="bi bi-chevron-down" aria-hidden="true"></i>
   </button>
   <div class="account-picker-panel" hidden data-account-panel>
     <div class="account-picker-search">
-      <i class="bi bi-search"></i>
-      <input type="search" class="form-control" placeholder="بحث فوري باسم الحساب..." autocomplete="off" data-account-search>
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input type="search" class="form-control" placeholder="بحث باسم الحساب أو الرمز..." autocomplete="off" data-account-search>
     </div>
-    <div class="account-picker-tree" data-account-tree>
+    <div class="account-picker-tree" data-account-tree role="tree">
       {% for a,depth in account_options %}
         {% if a.is_group %}
-          <div class="account-picker-group" data-account-label-text="{{a.name|lower}}" style="padding-right:{{depth*18}}px" data-account-group>
-            <i class="bi bi-folder2-open"></i><span>{{a.name}}</span>
-          </div>
+          <button type="button"
+                  class="account-picker-group"
+                  data-account-group
+                  data-account-id="{{a.id}}"
+                  data-account-parent-id="{{a.parent_id or ''}}"
+                  data-account-depth="{{depth}}"
+                  data-account-label-text="{{a.code|lower}} {{a.name|lower}}"
+                  aria-expanded="false"
+                  role="treeitem"
+                  style="--account-depth:{{depth}}">
+            <span class="account-picker-caret"><i class="bi bi-chevron-left" aria-hidden="true"></i></span>
+            <span class="account-picker-code">{{a.code}}</span>
+            <span class="account-picker-name">{{a.name}}</span>
+          </button>
         {% elif a.allow_manual_posting and (allowed_ids is none or a.id in allowed_ids) %}
-          <button type="button" class="account-picker-leaf" data-account-id="{{a.id}}" data-account-label-text="{{a.name|lower}}" style="padding-right:{{depth*18}}px" data-account-leaf>
-            <span class="account-picker-branch">↳</span><span>{{a.name}}</span>
+          <button type="button"
+                  class="account-picker-leaf"
+                  data-account-leaf
+                  data-account-id="{{a.id}}"
+                  data-account-parent-id="{{a.parent_id or ''}}"
+                  data-account-depth="{{depth}}"
+                  data-account-label-text="{{a.code|lower}} {{a.name|lower}}"
+                  role="treeitem"
+                  style="--account-depth:{{depth}}">
+            <span class="account-picker-caret"><i class="bi bi-arrow-return-left" aria-hidden="true"></i></span>
+            <span class="account-picker-code">{{a.code}}</span>
+            <span class="account-picker-name">{{a.name}}</span>
           </button>
         {% endif %}
       {% endfor %}
