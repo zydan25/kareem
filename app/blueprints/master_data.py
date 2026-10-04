@@ -11,6 +11,7 @@ from ..permissions import can, permission_required
 from ..services.accounting import account_balance, create_posted_entry, get_system_account
 from ..services.audit import audit
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_employee_account, ensure_employee_cashbox, ensure_employee_payroll_account
+from ..services.vehicles import ensure_default_vehicle
 from ..services.phone import normalize_phone, strip_password_formatting
 from ..services.setup import ensure_employees_for_users
 
@@ -188,7 +189,7 @@ def clients():
                 identity_number=request.form.get("identity_number") or None,address=request.form.get("address"),notes=request.form.get("notes"),active=True)
             db.session.add(client); db.session.flush(); _save_party_identity(client,"client"); ensure_client_account(client)
 
-            # Every newly created customer must have at least one vehicle.
+            # Every newly created customer gets a real persistent default vehicle.
             plates=request.form.getlist("vehicle_plate_number")
             statuses=request.form.getlist("vehicle_registration_status")
             type_ids=request.form.getlist("vehicle_type_id")
@@ -218,7 +219,8 @@ def clients():
                 created+=1
 
             if created<1:
-                raise ValueError("يجب إضافة مركبة واحدة على الأقل للعميل")
+                ensure_default_vehicle(client)
+                created=1
             for aid in {int(x) for x in request.form.getlist("agent_ids")}:
                 db.session.add(ClientAgent(client_id=client.id,agent_id=aid,priority=1))
             audit("create","client",client.id,client.name); db.session.commit(); flash(f"تم إضافة العميل وحسابه وتسجيل {created} مركبة","success")
