@@ -211,7 +211,7 @@
 {% block scripts %}
 <script>
 const DEFAULT_VEHICLE_TYPE_ID={{default_vehicle_type_id|int}};
-window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{client?.focus();loadClientSuggestions('');},40));
+window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>client?.focus(),40));
 const plateHidden=document.getElementById('plate_number');
 const sep=document.getElementById('plate_separator');
 const vehicleHidden=document.getElementById('vehicle_id');
