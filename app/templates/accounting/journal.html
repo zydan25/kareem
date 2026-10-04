@@ -1,7 +1,82 @@
 {% extends 'base.html' %}
-{% block title %}دفتر القيود اليومية - {{app_name}}{% endblock %}
+{% block title %}اليوميات - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">المحاسبة</span><h1>دفتر القيود اليومية</h1><p>كل قيد مرحّل محفوظ ويمكن طباعته أو عكسه بقيد تصحيحي دون تعديل الأصل.</p></div><div class="d-flex gap-2 flex-wrap">{% if can("accounting.post") %}<a class="btn btn-primary" href="{{url_for('operations.manual_journal')}}">قيد يدوي</a>{% endif %}<button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div></div>
-<div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>رقم القيد</th><th>التاريخ</th><th>البيان</th><th>المصدر</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
-<tbody>{% for e in entries %}<tr><td><code>{{e.number}}</code></td><td>{{e.entry_date}}</td><td class="fw-bold">{{e.description}}</td><td>{{e.source_type}}</td><td><span class="badge-soft">{{'مرحّل' if e.status=='posted' else 'ملغى' if e.status=='void' else e.status}}</span></td><td><a class="btn btn-sm btn-light" href="{{url_for('accounting.journal_detail',entry_id=e.id)}}">عرض وطباعة</a></td></tr>{% else %}<tr><td colspan="6" class="text-center py-5 text-muted">لا توجد قيود.</td></tr>{% endfor %}</tbody></table></div>
+<div class="page-head">
+  <div>
+    <span class="eyebrow">الحسابات</span>
+    <h1>اليوميات</h1>
+    <p>كل الحركات المحاسبية في صورة قيود: من حساب إلى حساب، بما فيها السندات.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if can("accounting.post") %}<a class="btn btn-primary" href="{{url_for('operations.manual_journal')}}"><i class="bi bi-plus-lg"></i> قيد يدوي</a>{% endif %}
+    <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
+  </div>
+</div>
+
+<div class="card-soft journal-tools print-hide">
+  <form class="journal-filter-grid" method="get">
+    <div class="journal-search">
+      <i class="bi bi-search"></i>
+      <input class="form-control" name="q" value="{{query}}" placeholder="بحث برقم القيد أو البيان">
+    </div>
+    <select class="form-select" name="source">
+      <option value="">كل الحركات</option>
+      <option value="voucher" {% if source=='voucher' %}selected{% endif %}>السندات</option>
+      <option value="manual" {% if source=='manual' %}selected{% endif %}>قيود يدوية</option>
+      <option value="reverse" {% if source=='reverse' %}selected{% endif %}>قيود عكسية</option>
+      <option value="expense" {% if source=='expense' %}selected{% endif %}>مصروفات</option>
+      <option value="settlement" {% if source=='settlement' %}selected{% endif %}>تسويات</option>
+    </select>
+    <select class="form-select" name="sort">
+      <option value="latest" {% if sort=='latest' %}selected{% endif %}>الأحدث</option>
+      <option value="oldest" {% if sort=='oldest' %}selected{% endif %}>الأقدم</option>
+      <option value="highest" {% if sort=='highest' %}selected{% endif %}>الأعلى مبلغًا</option>
+      <option value="lowest" {% if sort=='lowest' %}selected{% endif %}>الأقل مبلغًا</option>
+    </select>
+    <button class="btn btn-primary"><i class="bi bi-funnel"></i> تطبيق</button>
+  </form>
+</div>
+
+<div class="journal-list">
+{% for e in entries %}
+  {% set ns=namespace(frm='—',to='—') %}
+  {% for line in e.lines %}
+    {% if line.credit and line.credit > 0 %}{% set ns.frm=line.account.name %}{% endif %}
+    {% if line.debit and line.debit > 0 %}{% set ns.to=line.account.name %}{% endif %}
+  {% endfor %}
+  <article class="journal-card">
+    <div class="journal-card-top">
+      <div>
+        <span class="journal-number">{{e.number}}</span>
+        <span class="journal-source">{{source_labels.get(e.source_type,e.source_type)}}</span>
+      </div>
+      <span class="journal-date">{{e.entry_date}}</span>
+    </div>
+    <strong class="journal-description">{{e.description}}</strong>
+    <div class="journal-flow">
+      <span>{{ns.frm}}</span><i class="bi bi-arrow-left"></i><span>{{ns.to}}</span>
+    </div>
+    <div class="journal-card-bottom">
+      <div>
+        <small>المبلغ</small>
+        <strong>{{'{:,.2f}'.format(e.totals()[0])}} {{currency}}</strong>
+      </div>
+      <span class="journal-status {% if e.status=='posted' %}posted{% else %}void{% endif %}">
+        {{'مرحّل' if e.status=='posted' else 'ملغى' if e.status=='void' else e.status}}
+      </span>
+      <div class="journal-actions">
+        <a class="btn btn-sm btn-light" href="{{url_for('accounting.journal_detail',entry_id=e.id)}}"><i class="bi bi-eye"></i> عرض</a>
+        {% if e.status=='posted' and can("accounting.post") and not e.reversed_entry_id %}
+        <form method="post" action="{{url_for('accounting.reverse',entry_id=e.id)}}" onsubmit="return confirm('سيتم إنشاء قيد عكسي دون حذف القيد الأصلي. هل تريد المتابعة؟')">
+          <input type="hidden" name="reason" value="عكس من اليوميات">
+          <button class="btn btn-sm btn-outline-danger"><i class="bi bi-arrow-counterclockwise"></i> عكس</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+{% else %}
+  <div class="empty-state"><i class="bi bi-journal-x"></i><strong>لا توجد قيود</strong><span>سيظهر هنا كل قيد مرحّل وكل سند محاسبي.</span></div>
+{% endfor %}
+</div>
 {% endblock %}
