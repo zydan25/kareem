@@ -257,7 +257,7 @@
 
       leaves.forEach(leaf=>leaf.addEventListener("click",()=>{
         value.value=leaf.dataset.accountId||"";
-        label.textContent=(leaf.dataset.accountLabelText||"").replace(/\s+/g," / ").replace(/\s\/\s/g," / ");
+        label.textContent=leaf.dataset.accountLabelDisplay||leaf.dataset.accountLabelText||"اختر الحساب";
         leaves.forEach(x=>x.classList.remove("selected"));
         leaf.classList.add("selected");
         leaf.dataset.accountSelected="1";
@@ -277,7 +277,7 @@
           selected.classList.add("selected");
           selected.dataset.accountSelected="1";
           const parts=(selected.dataset.accountLabelText||"").split(/\s+/);
-          label.textContent=selected.dataset.accountLabelText||label.textContent;
+          label.textContent=selected.dataset.accountLabelDisplay||selected.dataset.accountLabelText||label.textContent;
           openSelectedAccountPath(picker,value.value);
         }
       }
