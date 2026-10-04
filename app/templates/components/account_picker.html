@@ -36,6 +36,7 @@
                   data-account-parent-id="{{a.parent_id or ''}}"
                   data-account-depth="{{depth}}"
                   data-account-label-text="{{a.code|lower}} {{a.name|lower}}"
+                  data-account-label-display="{{a.code}}/{{a.name}}"
                   role="treeitem"
                   style="--account-depth:{{depth}}">
             <span class="account-picker-caret"><i class="bi bi-arrow-return-left" aria-hidden="true"></i></span>
