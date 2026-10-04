@@ -186,8 +186,7 @@ def transaction_detail(transaction_id):
 @permission_required("collector.view")
 def search():
     q=request.args.get("q","").strip()
-    if not q:
-        return jsonify([])
+    initial_load=not q
     rows=(Vehicle.query.filter(Vehicle.active.is_(True),
         or_(Vehicle.plate_number.ilike(f"%{q}%"),Vehicle.plate_separator.ilike(f"%{q}%"),Vehicle.plate_letters.ilike(f"%{q}%")))
         .order_by(Vehicle.updated_at.desc()).limit(15).all())
@@ -261,6 +260,9 @@ def search_clients():
             "address":client.address,
             "vehicles":vehicle_payload,
         })
+
+    if initial_load:
+        return jsonify(results[:10])
 
     # A plate may be typed without spaces/slashes/dashes; compare against a
     # compacted database value as well.
