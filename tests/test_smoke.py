@@ -154,9 +154,9 @@ def test_employee_created_account_can_login(app):
     employee_response=employee_client.post("/login",data={
         "identifier":"777123456",
         "password":"pass1234",
-    },follow_redirects=True)
-    assert employee_response.status_code==200
-    assert employee_response.request.path == "/collector"
+    },follow_redirects=False)
+    assert employee_response.status_code==302
+    assert employee_response.headers["Location"].endswith("/dashboard")
 
 
 def test_employee_login_accepts_hidden_bidi_marks_in_phone_and_password(app):
@@ -181,6 +181,6 @@ def test_employee_login_accepts_hidden_bidi_marks_in_phone_and_password(app):
     response=client.post("/login",data={
         "identifier":"775660418",
         "password":"‏775660418‬",
-    },follow_redirects=True)
-    assert response.status_code==200
-    assert response.request.path == "/collector"
+    },follow_redirects=False)
+    assert response.status_code==302
+    assert response.headers["Location"].endswith("/dashboard")
