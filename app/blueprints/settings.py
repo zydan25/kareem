@@ -90,6 +90,9 @@ def index():
             _save_setting("currency_name",currency_name,"string","العملة")
             _save_setting("brand_color",brand_color,"string","اللون الرئيسي")
             _save_setting("ui_theme",request.form.get("setting_ui_theme","light"),"string","المظهر")
+            font_size=request.form.get("setting_font_size","100")
+            if font_size not in {"100","110","120","130"}: font_size="100"
+            _save_setting("font_size",font_size,"string","حجم الخط العام")
             _save_setting("customer_portal",request.form.get("setting_customer_portal","0"),"boolean","إتاحة لوحة العميل")
             _save_setting("brand_icon_enabled","1" if request.form.get("setting_brand_icon_enabled")=="1" else "0","boolean","تفعيل أيقونة التطبيق")
             _save_brand_image(request.files.get("brand_logo"),"brand_logo")
