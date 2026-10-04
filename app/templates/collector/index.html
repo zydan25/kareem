@@ -175,19 +175,46 @@
 .collector-form-compact .collector-selected-vehicle small{
   font-size:calc(11px * var(--collector-form-scale))!important;
 }
-</style>
+.collector-title-wrap{display:flex;flex-direction:column;min-width:0}
+.collector-head-actions{display:flex;align-items:center;gap:6px}
+.collector-head-action{width:58px;min-height:48px;padding:6px 5px;border-radius:13px;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid transparent;font-size:calc(10px * var(--collector-form-scale,1.2));font-weight:950;line-height:1}
+.collector-head-action i{font-size:calc(18px * var(--collector-form-scale,1.2))}
+.collector-head-action.client{background:#edf9f1;border-color:#c7e8d2;color:#16794a}
+.collector-head-action.vehicle{background:#edf5ff;border-color:#cddff4;color:#2d67a2}
+.collector-head-action.report{background:#f4f0ff;border-color:#ddd2f5;color:#7351ac}
+.collector-head-action:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(20,45,37,.08)}
+.collector-mini-stats{--stats-scale:var(--collector-form-scale,1.2);grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.collector-mini-stat{position:relative;min-height:calc(60px * var(--stats-scale));padding:calc(8px * var(--stats-scale)) calc(10px * var(--stats-scale));border-radius:15px;display:flex;align-items:center;gap:calc(8px * var(--stats-scale));overflow:hidden;box-shadow:0 4px 14px rgba(20,45,37,.045)}
+.collector-mini-stat .stat-icon{width:calc(32px * var(--stats-scale));height:calc(32px * var(--stats-scale));flex:0 0 auto;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:calc(15px * var(--stats-scale))}
+.collector-mini-stat .copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.collector-mini-stat span{font-size:calc(9px * var(--stats-scale));font-weight:900}
+.collector-mini-stat strong{font-size:calc(16px * var(--stats-scale));font-weight:950;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.collector-mini-stat>small{margin-right:auto;align-self:flex-end;font-size:calc(8px * var(--stats-scale));opacity:.62;font-weight:800}
+.collector-mini-stat.total .stat-icon{background:#dce9fb}.collector-mini-stat.entry .stat-icon{background:#d5f0df}.collector-mini-stat.exit .stat-icon{background:#f9dbd8}.collector-mini-stat.custody .stat-icon{background:#f5e7bc}
+@media(max-width:700px){
+  .collector-mobile-head{align-items:center}
+  .collector-head-actions{gap:5px}
+  .collector-head-action{width:calc(50px * var(--collector-form-scale,1.2));min-height:calc(48px * var(--collector-form-scale,1.2));border-radius:12px}
+  .collector-head-action span{font-size:calc(8px * var(--collector-form-scale,1.2))}
+  .collector-mini-stats{grid-template-columns:1fr 1fr;gap:6px}
+  .collector-mini-stat{min-height:calc(62px * var(--stats-scale));border-radius:14px}
+}</style>
 
 <div class="collector-mobile-page">
   <div class="collector-mobile-head">
-    <div><span class="eyebrow">البوابة</span><h1>تحصيل</h1><small>{{today if today is defined else ''}}</small></div>
-    <a class="btn btn-sm btn-outline-primary" href="{{url_for('reports.gate')}}"><i class="bi bi-bar-chart"></i></a>
+    <div class="collector-title-wrap"><span class="eyebrow">البوابة</span><h1>تحصيل</h1><small>{{today if today is defined else ''}}</small></div>
+    <div class="collector-head-actions">
+      {% if can("clients.manage") %}<a class="collector-head-action client" href="{{url_for('master_data.clients')}}?open=add" title="إضافة عميل"><i class="bi bi-person-plus"></i><span>عميل</span></a>{% endif %}
+      {% if can("vehicles.manage") %}<a class="collector-head-action vehicle" id="collector-add-vehicle" href="{{url_for('master_data.vehicles')}}?open=add-vehicle" title="إضافة مركبة"><i class="bi bi-truck-front"></i><span>مركبة</span></a>{% endif %}
+      <a class="collector-head-action report" href="{{url_for('reports.gate')}}" title="التقرير"><i class="bi bi-bar-chart"></i><span>تقرير</span></a>
+    </div>
   </div>
 
   <div class="collector-mini-stats">
-    <div class="collector-mini-stat total"><i class="bi bi-cash-stack"></i><div class="copy"><span>تحصيلي</span><strong>{{'{:,.0f}'.format(daily_total or 0)}}</strong></div></div>
-    <div class="collector-mini-stat entry"><i class="bi bi-arrow-down-circle"></i><div class="copy"><span>دخول</span><strong>{{daily_entries}}</strong></div></div>
-    <div class="collector-mini-stat exit"><i class="bi bi-arrow-up-circle"></i><div class="copy"><span>خروج</span><strong>{{daily_exits}}</strong></div></div>
-    <div class="collector-mini-stat custody"><i class="bi bi-safe2"></i><div class="copy"><span>عهدتي</span><strong>{{'{:,.0f}'.format(custody_balance or 0)}}</strong></div></div>
+    <div class="collector-mini-stat total"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="copy"><span>تحصيلي</span><strong>{{'{:,.0f}'.format(daily_total or 0)}}</strong></div><small>اليوم</small></div>
+    <div class="collector-mini-stat entry"><div class="stat-icon"><i class="bi bi-arrow-down-circle"></i></div><div class="copy"><span>دخول</span><strong>{{daily_entries}}</strong></div></div>
+    <div class="collector-mini-stat exit"><div class="stat-icon"><i class="bi bi-arrow-up-circle"></i></div><div class="copy"><span>خروج</span><strong>{{daily_exits}}</strong></div></div>
+    <div class="collector-mini-stat custody"><div class="stat-icon"><i class="bi bi-safe2"></i></div><div class="copy"><span>عهدتي</span><strong>{{'{:,.0f}'.format(custody_balance or 0)}}</strong></div></div>
   </div>
 
   <div class="card-soft collector-mobile-card">
@@ -405,6 +432,15 @@ client?.addEventListener('input',()=>{
   searchClients(q);
 });
 client?.addEventListener('focus',()=>{});
+const collectorAddVehicle=document.getElementById('collector-add-vehicle');
+function syncCollectorVehicleLink(){
+  if(!collectorAddVehicle)return;
+  const base='{{url_for("master_data.vehicles")}}?open=add-vehicle';
+  collectorAddVehicle.href=clientId.value?base+'&client_id='+encodeURIComponent(clientId.value):base;
+}
+client?.addEventListener('input',syncCollectorVehicleLink);
+syncCollectorVehicleLink();
+
 document.getElementById('add-real-vehicle')?.addEventListener('click',()=>{
   newVehiclePanel.hidden=false;vehiclePanel.hidden=true;selectedVehicle.hidden=true;defaultHidden.value='';newType.focus();
 });
