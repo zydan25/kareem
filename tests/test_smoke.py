@@ -108,7 +108,7 @@ def test_simple_receipt_and_payment_vouchers_use_cashboxes(app):
         assert payment_entry.totals()==(Decimal("25.00"),Decimal("25.00"))
 
 
-def test_vouchers_page_restores_receipt_payment_ui(app, client):
+def test_vouchers_page_polished_receipt_payment_ui(app, client):
     login(client)
     response=client.get("/operations/vouchers")
     assert response.status_code==200
@@ -118,8 +118,10 @@ def test_vouchers_page_restores_receipt_payment_ui(app, client):
     assert 'data-voucher-open-mode="payment"' in body
     assert "سند قبض" in body
     assert "سند صرف" in body
-    assert 'class="voucher-kind-tabs voucher-kind-tabs-primary"' in body
-    assert "من الحساب <strong>إلى الصندوق</strong>" not in body
+    assert 'id="voucher-kind-tabs"' in body
+    assert 'id="voucher-type" value=""' in body
+    assert "سند عام" not in body
+    assert "إصدار سند" in body
 
 
 def test_voucher_route_requires_post_permission(app, client):
