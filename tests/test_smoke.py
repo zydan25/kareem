@@ -122,6 +122,8 @@ def test_vouchers_page_polished_receipt_payment_ui(app, client):
     assert 'id="voucher-type" value=""' in body
     assert "سند عام" not in body
     assert "إصدار سند" in body
+    assert "grid-template-columns:minmax(52px,.7fr) minmax(0,1fr) minmax(0,1fr) minmax(92px,1.15fr)" in body or \
+           "grid-template-columns:minmax(52px,.7fr) minmax(0,1fr) minmax(0,1fr) minmax(92px,1.15fr)" in body
 
 
 def test_voucher_route_requires_post_permission(app, client):
