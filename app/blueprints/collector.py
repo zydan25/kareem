@@ -105,7 +105,7 @@ def index():
             custody=ensure_user_collector_account(current_user)
             revenue=get_system_account("entry_revenue" if direction=="entry" else "exit_revenue")
             # Entry fees assigned to an agent are receivables on that agent's
-            # account; only unassigned gate cash becomes collector custody.
+            # account; only unassigned gate cash becomes the collector's cashbox.
             debit_account=ensure_agent_account(agent) if direction=="entry" and agent else custody
             now=datetime.now(timezone.utc)
             entry=create_posted_entry(
