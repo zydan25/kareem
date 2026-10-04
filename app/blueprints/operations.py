@@ -12,7 +12,7 @@ from ..services.accounts import ensure_agent_account, ensure_employee_payroll_ac
 from ..services.audit import audit
 from ..services.operations import (
     approve_settlement, build_payroll, charge_rent, pay_rent, pay_salary,
-    post_payroll, post_voucher, create_settlement, post_expense,
+    is_cash_account, post_payroll, post_voucher, create_settlement, post_expense,
 )
 
 
@@ -35,35 +35,48 @@ def _account_picker():
 
 
 @bp.route("/vouchers",methods=["GET","POST"])
-@permission_required("vouchers.post")
+@permission_required("vouchers.view")
 def vouchers():
     account_options=_account_picker()
-    accounts=[a for a,_ in account_options if not a.is_group and a.allow_manual_posting]
+    postable=[a for a,_ in account_options if not a.is_group and a.active and a.allow_manual_posting]
+    cash_accounts=[a for a in postable if is_cash_account(a)]
+    cash_ids={a.id for a in cash_accounts}
+    counterpart_ids={a.id for a in postable if a.id not in cash_ids}
     rows=Voucher.query.order_by(Voucher.id.desc()).limit(200).all()
     if request.method=="POST":
         try:
-            from_account=db.session.get(Account,int(request.form["from_account_id"]))
-            to_account=db.session.get(Account,int(request.form["to_account_id"]))
-            if not from_account or not to_account: raise ValueError("اختر حسابي المصدر والهدف")
+            if not can("vouchers.post"):
+                raise ValueError("ليست لديك صلاحية إصدار السندات")
+            voucher_type=request.form.get("voucher_type","receipt")
+            account=db.session.get(Account,request.form.get("account_id",type=int))
+            cash_account=db.session.get(Account,request.form.get("cash_account_id",type=int))
+            if not account or not cash_account:
+                raise ValueError("اختر الحساب والصندوق")
+            if voucher_type==VoucherType.RECEIPT.value:
+                from_account,to_account=account,cash_account
+            elif voucher_type==VoucherType.PAYMENT.value:
+                from_account,to_account=cash_account,account
+            else:
+                raise ValueError("استخدم سند قبض أو سند صرف من هذه الشاشة")
             voucher,entry=post_voucher(
-                voucher_type=request.form.get("voucher_type","transfer"),
-                amount=request.form.get("amount"),
+                voucher_type=voucher_type,amount=request.form.get("amount"),
                 from_account=from_account,to_account=to_account,
                 description=request.form.get("description","سند محاسبي"),
                 user_id=current_user.id,beneficiary=request.form.get("beneficiary",""),
             )
             audit("create_voucher","voucher",voucher.id,voucher.number)
-            db.session.commit(); flash(f"تم ترحيل السند {voucher.number} والقيد {entry.number}","success")
+            db.session.commit(); flash(f"تم إصدار السند {voucher.number} والقيد {entry.number}","success")
             return redirect(url_for("operations.vouchers"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     selected_type=request.args.get("type","receipt")
-    return render_template("operations/vouchers.html",accounts=accounts,account_options=account_options,vouchers=rows,types=[
-        (VoucherType.RECEIPT.value,"سند قبض"),(VoucherType.PAYMENT.value,"سند صرف"),
-        (VoucherType.TRANSFER.value,"سند تحويل")])
+    if selected_type not in {VoucherType.RECEIPT.value,VoucherType.PAYMENT.value}: selected_type=VoucherType.RECEIPT.value
+    return render_template("operations/vouchers.html",
+        account_options=account_options,counterpart_ids=counterpart_ids,
+        cash_ids=cash_ids,vouchers=rows,selected_type=selected_type)
 
 @bp.get("/vouchers/<int:voucher_id>")
-@permission_required("vouchers.post")
+@permission_required("vouchers.view")
 def voucher_detail(voucher_id):
     voucher=db.session.get(Voucher,voucher_id)
     if not voucher: return ("السند غير موجود",404)
