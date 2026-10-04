@@ -208,8 +208,7 @@ def search():
 @permission_required("collector.view")
 def search_clients():
     q=request.args.get("q","").strip()
-    if not q:
-        return jsonify([])
+    initial_load=not q
 
     compact=q.replace(" ","").replace("-","").replace("/","")
     phone_compact=q.replace(" ","").replace("-","").replace("(","").replace(")","")
