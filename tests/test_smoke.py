@@ -63,3 +63,18 @@ def test_sidebar_contains_all_major_sections_and_report_links(client):
         assert url in body
     assert 'class="nav-count"' in body
     assert 'class="nav-chevron bi bi-chevron-down"' in body
+
+
+def test_employee_has_separate_account_and_cashbox(app):
+    with app.app_context():
+        from app.models import Employee
+        employee=db.session.query(Employee).filter_by(active=True).order_by(Employee.id).first()
+        assert employee is not None
+        assert employee.account_id is not None
+        assert employee.cashbox_account_id is not None
+        assert employee.account_id != employee.cashbox_account_id
+        assert employee.account.is_group is False
+        assert employee.cashbox_account.is_group is False
+        assert employee.account.parent_id != employee.cashbox_account.parent_id
+        assert employee.cashbox_account.parent.system_key == "collector_root"
+        assert employee.account.parent.system_key == "employee_accounts_root"
