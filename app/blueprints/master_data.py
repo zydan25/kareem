@@ -323,7 +323,10 @@ def toggle_client(client_id):
 @permission_required("vehicles.view")
 def vehicles():
     q=request.args.get("q","").strip()
+    vehicle_type_id=request.args.get("vehicle_type_id",type=int)
     query=Vehicle.query
+    if vehicle_type_id:
+        query=query.filter(Vehicle.vehicle_type_id==vehicle_type_id)
     if q:
         compact=q.replace(" ","").replace("-","").replace("/","")
         query=query.filter(or_(
@@ -357,7 +360,9 @@ def vehicles():
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     selected_client_id=request.args.get("client_id",type=int)
-    return render_template("master_data/vehicles.html",vehicles=rows,vehicle_types=types,all_vehicle_types=all_vehicle_types,clients=clients,agents=agents,can_manage=can("vehicles.manage"),q=q,selected_client_id=selected_client_id)
+    selected_vehicle_type_id=vehicle_type_id
+    selected_vehicle_type=db.session.get(VehicleType,vehicle_type_id) if vehicle_type_id else None
+    return render_template("master_data/vehicles.html",vehicles=rows,vehicle_types=types,all_vehicle_types=all_vehicle_types,clients=clients,agents=agents,can_manage=can("vehicles.manage"),q=q,selected_client_id=selected_client_id,selected_vehicle_type_id=selected_vehicle_type_id,selected_vehicle_type=selected_vehicle_type)
 
 @bp.get("/vehicles/<int:vehicle_id>")
 @permission_required("vehicles.view")
