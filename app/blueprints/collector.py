@@ -167,6 +167,7 @@ def index():
 
     return render_template("collector/index.html",
         vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all(),
+        default_vehicle_type_id=default_vehicle_type(db.session).id,
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
         recent=day_rows[:20],current_shift=current_shift(),
         daily_total=daily_total,daily_count=daily_count,daily_entries=daily_entries,
