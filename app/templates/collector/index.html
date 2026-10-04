@@ -135,7 +135,15 @@
         <input type="hidden" id="client_phone" name="client_phone">
         <input type="hidden" id="client_address" name="client_address">
         <input type="hidden" id="client_notes" name="client_notes">
-        <div id="client-suggestions" class="client-suggestion-list" hidden></div>
+        <div id="client-suggestions" class="client-suggestion-list">
+          {% for c in initial_clients %}
+          <button type="button" class="client-suggestion" data-client-index="{{loop.index0}}">
+            <span class="client-suggestion-icon"><i class="bi bi-person"></i></span>
+            <span><strong>{{c.name}}</strong><small>{{c.phone or 'بدون هاتف'}} · {{c.vehicles|length}} مركبة</small></span>
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          {% endfor %}
+        </div>
       </div>
 
       <div id="customer-vehicles-panel" class="customer-vehicles-panel" hidden>
@@ -308,26 +316,36 @@ function chooseVehicleResult(x){
 function renderClientSuggestions(rows){
   rows=rows||[];
   clientSug.hidden=false;
-  if(!rows.length){clientSug.innerHTML='<div style="padding:10px;font-size:12px">لا يوجد عملاء مسجلون.</div>';return;}
-  clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi bi-person"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة')+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
-  clientSug.querySelectorAll('.client-suggestion').forEach(btn=>btn.onclick=()=>{const x=rows[Number(btn.dataset.index)];chooseCustomer(x);});
+  if(!rows.length){clientSug.innerHTML='<div style="padding:10px;font-size:12px">لا يوجد عملاء مطابقون.</div>';return;}
+  clientSug.innerHTML=rows.map((x,i)=>'<button type="button" class="client-suggestion" data-client-temp="'+i+'"><span class="client-suggestion-icon"><i class="bi bi-person"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة')+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
+  clientSug.querySelectorAll('.client-suggestion').forEach((btn,i)=>btn.onclick=()=>chooseCustomer(rows[i]));
+}
+function filterInitialClients(query){
+  const needle=String(query||'').trim().toLowerCase();
+  const rows=INITIAL_CLIENTS.filter(x=>(String(x.name||'')+' '+String(x.phone||'')).toLowerCase().includes(needle));
+  renderClientSuggestions(rows);
+  return rows.length;
 }
 function loadClientSuggestions(q=''){
   const query=String(q??'').trim();
   clearTimeout(searchTimer);
-  if(!query){renderClientSuggestions(INITIAL_CLIENTS);return;}
+  if(!query){filterInitialClients('');return;}
+  if(filterInitialClients(query)>0)return;
   clientSug.hidden=false;
   clientSug.innerHTML='<div style="padding:10px;font-size:11px;color:#8c9693">جارٍ البحث...</div>';
-  searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query)).then(r=>r.ok?r.json():Promise.reject(new Error('search failed'))).then(renderClientSuggestions).catch(()=>{clientSug.innerHTML='<div style="padding:10px;font-size:11px">تعذر البحث، جرّب مرة أخرى.</div>';})},70);
+  searchTimer=setTimeout(()=>fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query))
+    .then(r=>r.ok?r.json():Promise.reject(new Error('search failed')))
+    .then(renderClientSuggestions)
+    .catch(()=>{clientSug.innerHTML='<div style="padding:10px;font-size:11px">تعذر البحث، جرّب مرة أخرى.</div>';});},70);
 }
-client?.addEventListener('focus',()=>{if(!client.value.trim())renderClientSuggestions(INITIAL_CLIENTS);});
+client?.addEventListener('focus',()=>{clientSug.hidden=false;filterInitialClients(client.value);});
 client?.addEventListener('input',()=>{
   clientId.value='';clearVehicle();
   const q=client.value.trim();
-  if(!q){vehiclePanel.hidden=true;renderClientSuggestions(INITIAL_CLIENTS);return;}
+  if(!q){vehiclePanel.hidden=true;filterInitialClients('');return;}
   loadClientSuggestions(q);
 });
-window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{client?.focus();renderClientSuggestions(INITIAL_CLIENTS);},40));
+window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{client?.focus();filterInitialClients(client?.value||'');},40));
 document.getElementById('add-real-vehicle')?.addEventListener('click',showRealVehicle);
 document.getElementById('cancel-real-vehicle')?.addEventListener('click',()=>{newVehiclePanel.hidden=true;vehiclePanel.hidden=false;});
 document.getElementById('use-real-vehicle')?.addEventListener('click',useRealVehicle);
