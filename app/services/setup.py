@@ -25,6 +25,7 @@ CHILDREN=[
 ("403","إيرادات أخرى",AccountType.REVENUE.value,"root_revenue",False,"other_revenue"),
 ("404","إيرادات خروج السوق",AccountType.REVENUE.value,"root_revenue",False,"exit_revenue"),
 ("405","إيرادات غرامات ومخالفات الموظفين",AccountType.REVENUE.value,"root_revenue",False,"employee_fines_revenue"),
+("39901","أرصدة افتتاحية",AccountType.EQUITY.value,"root_equity",False,"opening_balance_equity"),
 ("501","الرواتب والأجور",AccountType.EXPENSE.value,"root_expenses",False,"salary_expense"),
 ("502","مصروفات تشغيلية",AccountType.EXPENSE.value,"root_expenses",False,"operating_expense")]
 
