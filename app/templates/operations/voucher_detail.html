@@ -37,6 +37,11 @@ async function shareVoucher(){
    else{await navigator.clipboard.writeText(location.href);alert('تم نسخ رابط السند للمشاركة.');}
  }catch(e){}
 }
+document.addEventListener('DOMContentLoaded',()=>{
+ if(new URLSearchParams(location.search).get('print')==='1'){
+   setTimeout(()=>window.print(),250);
+ }
+});
 async function saveVoucherImage(){
  const paper=document.getElementById('voucher-paper');
  if(!window.html2canvas){alert('لم يتم تحميل أداة حفظ الصورة. أعد المحاولة.');return;}
