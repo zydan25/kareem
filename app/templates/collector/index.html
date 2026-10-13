@@ -18,8 +18,8 @@
 .collector-mini-stat.exit i{background:#f9dbd8}
 .collector-mini-stat.total{background:#eef5ff;border-color:#d9e6fa;color:#2f67a8}
 .collector-mini-stat.total i{background:#dce9fb}
-.collector-mini-stat.custody{background:#fff8e9;border-color:#f2e5bf;color:#9a7514}
-.collector-mini-stat.custody i{background:#f5e7bc}
+.collector-mini-stat.cashbox{background:#fff8e9;border-color:#f2e5bf;color:#9a7514}
+.collector-mini-stat.cashbox i{background:#f5e7bc}
 .collector-mobile-card{padding:10px!important}
 .collector-form-compact{--collector-form-scale:{{collector_font_scale|default('1.1')}};display:flex;flex-direction:column;gap:8px;font-size:calc(14px * var(--collector-form-scale))}
 .collector-field{display:flex;flex-direction:column;gap:4px}
@@ -190,7 +190,7 @@
 .collector-mini-stat span{font-size:calc(9px * var(--stats-scale));font-weight:900}
 .collector-mini-stat strong{font-size:calc(16px * var(--stats-scale));font-weight:950;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .collector-mini-stat>small{margin-right:auto;align-self:flex-end;font-size:calc(8px * var(--stats-scale));opacity:.62;font-weight:800}
-.collector-mini-stat.total .stat-icon{background:#dce9fb}.collector-mini-stat.entry .stat-icon{background:#d5f0df}.collector-mini-stat.exit .stat-icon{background:#f9dbd8}.collector-mini-stat.custody .stat-icon{background:#f5e7bc}
+.collector-mini-stat.total .stat-icon{background:#dce9fb}.collector-mini-stat.entry .stat-icon{background:#d5f0df}.collector-mini-stat.exit .stat-icon{background:#f9dbd8}.collector-mini-stat.cashbox .stat-icon{background:#f5e7bc}
 @media(max-width:700px){
   .collector-mobile-head{align-items:center}
   .collector-head-actions{gap:5px}
@@ -214,7 +214,7 @@
     <div class="collector-mini-stat total"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="copy"><span>تحصيلي</span><strong>{{'{:,.0f}'.format(daily_total or 0)}}</strong></div><small>اليوم</small></div>
     <div class="collector-mini-stat entry"><div class="stat-icon"><i class="bi bi-arrow-down-circle"></i></div><div class="copy"><span>دخول</span><strong>{{daily_entries}}</strong></div></div>
     <div class="collector-mini-stat exit"><div class="stat-icon"><i class="bi bi-arrow-up-circle"></i></div><div class="copy"><span>خروج</span><strong>{{daily_exits}}</strong></div></div>
-    <div class="collector-mini-stat custody"><div class="stat-icon"><i class="bi bi-safe2"></i></div><div class="copy"><span>عهدتي</span><strong>{{'{:,.0f}'.format(custody_balance or 0)}}</strong></div></div>
+    <div class="collector-mini-stat cashbox"><div class="stat-icon"><i class="bi bi-safe2"></i></div><div class="copy"><span>{{cashbox_label}}</span><strong>{{'{:,.0f}'.format(cashbox_balance or 0)}}</strong></div></div>
   </div>
 
   <div class="card-soft collector-mobile-card">
