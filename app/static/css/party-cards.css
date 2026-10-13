@@ -56,3 +56,18 @@ body.theme-water-project .party-page-head h1{margin:0 0 4px;font-size:20px;font-
 body.theme-water-project .party-page-head .eyebrow{font-size:12px;font-weight:900;letter-spacing:0;color:#111827;}
 body.theme-water-project .party-page-head small{font-size:10px;font-weight:500;line-height:1.5;color:#687385;}
 @media(max-width:600px){body.theme-water-project .party-page-head h1{font-size:20px;font-weight:850;line-height:1.4;}}
+
+/* Raise all card typography to the same comfortable scale as the third-theme dashboard. */
+.party-page-head h1{font-size:24px;font-weight:850;line-height:1.4;}
+.party-title strong{font-size:16px;line-height:1.5;}
+.party-title small{font-size:11px;}
+.party-status{font-size:10px;padding:6px 8px;}
+.party-card-facts span{font-size:10px;margin-bottom:4px;}
+.party-card-facts strong{font-size:13px;line-height:1.5;}
+.party-account-label{font-size:10px;}
+.party-card-actions .btn{width:32px;height:32px;font-size:12px;}
+.party-result-bar strong{font-size:14px;}
+.party-result-bar span{font-size:11px;}
+.party-page-head .eyebrow{font-size:12px;}
+body.theme-water-project .party-page-head h1{font-size:20px;font-weight:850;line-height:1.4;letter-spacing:-.2px;}
+@media(max-width:520px){.party-page-head h1{font-size:22px;}.party-title strong{font-size:15px;}.party-title small{font-size:11px;}.party-status{font-size:10px;}.party-card-facts span{font-size:9.5px;}.party-card-facts strong{font-size:12px;}.party-account-label{font-size:9.5px;}}

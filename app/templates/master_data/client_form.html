@@ -49,6 +49,8 @@ document.getElementById('add-client-vehicle')?.addEventListener('click',()=>{bui
 builder?.addEventListener('click',e=>{const btn=e.target.closest('.vehicle-remove');if(!btn)return;const row=btn.closest('.client-vehicle-row');if(row)row.remove();});
 builder?.addEventListener('change',e=>{if(e.target.classList.contains('vehicle-status')||e.target.name==='vehicle_type_id')setVehicleRequirement(e.target.closest('.client-vehicle-row'));});
 builder?.querySelectorAll('.client-vehicle-row').forEach(setVehicleRequirement);
+function initClientVehicleSearchSelects(root=document){root.querySelectorAll?.('select[data-searchable-select]').forEach(x=>window.initSearchableSelect?.(x));}
+initClientVehicleSearchSelects();
 document.getElementById('edit-client-form')?.addEventListener('submit',e=>{
  const rows=builder.querySelectorAll('.client-vehicle-row');
  if(!rows.length){e.preventDefault();alert('يجب أن يكون للعميل مركبة واحدة على الأقل.');return;}

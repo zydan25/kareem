@@ -86,10 +86,13 @@ document.getElementById('add-client-vehicle')?.addEventListener('click',()=>{
   const row=builder.lastElementChild;
   setVehicleRequirement(row);
   row?.querySelectorAll('select[data-searchable-select]').forEach(x=>window.initSearchableSelect?.(x));
+  initClientVehicleSearchSelects(row);
 });
 builder?.addEventListener('click',e=>{const btn=e.target.closest('.vehicle-remove');if(!btn)return;const rows=builder.querySelectorAll('.client-vehicle-row');if(rows.length<=1)return;btn.closest('.client-vehicle-row')?.remove();});
 builder?.addEventListener('change',e=>{if(e.target.classList.contains('vehicle-status')||e.target.name==='vehicle_type_id')setVehicleRequirement(e.target.closest('.client-vehicle-row'));});
 builder?.querySelectorAll('.client-vehicle-row').forEach(setVehicleRequirement);
+function initClientVehicleSearchSelects(root=document){root.querySelectorAll?.('select[data-searchable-select]').forEach(x=>window.initSearchableSelect?.(x));}
+initClientVehicleSearchSelects();
 document.querySelectorAll('[data-card-href]').forEach(card=>{
  card.addEventListener('click',e=>{if(e.target.closest('a,button,form,input,select,textarea,details,summary'))return;window.location.href=card.dataset.cardHref;});
  card.addEventListener('keydown',e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();window.location.href=card.dataset.cardHref;}});
