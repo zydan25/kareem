@@ -209,6 +209,54 @@ def test_employee_login_accepts_hidden_bidi_marks_in_phone_and_password(app):
     assert response.headers["Location"].endswith("/dashboard")
 
 
+def test_receipt_to_main_cash_handles_legacy_account_tree(app, client):
+    login(client)
+    with app.app_context():
+        from app.services.operations import is_cash_account
+
+        cash = db.session.query(Account).filter_by(system_key="main_cash").one()
+        revenue = db.session.query(Account).filter_by(system_key="entry_revenue").one()
+        assets_root = db.session.query(Account).filter_by(system_key="root_assets").one()
+
+        # Simulate an older database where the system cash account's parent
+        # differs from the current seed hierarchy.
+        cash.parent_id = assets_root.id
+        db.session.commit()
+        cash_id, revenue_id = cash.id, revenue.id
+        assert is_cash_account(cash) is True
+
+    page = client.get("/operations/vouchers")
+    assert page.status_code == 200
+    body = page.get_data(as_text=True)
+    cash_picker_start = body.index('data-name="cash_account_id"')
+    transfer_picker_start = body.index('data-name="from_account_id"', cash_picker_start)
+    assert f'data-account-id="{cash_id}"' in body[cash_picker_start:transfer_picker_start]
+
+    response = client.post("/operations/vouchers", data={
+        "voucher_type": "receipt",
+        "account_id": str(revenue_id),
+        "cash_account_id": str(cash_id),
+        "amount": "65",
+        "beneficiary": "اختبار الصندوق الرئيسي",
+        "description": "اختبار قبض للصندوق الرئيسي مع اختلاف شجرة الحسابات",
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert "تم إصدار السند" in response.get_data(as_text=True)
+    assert "يجب أن يصب في حساب صندوق" not in response.get_data(as_text=True)
+
+    with app.app_context():
+        from app.models import Voucher
+
+        voucher = Voucher.query.order_by(Voucher.id.desc()).first()
+        assert voucher.voucher_type == "receipt"
+        assert voucher.status == "posted"
+        assert voucher.from_account_id == revenue_id
+        assert voucher.to_account_id == cash_id
+        lines = {line.account_id: line for line in voucher.journal_entry.lines}
+        assert lines[cash_id].debit == Decimal("65.00")
+        assert lines[revenue_id].credit == Decimal("65.00")
+
+
 def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
     login(client)
     with app.app_context():
