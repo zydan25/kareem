@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{{entry.number}} - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head print-hide"><div><span class="eyebrow">قيد محاسبي</span><h1>{{entry.number}}</h1><p>{{entry.description}} — {{entry.entry_date}} — {{'مرحّل' if entry.status=='posted' else 'ملغى'}}</p></div><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button></div>
+<div class="page-head print-hide"><div><span class="eyebrow">قيد محاسبي</span><h1>{{entry.number}}</h1><p>{{entry.description}} — {{entry.entry_date}} — {{'معكوس' if entry.reversed_entry_id else 'مرحّل' if entry.status=='posted' else 'ملغى'}}</p></div><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button></div>
 <div class="card-soft print-paper">
   <div class="document-heading"><strong>{{app_name}}</strong><span>قيد يومية</span><b>{{entry.number}}</b></div>
   <div class="table-wrap"><table class="table align-middle"><thead><tr><th>#</th><th>الحساب</th><th>البيان</th><th>مرجع</th><th>مدين</th><th>دائن</th></tr></thead><tbody>
