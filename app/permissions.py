@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import abort, g
+from flask import abort, g, request
 from flask_login import current_user, login_required
 from sqlalchemy import select
 from .extensions import db
@@ -31,8 +31,15 @@ ROLE_DEFAULTS={
 "auditor":{"dashboard.view","accounting.view","vouchers.view","reports.view","reports.export","audit.view"}}
 
 def _permission_cache():
+    # Flask's g belongs to the application context. Test clients and
+    # explicitly-pushed app contexts can reuse that context across requests,
+    # so bind this cache to the request and user to avoid cross-user leakage.
+    current_request=request._get_current_object()
     cached=getattr(g,"_permission_cache",None)
-    if cached is not None:
+    if (cached is not None
+            and getattr(g,"_permission_cache_request",None) is current_request
+            and getattr(g,"_permission_cache_user_id",None)==current_user.get_id()
+            and getattr(g,"_permission_cache_role",None)==current_user.role):
         return cached
     defaults=ROLE_DEFAULTS.get(current_user.role,set())
     if "*" in defaults:
@@ -48,6 +55,9 @@ def _permission_cache():
             if granted: cached.add(key)
             else: cached.discard(key)
     g._permission_cache=cached
+    g._permission_cache_request=current_request
+    g._permission_cache_user_id=current_user.get_id()
+    g._permission_cache_role=current_user.role
     return cached
 
 def can(permission):
