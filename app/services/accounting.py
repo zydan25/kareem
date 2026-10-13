@@ -64,6 +64,8 @@ def reverse_entry(entry,user_id,reason):
     reverse=create_posted_entry(description=f"عكس القيد {entry.number}: {reason}",
         entry_date=date.today(),created_by_id=user_id,source_type="reverse",source_id=entry.id,
         lines=lines,prefix="REV",audit=f"عكس القيد {entry.number}")
+    # Keep the original entry posted: the posted reversal must be counted
+    # alongside it so the two entries cancel in balances and financial reports.
+    # The link prevents this entry from being reversed more than once.
     entry.reversed_entry_id=reverse.id
-    entry.status=EntryStatus.VOID.value
     return reverse
