@@ -1,12 +1,12 @@
 """Add fiscal years and retained earnings for closing entries.
 
-Revision ID: 0010_fiscal_years_and_retained_earnings
+Revision ID: 0010_fiscal_years
 Revises: 0009_audit_log_context
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0010_fiscal_years_and_retained_earnings"
+revision = "0010_fiscal_years"
 down_revision = "0009_audit_log_context"
 branch_labels = None
 depends_on = None
