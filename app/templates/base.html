@@ -85,6 +85,7 @@
         {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/journal') %}active{% endif %}" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i><span>اليوميات</span></a>{% endif %}
         {% if can("vouchers.view") %}<a class="{% if request.path.startswith('/operations/vouchers') %}active{% endif %}" href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt-cutoff"></i><span>السندات</span></a>{% endif %}
         {% if can("accounting.post") %}<a class="{% if request.path.startswith('/operations/manual-journal') %}active{% endif %}" href="{{url_for('operations.manual_journal')}}"><i class="bi bi-pencil-square"></i><span>القيد اليدوي</span></a>{% endif %}
+        {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/fiscal-years') %}active{% endif %}" href="{{url_for('accounting.fiscal_years')}}"><i class="bi bi-calendar2-check"></i><span>السنوات المالية والإقفال</span></a>{% endif %}
         {% if can("expenses.view") %}<a class="{% if request.path.startswith('/operations/expenses') %}active{% endif %}" href="{{url_for('operations.expenses')}}"><i class="bi bi-wallet2"></i><span>المصروفات</span></a>{% endif %}
       </div>
     </details>
@@ -103,7 +104,7 @@
 
     {% if can("reports.view") %}
     <details class="nav-tree" {% if request.path.startswith('/reports') %}open{% endif %}>
-      <summary><i class="bi bi-bar-chart-fill"></i><span>التقارير</span><b class="nav-count">16</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
+      <summary><i class="bi bi-bar-chart-fill"></i><span>التقارير</span><b class="nav-count">17</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children nav-report-list">
         <a class="{% if request.path == '/reports/' %}active{% endif %}" href="{{url_for('reports.index')}}"><i class="bi bi-grid-1x2"></i><span>مركز التقارير</span></a>
         <a href="{{url_for('reports.daily')}}"><i class="bi bi-calendar-day"></i><span>تقرير يومي</span></a>
