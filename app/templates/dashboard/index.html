@@ -13,7 +13,6 @@
     </nav>
     {% endif %}
     <div class="water-project-action-grid">
-      {% if can("collector.view") %}<a href="{{url_for('collector.index')}}" class="water-project-action-tile"><i class="bi bi-clipboard-check"></i><span>حركات البوابة</span></a>{% endif %}
       {% if can("vouchers.view") %}<a href="{{url_for('operations.vouchers')}}" class="water-project-action-tile"><i class="bi bi-cash-coin"></i><span>سجل السندات</span></a>{% endif %}
       {% if can("employees.view") %}<a href="{{url_for('master_data.employees')}}" class="water-project-action-tile"><i class="bi bi-person-workspace"></i><span>الموظفون</span></a>{% endif %}
       {% if can("clients.view") %}<a href="{{url_for('master_data.clients')}}" class="water-project-action-tile"><i class="bi bi-people-fill"></i><span>العملاء</span></a>{% endif %}
