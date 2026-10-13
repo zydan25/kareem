@@ -27,6 +27,24 @@ def D(value):
     from decimal import Decimal
     return Decimal(str(value or 0)).quantize(Decimal("0.01"))
 
+
+def _sync_work_days(employee):
+    """Keep the legacy work_days field in sync with the employee's active schedule."""
+    db.session.flush()
+    rows = (
+        db.session.query(EmployeeSchedule.weekday)
+        .filter(
+            EmployeeSchedule.employee_id == employee.id,
+            EmployeeSchedule.active.is_(True),
+        )
+        .distinct()
+        .order_by(EmployeeSchedule.weekday)
+        .all()
+    )
+    weekdays = sorted({row[0] for row in rows if row[0] in range(7)})
+    employee.work_days = ",".join(str(day) for day in weekdays)
+
+
 def _save_identity_image(emp):
     image=request.files.get("identity_image")
     if not image or not image.filename:

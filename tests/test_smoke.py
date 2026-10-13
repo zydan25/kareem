@@ -1099,15 +1099,19 @@ def test_employee_add_and_fine_controls_and_employee_actions_work(app, client):
         "shift_name": "دوام اختبار",
         "start_time": "08:00",
         "end_time": "15:00",
-    }, follow_redirects=False)
-    assert schedule_response.status_code == 302
+    }, follow_redirects=True)
+    assert schedule_response.status_code == 200
+    assert "تم حفظ جدول دوام الموظف" in schedule_response.get_data(as_text=True)
     with app.app_context():
         schedule = EmployeeSchedule.query.filter_by(employee_id=employee_id, shift_name="دوام اختبار").one()
+        assert employee_id == schedule.employee_id
+        assert "0" in (db.session.get(Employee, employee_id).work_days or "").split(",")
         schedule_id = schedule.id
     delete_schedule = client.post(f"/employees/schedule/{schedule_id}/delete", follow_redirects=False)
     assert delete_schedule.status_code == 302
     with app.app_context():
         assert db.session.get(EmployeeSchedule, schedule_id) is None
+        assert "0" not in (db.session.get(Employee, employee_id).work_days or "").split(",")
 
     assert client.post(f"/employees/{employee_id}/toggle", follow_redirects=False).status_code == 302
     with app.app_context():
