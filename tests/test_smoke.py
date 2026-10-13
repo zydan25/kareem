@@ -213,8 +213,12 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
     login(client)
     with app.app_context():
         from app.models import Account, Voucher, JournalEntry
+        from app.services.accounting import account_balance
         cash=db.session.query(Account).filter_by(system_key="main_cash").one()
         revenue=db.session.query(Account).filter_by(system_key="entry_revenue").one()
+        cash_id, revenue_id = cash.id, revenue.id
+        cash_before = account_balance(cash_id)
+        revenue_before = account_balance(revenue_id)
 
     receipt=client.post("/operations/vouchers",data={
         "voucher_type":"receipt","account_id":str(revenue.id),"cash_account_id":str(cash.id),
@@ -251,10 +255,13 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
             reverse_id=conn.execute(
                 text("SELECT reversed_entry_id FROM journal_entries WHERE id=:id"),{"id":entry_id}
             ).scalar_one()
-        assert journal_status=="void"
+        assert journal_status=="posted"
         assert reverse_id is not None
         db.session.remove()
         voucher=db.session.get(Voucher,voucher_id)
         assert voucher.status=="void"
-        assert voucher.journal_entry.status=="void"
+        assert voucher.journal_entry.status=="posted"
         assert voucher.journal_entry.reversed_entry_id is not None
+        # After reversing the receipt, only the separate 25-unit transfer remains.
+        assert account_balance(cash_id) == cash_before - Decimal("25.00")
+        assert account_balance(revenue_id) == revenue_before + Decimal("25.00")
