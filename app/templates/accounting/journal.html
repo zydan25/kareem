@@ -23,6 +23,8 @@
       <option value="">كل الحركات</option>
       <option value="voucher" {% if source=='voucher' %}selected{% endif %}>السندات</option>
       <option value="manual" {% if source=='manual' %}selected{% endif %}>قيود يدوية</option>
+      <option value="employee_daily" {% if source=='employee_daily' %}selected{% endif %}>يوميات الموظفين</option>
+      <option value="client_daily" {% if source=='client_daily' %}selected{% endif %}>يوميات العملاء</option>
       <option value="reverse" {% if source=='reverse' %}selected{% endif %}>قيود عكسية</option>
       <option value="expense" {% if source=='expense' %}selected{% endif %}>مصروفات</option>
       <option value="settlement" {% if source=='settlement' %}selected{% endif %}>تسويات</option>
