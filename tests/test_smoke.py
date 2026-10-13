@@ -954,6 +954,14 @@ def test_admin_theme_is_optional_and_only_loaded_after_selection(app, client):
     water_project_body = water_project.get_data(as_text=True)
     assert 'class="theme-water-project"' in water_project_body
     assert "css/admin-theme-water-project.css" in water_project_body
+    assert water_project_body.index('class="menu-toggle"') < water_project_body.index('class="brand"')
+    assert "water-project-home-button" not in water_project_body
+    assert "bi bi-arrow-right" not in water_project_body.split("</header>", 1)[0]
+    from pathlib import Path
+    theme_css = (Path(app.root_path) / "static" / "css" / "admin-theme-water-project.css").read_text(encoding="utf-8")
+    assert "flex-direction:row;align-items:center" in theme_css
+    assert "body.theme-water-project .topbar-start {" in theme_css
+    assert "water-project-home-button" not in theme_css
     assert "water-project-dashboard-panel" in water_project_body
     assert "water-project-quick-actions" in water_project_body
     assert "water-project-action-grid" in water_project_body

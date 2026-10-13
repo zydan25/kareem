@@ -13,7 +13,7 @@
 {% if current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water' %}
 <link href="{{ url_for('static',filename='css/admin-theme.css',v='20261013-1') }}" rel="stylesheet">
 {% elif current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water_project' %}
-<link href="{{ url_for('static',filename='css/admin-theme-water-project.css',v='20261013-2') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/admin-theme-water-project.css',v='20261013-3') }}" rel="stylesheet">
 {% endif %}
 <title>{% block title %}{{ app_name }}{% endblock %}</title>
 </head>
@@ -29,7 +29,6 @@
     </a>
   </div>
   <div class="top-actions">
-    {% if current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water_project' %}<a class="water-project-home-button" href="{{url_for('dashboard.index')}}" aria-label="الرئيسية" title="الرئيسية"><i class="bi bi-arrow-right"></i></a>{% endif %}
     <a class="top-account-link" href="{{url_for('auth.account')}}"><i class="bi bi-person-circle"></i><span>{{current_user.full_name}}</span></a>
     <form method="post" action="{{url_for('auth.logout')}}"><button class="icon-button" title="خروج"><i class="bi bi-box-arrow-left"></i></button></form>
   </div>

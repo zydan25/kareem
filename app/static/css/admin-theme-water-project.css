@@ -22,12 +22,6 @@ body.theme-water-project .brand-mark {
 }
 body.theme-water-project .brand strong {font-size:16px;font-weight:900}
 body.theme-water-project .brand small {color:#738096;font-size:10px}
-body.theme-water-project .water-project-home-button {
-  width:48px;height:48px;display:inline-flex;align-items:center;justify-content:center;
-  border:1px solid #dce3ed;border-radius:15px;background:#fff;color:#334155;
-  text-decoration:none;font-size:24px;
-}
-body.theme-water-project .water-project-home-button:hover {background:#f4f7fc;color:#1d55d8}
 body.theme-water-project .top-account-link {
   display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:12px;font-weight:800;
 }
@@ -135,24 +129,28 @@ body.theme-water-project .site-footer {color:#687385;border-top-color:#e0e6ef}
 
 @media(max-width:1100px) {
   body.theme-water-project .topbar {
-    min-height:0;height:auto;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
-    gap:4px;padding:8px 12px;position:sticky;top:0;z-index:60;
+    min-height:58px;height:auto;display:flex;flex-direction:row;align-items:center;justify-content:space-between;
+    gap:8px;padding:8px 12px;position:sticky;top:0;z-index:60;
   }
-  body.theme-water-project .topbar-start {display:contents}
-  body.theme-water-project .brand {order:1;align-self:flex-start;max-width:calc(100% - 108px);min-height:34px;gap:6px}
-  body.theme-water-project .brand-copy {min-width:0}
-  body.theme-water-project .brand strong {max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(14px,4.3vw,18px)}
-  body.theme-water-project .brand small {display:none}
+  body.theme-water-project .topbar-start {
+    order:1;display:flex;flex:1 1 auto;align-items:center;gap:7px;min-width:0;
+  }
   body.theme-water-project .menu-toggle {
-    order:2;align-self:flex-start;width:52px;height:38px;display:inline-flex!important;align-items:center;justify-content:center;
-    border:1px solid #dce3ed;border-radius:12px;background:#fff;color:#344054;font-size:25px;
+    order:0;align-self:center;width:38px;height:38px;flex:0 0 38px;display:inline-flex!important;
+    align-items:center;justify-content:center;border:1px solid #dce3ed;border-radius:11px;
+    background:#fff;color:#344054;font-size:23px;
   }
-  body.theme-water-project .top-actions {order:3;position:absolute;top:8px;left:10px;display:flex;align-items:center;gap:5px}
-  body.theme-water-project .water-project-home-button,
+  body.theme-water-project .brand {order:1;align-self:center;flex:1 1 auto;min-width:0;max-width:none;min-height:34px;gap:6px}
+  body.theme-water-project .brand-copy {min-width:0;overflow:hidden}
+  body.theme-water-project .brand strong {max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(13px,4vw,17px)}
+  body.theme-water-project .brand small {display:none}
+  body.theme-water-project .top-actions {
+    order:2;position:static;display:flex;flex:0 0 auto;align-items:center;gap:5px;margin-inline-start:0;
+  }
   body.theme-water-project .top-account-link,
   body.theme-water-project .top-actions .icon-button {
-    width:38px;height:38px;flex:0 0 38px;display:inline-flex;align-items:center;justify-content:center;
-    padding:0;border:1px solid #dce3ed;border-radius:11px;background:#fff;color:#344054;font-size:17px;
+    width:36px;height:36px;flex:0 0 36px;display:inline-flex;align-items:center;justify-content:center;
+    padding:0;border:1px solid #dce3ed;border-radius:11px;background:#fff;color:#344054;font-size:16px;
   }
   body.theme-water-project .top-account-link span {display:none}
   body.theme-water-project .top-actions form {margin:0}
