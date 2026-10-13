@@ -149,7 +149,9 @@ def agents():
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     party_theme_row=Setting.query.filter_by(key="party_cards_theme").first()
-    return render_template("master_data/agents.html",agents=rows,can_manage=can("agents.manage"),q=q,sort=sort,agent_vehicle_counts=agent_vehicle_counts,party_cards_theme=(party_theme_row.value if party_theme_row and party_theme_row.value in {"water","classic"} else "water"))
+    party_cards_theme=party_theme_row.value if party_theme_row and party_theme_row.value in {"water","classic"} else "water"
+    template="master_data/agents_classic.html" if party_cards_theme=="classic" else "master_data/agents.html"
+    return render_template(template,agents=rows,can_manage=can("agents.manage"),q=q,sort=sort,agent_vehicle_counts=agent_vehicle_counts,party_cards_theme=party_cards_theme)
 
 @bp.get("/agents/<int:agent_id>")
 @permission_required("agents.view")
@@ -260,7 +262,9 @@ def clients():
             db.session.rollback(); flash(str(exc),"danger")
     vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
     party_theme_row=Setting.query.filter_by(key="party_cards_theme").first()
-    return render_template("master_data/clients.html",clients=rows,agents=agents,vehicle_types=vehicle_types,can_manage=can("clients.manage"),q=q,sort=sort,party_cards_theme=(party_theme_row.value if party_theme_row and party_theme_row.value in {"water","classic"} else "water"))
+    party_cards_theme=party_theme_row.value if party_theme_row and party_theme_row.value in {"water","classic"} else "water"
+    template="master_data/clients_classic.html" if party_cards_theme=="classic" else "master_data/clients.html"
+    return render_template(template,clients=rows,agents=agents,vehicle_types=vehicle_types,can_manage=can("clients.manage"),q=q,sort=sort,party_cards_theme=party_cards_theme)
 
 @bp.get("/clients/<int:client_id>")
 @permission_required("clients.view")

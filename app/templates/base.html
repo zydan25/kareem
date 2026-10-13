@@ -15,8 +15,8 @@
 {% elif current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water_project' %}
 <link href="{{ url_for('static',filename='css/admin-theme-water-project.css',v='20261013-3') }}" rel="stylesheet">
 {% endif %}
-<link href="{{ url_for('static',filename='css/searchable-select.css',v='20261014-2') }}" rel="stylesheet">
-<link href="{{ url_for('static',filename='css/party-cards.css',v='20261014-2') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/searchable-select.css',v='20261014-3') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/party-cards.css',v='20261014-3') }}" rel="stylesheet">
 <title>{% block title %}{{ app_name }}{% endblock %}</title>
 </head>
 <style>:root{--primary:{{brand_color}};--primary-dark:color-mix(in srgb, {{brand_color}} 82%, #000);--accent:color-mix(in srgb, {{brand_color}} 12%, #fff);--ui-font-scale:{{ui_font_scale|default('1')}}}html{font-size:calc(16px * var(--ui-font-scale,1))}</style>
@@ -159,7 +159,7 @@
 <div id="pwa-install-fab" class="pwa-install-fab" hidden><button type="button" data-pwa-install><i class="bi bi-phone"></i><span>تثبيت التطبيق</span></button><button type="button" data-pwa-dismiss aria-label="إغلاق"><i class="bi bi-x"></i></button></div>
 
 <script src="{{url_for('static',filename='js/app.js',v='20261004-1')}}"></script>
-<script src="{{url_for('static',filename='js/searchable-select.js',v='20261014-2')}}"></script>
+<script src="{{url_for('static',filename='js/searchable-select.js',v='20261014-3')}}"></script>
 {% block scripts %}{% endblock %}
 {% else %}
 {% block guest_content %}{% endblock %}
