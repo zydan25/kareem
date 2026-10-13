@@ -235,7 +235,7 @@
       <div class="row g-3">
         <div class="col-12 col-lg-5">
           <label class="form-label" for="lease-agent">الوكيل <span class="text-danger">*</span></label>
-          <select id="lease-agent" name="agent_id" class="form-select" required {% if not agents %}disabled{% endif %}>
+          <select id="lease-agent" name="agent_id" class="form-select" data-searchable-select data-ss-placeholder="اختر الوكيل صاحب العقد" required {% if not agents %}disabled{% endif %}>
             <option value="">اختر الوكيل صاحب العقد</option>
             {% for a in agents %}<option value="{{a.id}}" {% if form_data.get('agent_id') == a.id|string %}selected{% endif %}>{{a.code}} — {{a.name}}{% if a.phone %} — {{a.phone}}{% endif %}</option>{% endfor %}
           </select>
@@ -283,8 +283,9 @@
       <button type="button" class="icon-button" data-lease-panel-close aria-label="إغلاق"><i class="bi bi-x-lg"></i></button>
     </div>
     <form method="post" action="#" class="lease-form-body" id="lease-edit-form">
-      <div class="alert alert-info py-2 small"><i class="bi bi-shield-check"></i> الاستحقاقات السابقة وقيودها المحاسبية لن تتغير.</div>
+      <div class="alert alert-info py-2 small"><i class="bi bi-shield-check"></i> الاستحقاقات السابقة وقيودها المحاسبية لن تتغير. تغيير الوكيل مسموح فقط إذا لم توجد استحقاقات مسجلة للعقد.</div>
       <div class="row g-3">
+        <div class="col-12"><label class="form-label" for="lease-edit-agent">الوكيل</label><select id="lease-edit-agent" name="agent_id" class="form-select" data-searchable-select data-ss-placeholder="اختر الوكيل" required>{% for a in all_agents %}<option value="{{a.id}}" data-search="{{a.code}} {{a.name}} {{a.phone or ''}}">{{a.code}} — {{a.name}}{% if not a.active %} (موقوف){% endif %}</option>{% endfor %}</select></div>
         <div class="col-12 col-md-6"><label class="form-label" for="lease-edit-name">اسم العقد</label><input id="lease-edit-name" name="name" class="form-control" maxlength="120" required></div>
         <div class="col-12 col-md-6"><label class="form-label" for="lease-edit-amount">الإيجار الشهري</label><input id="lease-edit-amount" name="monthly_amount" class="form-control" inputmode="decimal" required></div>
         <div class="col-12 col-md-4"><label class="form-label" for="lease-edit-start">بداية العقد</label><input id="lease-edit-start" type="date" name="starts_on" class="form-control" required></div>
@@ -335,7 +336,7 @@
 
   <div class="lease-cards" id="lease-cards">
     {% for l in leases %}
-    <article class="lease-card" data-lease-card data-status="{{'active' if l.active else 'inactive'}}" data-amount="{{l.monthly_amount}}" data-start="{{l.starts_on.isoformat()}}" data-search="{{l.agent.name}} {{l.agent.code}} {{l.name}} {{l.agent.phone or ''}} {{l.id}}" data-agent-name="{{l.agent.name}}" data-lease-name="{{l.name}}" data-end="{{l.ends_on.isoformat() if l.ends_on else ''}}" data-due-day="{{l.due_day}}" data-edit-url="{{url_for('operations.edit_lease',lease_id=l.id)}}" data-renew-url="{{url_for('operations.renew_lease',lease_id=l.id)}}">
+    <article class="lease-card" data-lease-card data-status="{{'active' if l.active else 'inactive'}}" data-amount="{{l.monthly_amount}}" data-start="{{l.starts_on.isoformat()}}" data-search="{{l.agent.name}} {{l.agent.code}} {{l.name}} {{l.agent.phone or ''}} {{l.id}}" data-agent-id="{{l.agent_id}}" data-agent-name="{{l.agent.name}}" data-lease-name="{{l.name}}" data-end="{{l.ends_on.isoformat() if l.ends_on else ''}}" data-due-day="{{l.due_day}}" data-edit-url="{{url_for('operations.edit_lease',lease_id=l.id)}}" data-renew-url="{{url_for('operations.renew_lease',lease_id=l.id)}}">
       <div class="lease-card-top">
         <div class="lease-card-identity">
           <div class="lease-card-icon"><i class="bi bi-building-check"></i></div>
@@ -427,6 +428,8 @@
     const card=button.closest('[data-lease-card]'); if(!card)return;
     const form=document.getElementById('lease-edit-form');
     form.action=card.dataset.editUrl||'#';
+    document.getElementById('lease-edit-agent').value=card.dataset.agentId||'';
+    window.refreshSearchableSelect?.('lease-edit-agent');
     document.getElementById('lease-edit-name').value=card.dataset.leaseName||'';
     document.getElementById('lease-edit-amount').value=card.dataset.amount||'';
     document.getElementById('lease-edit-start').value=card.dataset.start||'';

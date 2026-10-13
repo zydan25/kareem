@@ -342,6 +342,7 @@ def close_shift(shift_id):
 @permission_required("leases.view")
 def leases():
     agents=Agent.query.filter_by(active=True).order_by(Agent.name).all()
+    all_agents=Agent.query.order_by(Agent.active.desc(),Agent.name).all()
     rows=AgentLease.query.order_by(AgentLease.active.desc(),AgentLease.id.desc()).all()
     form_open=False
     form_data={}
@@ -410,7 +411,7 @@ def leases():
         except Exception as exc:
             db.session.rollback()
             flash(str(exc),"danger")
-    return render_template("operations/leases.html",agents=agents,leases=rows,
+    return render_template("operations/leases.html",agents=agents,all_agents=all_agents,leases=rows,
         form_open=form_open,form_data=form_data,today=today,current_month=current_month,
         next_month_start=next_month_start,current_rents=current_rents,
         current_due_eligible=current_due_eligible,unpaid_stats_by_lease=unpaid_stats_by_lease)
@@ -422,6 +423,13 @@ def edit_lease(lease_id):
     if not lease:
         return ("العقد غير موجود",404)
     try:
+        agent_id=request.form.get("agent_id",type=int)
+        agent=db.session.get(Agent,agent_id) if agent_id else None
+        if not agent or (not agent.active and agent.id!=lease.agent_id):
+            raise ValueError("اختر وكيلًا نشطًا")
+        recorded_rents=AgentRent.query.filter_by(lease_id=lease.id).all()
+        if agent.id!=lease.agent_id and recorded_rents:
+            raise ValueError("لا يمكن تغيير الوكيل بعد تسجيل استحقاق لهذا العقد؛ احتفظنا بالاستحقاقات والقيود كما هي.")
         name=(request.form.get("name") or "إيجار").strip() or "إيجار"
         if len(name)>120:
             raise ValueError("اسم العقد يجب ألا يتجاوز 120 حرفًا")
@@ -446,13 +454,15 @@ def edit_lease(lease_id):
         if not 1<=due_day<=31:
             raise ValueError("يوم الاستحقاق يجب أن يكون بين 1 و31")
 
-        recorded_months=[r.rent_month for r in AgentRent.query.filter_by(lease_id=lease.id).all()]
+        recorded_months=[r.rent_month for r in recorded_rents]
         if recorded_months and starts_on.replace(day=1)>min(recorded_months):
             raise ValueError("لا يمكن نقل بداية العقد إلى ما بعد شهر استحقاق مسجل؛ الاستحقاقات والقيود السابقة محفوظة كما سُجلت.")
         if recorded_months and ends_on and ends_on.replace(day=1)<max(recorded_months):
             raise ValueError("لا يمكن إنهاء العقد قبل آخر شهر استحقاق مسجل؛ عدّل العقد دون استبعاد الاستحقاقات السابقة.")
 
-        old_values=f"{lease.name}|{lease.monthly_amount}|{lease.starts_on}|{lease.ends_on}|{lease.due_day}"
+        old_values=f"{lease.agent.name}|{lease.name}|{lease.monthly_amount}|{lease.starts_on}|{lease.ends_on}|{lease.due_day}"
+        lease.agent=agent
+        ensure_agent_account(agent)
         lease.name=name
         lease.monthly_amount=monthly_amount
         lease.starts_on=starts_on
@@ -461,7 +471,7 @@ def edit_lease(lease_id):
         if ends_on and ends_on.replace(day=1)<date.today().replace(day=1):
             lease.active=False
         audit("update_lease","agent_lease",lease.id,
-              f"{old_values} -> {lease.name}|{lease.monthly_amount}|{lease.starts_on}|{lease.ends_on}|{lease.due_day}; الاستحقاقات والقيود السابقة دون تغيير")
+              f"{old_values} -> {lease.agent.name}|{lease.name}|{lease.monthly_amount}|{lease.starts_on}|{lease.ends_on}|{lease.due_day}; الاستحقاقات والقيود السابقة دون تغيير")
         db.session.commit()
         flash("تم تعديل بيانات العقد. لم تتغير الاستحقاقات السابقة أو قيودها المحاسبية.","success")
     except Exception as exc:
