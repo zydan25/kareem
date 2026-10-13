@@ -348,7 +348,7 @@
 .party-form-page textarea.form-control,
 .party-add-panel textarea.form-control { min-height: 76px; }
 .party-form-page select[multiple],
-.party-add-panel select[multiple] { min-height: 104px; }
+.party-add-panel select[multiple] { height: 112px; min-height: 112px; }
 .party-form-page .form-control:focus,
 .party-form-page .form-select:focus,
 .party-add-panel .form-control:focus,
