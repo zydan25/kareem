@@ -29,16 +29,29 @@
 .client-search-box{position:relative}
 .client-search-box .search-icon{position:absolute;right:10px;top:12px;color:#8b9893;font-size:13px;z-index:2}
 .client-search-box input{padding-right:32px!important}.client-search-box input.customer-selected{border-color:#6faed9!important;background:#f5faff!important;color:#205b86!important;font-weight:800}
-.client-suggestion-list{border:1px solid rgba(37,65,58,.10);border-radius:10px;margin-top:5px;background:#fff;overflow:hidden;box-shadow:0 7px 20px rgba(16,42,34,.07)}
+.gate-client-picker{position:relative;width:100%;min-width:0}
+.gate-client-trigger{width:100%;min-height:46px;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #d6dfe5;border-radius:11px;background:#fff;color:#111;text-align:right;font:inherit}
+.gate-client-trigger:focus-visible{outline:3px solid rgba(59,130,196,.15);border-color:#76a4d3}
+.gate-client-trigger>i:first-child{color:#667984;flex:0 0 auto;font-size:16px}
+.gate-client-selected-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#111;font-size:14px;font-weight:800}
+.gate-client-selected-name.is-empty{color:#7d898f;font-weight:650}
+.gate-client-chevron{color:#71818a;font-size:12px;transition:transform .15s ease}
+.gate-client-trigger[aria-expanded="true"] .gate-client-chevron{transform:rotate(180deg)}
+.gate-client-dropdown{position:absolute;z-index:450;top:calc(100% + 5px);inset-inline:0;min-width:0;background:#fff;color:#111;border:1px solid #d8e0e5;border-radius:13px;overflow:hidden;box-shadow:0 16px 35px rgba(13,30,43,.18)}
+.gate-client-dropdown[hidden]{display:none!important}
+.gate-client-search{position:relative;padding:8px;background:#fff;border-bottom:1px solid #edf0f2}
+.gate-client-search>i{position:absolute;right:20px;top:50%;transform:translateY(-50%);color:#71808a;font-size:14px;pointer-events:none}
+.gate-client-search input{min-height:44px;padding:9px 35px 9px 10px;border-radius:10px;background:#fff!important;color:#111!important;border:1px solid #d8e1e7;font-size:13px;box-shadow:none!important}
+.gate-client-search input:focus{border-color:#76a4d3;box-shadow:0 0 0 3px rgba(59,130,196,.12)!important}
+.client-suggestion-list{max-height:245px;overflow-y:auto;overscroll-behavior:contain;background:#fff;color:#111;border:0;border-radius:0;margin:0;box-shadow:none;scrollbar-width:thin}
 .client-suggestion-list[hidden]{display:none}
-.client-suggestion{width:100%;border:0;background:#fff;padding:8px;display:flex;align-items:center;gap:7px;text-align:right;border-bottom:1px solid rgba(37,65,58,.06)}
+.client-suggestion{width:100%;min-height:45px;border:0;background:#fff;color:#111;padding:10px 12px;display:flex;align-items:center;gap:8px;text-align:right;border-bottom:1px solid #f0f2f4;font:inherit;cursor:pointer}
 .client-suggestion:last-child{border-bottom:0}
-.client-suggestion:hover{background:#f7fbf9}
-.client-suggestion-icon{width:28px;height:28px;border-radius:8px;background:#edf6f2;color:var(--primary);display:flex;align-items:center;justify-content:center;flex:0 0 28px}
-.client-suggestion span:nth-child(2){min-width:0;display:flex;flex-direction:column}
-.client-suggestion strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-suggestion small{font-size:10px;color:#8d9895;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-suggestion>i{font-size:11px;color:#9aa4a1;margin-right:auto}
+.client-suggestion:hover,.client-suggestion:focus-visible{background:#f2f7fb;outline:none}
+.client-suggestion.is-selected{background:#edf5ff;color:#143b63;font-weight:900}
+.client-suggestion strong{font-size:13px;color:inherit;font-weight:inherit;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.client-suggestion>i{font-size:14px;color:#1e68b2;margin-right:auto;flex:0 0 auto}
+.client-suggestion small,.client-suggestion-icon{display:none!important}
 .customer-vehicles-panel{border:1px solid #c8dbef;background:#eef6ff;border-radius:12px;padding:10px}
 .customer-vehicles-panel[hidden]{display:none}
 .customer-vehicles-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -227,11 +240,22 @@
       <input type="hidden" id="is_default_vehicle" name="is_default_vehicle" value="">
 
       <div class="collector-field">
-        <label class="form-label">العميل</label>
-        <div class="client-search-box">
-          <i class="bi bi-search search-icon"></i>
-          <input id="client_name" name="client_name" class="form-control" placeholder="اسم العميل، الهاتف أو اللوحة" autocomplete="off">
+        <label class="form-label" for="client-select-trigger">العميل</label>
+        <div class="gate-client-picker" id="gate-client-picker">
+          <button type="button" class="gate-client-trigger" id="client-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+            <i class="bi bi-person-vcard" aria-hidden="true"></i>
+            <span id="client-selected-name" class="gate-client-selected-name is-empty">اختر العميل</span>
+            <i class="bi bi-chevron-down gate-client-chevron" aria-hidden="true"></i>
+          </button>
+          <div class="gate-client-dropdown" id="client-search-dropdown" hidden>
+            <div class="gate-client-search">
+              <i class="bi bi-search" aria-hidden="true"></i>
+              <input id="client_search" class="form-control" type="search" placeholder="ابحث بالاسم أو الهاتف أو اللوحة..." autocomplete="off" aria-label="بحث عن عميل أو لوحة مركبة">
+            </div>
+            <div id="client-suggestions" class="client-suggestion-list" hidden></div>
+          </div>
         </div>
+        <input type="hidden" id="client_name" name="client_name">
         <input type="hidden" id="client_id" name="client_id">
         <input type="hidden" id="client_phone" name="client_phone">
         <input type="hidden" id="client_address" name="client_address">
@@ -247,8 +271,8 @@
       <div id="new-vehicle-panel" class="customer-vehicles-panel" hidden>
         <div class="customer-vehicles-head"><div><strong>مركبة جديدة</strong><small>لإضافة مركبة فعلية للعميل</small></div><button type="button" class="btn btn-sm btn-light" id="cancel-real-vehicle">إلغاء</button></div>
         <div class="collector-field-row">
-          <div class="collector-field"><label class="form-label">النوع</label><select id="new_vehicle_type_id" class="form-select"><option value="">اختر</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
-          <div class="collector-field"><label class="form-label">الحالة</label><select id="new_registration_status" class="form-select"><option value="registered">جمركية</option><option value="without_customs">بدون جمارك</option></select></div>
+          <div class="collector-field"><label class="form-label">النوع</label><select id="new_vehicle_type_id" class="form-select" data-searchable-select data-ss-placeholder="اختر نوع المركبة"><option value="">اختر</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
+          <div class="collector-field"><label class="form-label">الحالة</label><select id="new_registration_status" class="form-select" data-searchable-select><option value="registered">جمركية</option><option value="without_customs">بدون جمارك</option></select></div>
           <div class="collector-field"><label class="form-label">الرقم</label><input id="new_plate_number" class="form-control" inputmode="numeric"></div>
           <div class="collector-field"><label class="form-label">الفاصل</label><input id="new_plate_separator" class="form-control" placeholder="0"></div>
         </div>
@@ -264,7 +288,7 @@
       <div class="collector-optional-grid">
         <div class="collector-field">
           <label class="form-label">الوكيل <small>(اختياري)</small></label>
-          <select id="agent_id" name="agent_id" class="form-select">
+          <select id="agent_id" name="agent_id" class="form-select" data-searchable-select data-ss-placeholder="على عهدة المتحصل">
             <option value="">على عهدة المتحصل</option>
             {% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}
           </select>
@@ -319,8 +343,12 @@ const vehicleHidden=document.getElementById('vehicle_id');
 const vehicleTypeHidden=document.getElementById('vehicle_type_id');
 const regHidden=document.getElementById('registration_status');
 const defaultHidden=document.getElementById('is_default_vehicle');
-const client=document.getElementById('client_name');
+const client=document.getElementById('client_search');
+const clientName=document.getElementById('client_name');
 const clientId=document.getElementById('client_id');
+const clientPickerTrigger=document.getElementById('client-select-trigger');
+const clientSelectedLabel=document.getElementById('client-selected-name');
+const clientDropdown=document.getElementById('client-search-dropdown');
 const clientPhone=document.getElementById('client_phone');
 const clientAddress=document.getElementById('client_address');
 const clientNotes=document.getElementById('client_notes');
@@ -353,7 +381,7 @@ function setSelectedVehicle(v){
   regHidden.value=v.registration_status||'registered';
   defaultHidden.value=v.is_default?'1':'';
   selectedVehicleName.textContent=plateText(v)||'مركبة بدون رقم';
-  selectedVehicleMeta.textContent=(v.vehicle_type||'مركبة')+(v.is_default?' · افتراضية':'')+(client.value?' · '+client.value:'');
+  selectedVehicleMeta.textContent=(v.vehicle_type||'مركبة')+(v.is_default?' · افتراضية':'')+(clientName.value?' · '+clientName.value:'');
   selectedVehicle.hidden=false;
   newVehiclePanel.hidden=true;
   vehicleList.querySelectorAll('.customer-vehicle-option').forEach(x=>{
@@ -374,10 +402,23 @@ function renderVehicles(vehicles,selectedId){
   });
   vehiclePanel.hidden=currentVehicles.length===0;
 }
+function closeClientPicker(){
+  if(clientDropdown)clientDropdown.hidden=true;
+  clientPickerTrigger?.setAttribute('aria-expanded','false');
+  if(client)client.value='';
+  clearTimeout(searchTimer);
+}
+function updateSelectedCustomerLabel(name){
+  const text=String(name||'').trim();
+  if(clientName)clientName.value=text;
+  if(clientSelectedLabel){clientSelectedLabel.textContent=text||'اختر العميل';clientSelectedLabel.classList.toggle('is-empty',!text);}
+  clientPickerTrigger?.classList.toggle('has-selection',!!text);
+}
 function chooseCustomer(x){
-  client.value=x.name||'';clientId.value=x.id||'';clientPhone.value=x.phone||'';
+  client.value='';
+  updateSelectedCustomerLabel(x.name||'');
+  clientId.value=x.id||'';clientPhone.value=x.phone||'';
   clientAddress.value=x.address||'';clientNotes.value='';
-  client.classList.add('customer-selected');
   syncCollectorVehicleLink();
   clearTimeout(searchTimer);clearVehicle();
   const vehicles=x.vehicles||[];
@@ -392,65 +433,91 @@ function chooseCustomer(x){
     vehiclePanel.hidden=true;
     setSelectedVehicle({id:'',plate:'0',separator:'0',vehicle_type_id:DEFAULT_VEHICLE_TYPE_ID,vehicle_type:'افتراضي',registration_status:'registered',is_default:true});
   }
-  clientSug.innerHTML='';clientSug.hidden=true;
+  clientSug.innerHTML='';clientSug.hidden=true;closeClientPicker();
 }
 function chooseVehicleResult(x){
-  client.value=x.name||'';clientId.value=x.id||'';clientPhone.value=x.phone||'';
-  clientAddress.value=x.address||'';client.classList.add('customer-selected');syncCollectorVehicleLink();currentVehicles=[];
+  client.value='';
+  updateSelectedCustomerLabel(x.name||'');
+  clientId.value=x.id||'';clientPhone.value=x.phone||'';
+  clientAddress.value=x.address||'';clientNotes.value='';
+  syncCollectorVehicleLink();currentVehicles=[];
   setSelectedVehicle({id:x.vehicle_id,plate:x.plate,separator:x.vehicle_separator,vehicle_type_id:x.vehicle_type_id,vehicle_type:x.vehicle_type,registration_status:x.registration_status,is_default:!!x.is_default});
-  vehiclePanel.hidden=true;clientSug.innerHTML='';clientSug.hidden=true;
+  vehiclePanel.hidden=true;clientSug.innerHTML='';clientSug.hidden=true;closeClientPicker();
 }
-function localClientMatches(query){
-  const needle=String(query||'').trim().toLowerCase();
-  return INITIAL_CLIENTS.filter(x=>(String(x.name||'')+' '+String(x.phone||'')).toLowerCase().includes(needle));
-}
+let clientSearchRequest=0;
 function renderClientResults(rows){
   const list=rows||[];
   clientSug.hidden=false;
-  if(!list.length){clientSug.innerHTML='<div style="padding:11px;font-size:12px;color:#7d8a90">لا يوجد عميل مطابق.</div>';return;}
-  clientSug.innerHTML=list.map((x,i)=>'<button type="button" class="client-suggestion" data-index="'+i+'"><span class="client-suggestion-icon"><i class="bi '+(x.kind==='vehicle'?'bi-truck-front':'bi-person')+'"></i></span><span><strong>'+esc(x.name||'')+'</strong><small>'+esc(x.kind==='vehicle'?('لوحة '+(x.plate||'0')):((x.phone||'بدون هاتف')+' · '+(x.vehicles?.length||0)+' مركبة'))+'</small></span><i class="bi bi-chevron-left"></i></button>').join('');
+  if(!list.length){clientSug.innerHTML='<div class="ss-empty">لا يوجد عميل مطابق.</div>';return;}
+  clientSug.innerHTML=list.map((x,i)=>{
+    const selected=String(clientId.value||'')===String(x.id||'') &&
+      (x.kind!=='vehicle'||String(vehicleHidden.value||'')===String(x.vehicle_id||''));
+    return '<button type="button" class="client-suggestion'+(selected?' is-selected':'')+'" data-index="'+i+'"><strong>'+esc(x.name||'مركبة بدون عميل')+'</strong>'+(selected?'<i class="bi bi-check2" aria-label="محدد"></i>':'')+'</button>';
+  }).join('');
   clientSug.querySelectorAll('.client-suggestion').forEach((btn,i)=>btn.onclick=()=>{
     const x=list[i];x.kind==='vehicle'?chooseVehicleResult(x):chooseCustomer(x);
   });
 }
 function searchClients(query){
-  const local=localClientMatches(query);
-  if(local.length){renderClientResults(local);return;}
   clearTimeout(searchTimer);
+  const requestId=++clientSearchRequest;
   clientSug.hidden=false;
-  clientSug.innerHTML='<div style="padding:11px;font-size:11px;color:#8c9693">جارٍ البحث...</div>';
+  clientSug.innerHTML='<div class="ss-empty">جارٍ البحث...</div>';
   searchTimer=setTimeout(()=>{
-    fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query))
+    fetch('{{url_for("collector.search_clients")}}?q='+encodeURIComponent(query),{headers:{'Accept':'application/json'}})
       .then(r=>r.ok?r.json():Promise.reject(new Error('search failed')))
-      .then(renderClientResults)
-      .catch(()=>{clientSug.innerHTML='<div style="padding:11px;font-size:11px">تعذر البحث، حاول مرة أخرى.</div>';});
-  },120);
+      .then(rows=>{if(requestId===clientSearchRequest&&clientDropdown&&!clientDropdown.hidden)renderClientResults(rows);})
+      .catch(()=>{if(requestId===clientSearchRequest)clientSug.innerHTML='<div class="ss-empty">تعذر البحث، حاول مرة أخرى.</div>';});
+  },140);
 }
-client?.addEventListener('input',()=>{
-  clientId.value='';client.classList.remove('customer-selected');clearVehicle();
-  const q=client.value.trim();
-  if(!q){clearTimeout(searchTimer);clientSug.innerHTML='';clientSug.hidden=true;return;}
-  searchClients(q);
+function openClientPicker(){
+  if(!clientDropdown||!clientPickerTrigger)return;
+  clientDropdown.hidden=false;
+  clientPickerTrigger.setAttribute('aria-expanded','true');
+  client.value='';
+  if(INITIAL_CLIENTS&&INITIAL_CLIENTS.length)renderClientResults(INITIAL_CLIENTS);
+  else searchClients('');
+  requestAnimationFrame(()=>client.focus({preventScroll:true}));
+}
+clientPickerTrigger?.addEventListener('click',()=>{
+  if(clientDropdown?.hidden)openClientPicker();
+  else closeClientPicker();
 });
-client?.addEventListener('focus',()=>{});
+document.addEventListener('click',event=>{
+  if(clientDropdown&&!clientDropdown.hidden&&!event.target.closest('#gate-client-picker'))closeClientPicker();
+});
+client?.addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();closeClientPicker();clientPickerTrigger?.focus();return;}
+  if(event.key==='Enter'){
+    const first=clientSug.querySelector('.client-suggestion');
+    if(first){event.preventDefault();first.click();}
+  }
+});
+client?.addEventListener('input',()=>{
+  clientId.value='';clientName.value='';updateSelectedCustomerLabel('');
+  clientPhone.value='';clientAddress.value='';clientNotes.value='';
+  clearVehicle();syncCollectorVehicleLink();
+  searchClients(client.value.trim());
+});
 const collectorAddVehicle=document.getElementById('collector-add-vehicle');
 function syncCollectorVehicleLink(){
   if(!collectorAddVehicle)return;
   const base='{{url_for("master_data.vehicles")}}?open=add-vehicle';
   collectorAddVehicle.href=clientId.value?base+'&client_id='+encodeURIComponent(clientId.value):base;
 }
-client?.addEventListener('input',syncCollectorVehicleLink);
 syncCollectorVehicleLink();
 
+const collectorAddVehicle=document.getElementById('collector-add-vehicle');
+
 document.getElementById('add-real-vehicle')?.addEventListener('click',()=>{
-  newVehiclePanel.hidden=false;vehiclePanel.hidden=true;selectedVehicle.hidden=true;defaultHidden.value='';newType.focus();
+  newVehiclePanel.hidden=false;vehiclePanel.hidden=true;selectedVehicle.hidden=true;defaultHidden.value='';window.focusSearchableSelect?.(newType);
 });
 document.getElementById('cancel-real-vehicle')?.addEventListener('click',()=>{
   newVehiclePanel.hidden=true;vehiclePanel.hidden=currentVehicles.length===0;
 });
 document.getElementById('use-real-vehicle')?.addEventListener('click',()=>{
   const typeId=newType.value,status=newStatus.value,plate=newPlate.value.trim();
-  if(!typeId){newType.focus();return;}
+  if(!typeId){window.focusSearchableSelect?.(newType);return;}
   if(status==='registered'&&!plate){newPlate.focus();return;}
   setSelectedVehicle({id:'',plate:plate,separator:newSep.value.trim(),vehicle_type_id:typeId,vehicle_type:newType.options[newType.selectedIndex]?.textContent||'مركبة',registration_status:status,is_default:false});
   defaultHidden.value='';
@@ -461,22 +528,22 @@ document.getElementById('change-vehicle')?.addEventListener('click',()=>{
 });
 document.getElementById('reset-collector')?.addEventListener('click',()=>{
   document.getElementById('collector-form')?.reset();
-  clientId.value='';clientPhone.value='';clientAddress.value='';clientNotes.value='';
-  client.classList.remove('customer-selected');clearVehicle();currentVehicles=[];
+  clientId.value='';clientName.value='';clientPhone.value='';clientAddress.value='';clientNotes.value='';
+  client.value='';updateSelectedCustomerLabel('');closeClientPicker();clearVehicle();currentVehicles=[];
   vehicleList.innerHTML='';vehiclePanel.hidden=true;newVehiclePanel.hidden=true;
-  clientSug.innerHTML='';clientSug.hidden=true;setTimeout(()=>client.focus(),40);
+  clientSug.innerHTML='';clientSug.hidden=true;setTimeout(()=>clientPickerTrigger?.focus(),40);
 });
 document.querySelectorAll('input[name="direction"]').forEach(r=>r.addEventListener('change',()=>{
   submitBtn.innerHTML=r.value==='exit'&&r.checked?'<i class="bi bi-arrow-up-circle"></i> تسجيل الخروج':'<i class="bi bi-arrow-down-circle"></i> تسجيل الدخول';
 }));
 document.getElementById('collector-form')?.addEventListener('submit',e=>{
-  const clientValue=clientId.value||client.value.trim();
-  if(!clientValue){e.preventDefault();client.focus();return;}
+  const clientValue=clientId.value||clientName.value.trim();
+  if(!clientValue){e.preventDefault();openClientPicker();clientPickerTrigger?.focus();return;}
   if(!vehicleTypeHidden.value){e.preventDefault();newVehiclePanel.hidden=false;newType.focus();return;}
   if(regHidden.value==='registered'&&!plateHidden.value.trim()){e.preventDefault();newVehiclePanel.hidden=false;newPlate.focus();return;}
   submitBtn.disabled=true;submitBtn.classList.add('loading');
   submitBtn.innerHTML='<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> جارٍ التسجيل...';
 });
-window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>client?.focus(),40));
+window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>clientPickerTrigger?.focus({preventScroll:true}),40));
 </script>
 {% endblock %}

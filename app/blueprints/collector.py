@@ -244,15 +244,18 @@ def search_clients():
     initial_load=not q
 
     compact=q.replace(" ","").replace("-","").replace("/","")
-    phone_compact=q.replace(" ","").replace("-","").replace("(","").replace(")","")
+    phone_compact=q.replace(" ","").replace("-","").replace("(","").replace(")","").replace("+","")
     results=[]
 
     client_rows=(Client.query
         .filter(Client.active.is_(True),
             or_(
                 Client.name.ilike(f"%{q}%"),
+                Client.code.ilike(f"%{q}%"),
+                Client.address.ilike(f"%{q}%"),
+                Client.identity_number.ilike(f"%{q}%"),
                 Client.phone.ilike(f"%{q}%"),
-                func.replace(func.replace(func.replace(Client.phone," ",""),"-",""),"+","").ilike(f"%{phone_compact}%"),
+                func.replace(func.replace(func.replace(func.replace(func.replace(Client.phone," ",""),"-",""),"+",""),"(",""),")","").ilike(f"%{phone_compact}%"),
             ))
         .order_by(Client.name)
         .limit(10).all())
@@ -305,6 +308,7 @@ def search_clients():
                 Vehicle.plate_number.ilike(f"%{q}%"),
                 Vehicle.plate_separator.ilike(f"%{q}%"),
                 Vehicle.plate_letters.ilike(f"%{q}%"),
+                Vehicle.notes.ilike(f"%{q}%"),
                 func.replace(func.replace(func.replace(Vehicle.plate_number," ",""),"-",""),"/","").ilike(f"%{compact}%"),
             ))
         .order_by(Vehicle.updated_at.desc()).limit(10).all())
