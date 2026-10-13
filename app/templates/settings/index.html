@@ -5,63 +5,63 @@
 .settings-page .page-head p{display:none}
 .settings-section{margin-bottom:10px}
 .settings-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.settings-section-head h3{font-size:14px;margin:0;font-weight:950}
-.settings-section-head small{font-size:9px;color:#889590}
+.settings-section-head h3{font-size: var(--type-body,14px);margin:0;font-weight:950}
+.settings-section-head small{font-size: var(--type-help,10px);color:#889590}
 .settings-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .setting-field{border:1px solid rgba(37,65,58,.09);border-radius:12px;padding:8px;background:#fff}
-.setting-field label{display:block;font-size:10px;font-weight:900;color:#566761;margin-bottom:5px}
-.setting-field .form-control,.setting-field .form-select{min-height:40px;border-radius:10px;font-size:11px}
+.setting-field label{display:block;font-size: var(--type-help,10px);font-weight:900;color:#566761;margin-bottom:5px}
+.setting-field .form-control,.setting-field .form-select{min-height:40px;border-radius:10px;font-size: var(--type-label,11px)}
 .setting-field-wide{grid-column:1/-1}
 .brand-color-input{display:grid;grid-template-columns:42px minmax(0,1fr);gap:6px;align-items:center}
 .brand-color-input input[type=color]{width:42px;height:40px;border:1px solid rgba(37,65,58,.12);border-radius:10px;padding:3px;background:#fff}
 .settings-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.settings-actions .btn{border-radius:10px;font-size:11px;font-weight:900}
+.settings-actions .btn{border-radius:10px;font-size: var(--type-label,11px);font-weight:900}
 .brand-preview-compact{display:flex;align-items:center;gap:9px;border:1px solid rgba(11,110,79,.14);background:linear-gradient(180deg,#f7fbf9,#fff);border-radius:13px;padding:10px}
 .brand-preview-mark{width:42px;height:42px;border-radius:12px;background:var(--preview-color,#0b6e4f);display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden;font-weight:950}
 .brand-preview-mark img{width:100%;height:100%;object-fit:contain}
 .brand-preview-copy{min-width:0;display:flex;flex-direction:column}
-.brand-preview-copy strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brand-preview-copy span{font-size:9px;color:#87938f}
+.brand-preview-copy strong{font-size: var(--type-body-compact,13px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-preview-copy span{font-size: var(--type-help,10px);color:#87938f}
 .current-brand{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:7px;padding:7px 8px;border:1px solid rgba(37,65,58,.08);border-radius:10px}
 .current-brand img{width:52px;height:35px;object-fit:contain;border-radius:7px;background:#f7f8f7}
-.current-brand strong{font-size:9px;color:#697772}
+.current-brand strong{font-size: var(--type-help,10px);color:#697772}
 .current-brand-actions{display:flex;gap:4px}
 .current-brand-actions .btn{height:28px;width:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px}
 .vehicle-types-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
 .vehicle-type-card{border:1px solid rgba(37,65,58,.10);border-radius:12px;padding:8px;background:#fff;min-width:0;display:flex;flex-direction:column;gap:7px;box-shadow:0 2px 7px rgba(24,45,39,.025)}
 .vehicle-type-card.is-off{opacity:.72;background:#f7f8f8}
 .vehicle-type-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
-.vehicle-type-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(11,110,79,.08);color:var(--primary);font-size:13px}
-.vehicle-type-name{font-size:11px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vehicle-type-meta{font-size:8.5px;color:#8b9692}
+.vehicle-type-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(11,110,79,.08);color:var(--primary);font-size: var(--type-body-compact,13px)}
+.vehicle-type-name{font-size: var(--type-label,11px);font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vehicle-type-meta{font-size: var(--type-help,10px);color:#8b9692}
 .vehicle-type-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.vehicle-type-actions .btn,.vehicle-type-actions form .btn{min-height:29px;padding:4px;border-radius:8px;font-size:9px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:3px}
+.vehicle-type-actions .btn,.vehicle-type-actions form .btn{min-height:29px;padding:4px;border-radius:8px;font-size: var(--type-help,10px);font-weight:850;display:flex;align-items:center;justify-content:center;gap:3px}
 .vehicle-type-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px}
-.vehicle-type-add .form-control{min-height:40px;border-radius:10px;font-size:11px}
-.vehicle-type-add .btn{border-radius:10px;font-size:10px;font-weight:900}
+.vehicle-type-add .form-control{min-height:40px;border-radius:10px;font-size: var(--type-label,11px)}
+.vehicle-type-add .btn{border-radius:10px;font-size: var(--type-help,10px);font-weight:900}
 .settings-policy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .policy-mini{border:1px solid rgba(37,65,58,.08);border-radius:11px;padding:8px;display:flex;flex-direction:column;gap:3px;background:#fff}
-.policy-mini i{font-size:14px;color:var(--primary)}
-.policy-mini strong{font-size:10px}
-.policy-mini span{font-size:8px;line-height:1.5;color:#87938f}
+.policy-mini i{font-size: var(--type-body,14px);color:var(--primary)}
+.policy-mini strong{font-size: var(--type-help,10px)}
+.policy-mini span{font-size: var(--type-help,10px);line-height:1.5;color:#87938f}
 .type-modal-backdrop{position:fixed;inset:0;background:rgba(17,31,27,.38);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
 .type-modal-backdrop[hidden]{display:none}
 .type-modal{width:min(360px,100%);background:#fff;border-radius:16px;padding:12px;box-shadow:0 18px 50px rgba(15,34,29,.22)}
-.type-modal h4{font-size:14px;margin:0}
-.type-modal .form-control{border-radius:10px;min-height:42px;font-size:12px}
+.type-modal h4{font-size: var(--type-body,14px);margin:0}
+.type-modal .form-control{border-radius:10px;min-height:42px;font-size: var(--type-small,12px)}
 .type-modal-actions{display:flex;gap:6px;margin-top:8px}
-.type-modal-actions .btn{flex:1;border-radius:10px;font-size:11px;font-weight:900}
+.type-modal-actions .btn{flex:1;border-radius:10px;font-size: var(--type-label,11px);font-weight:900}
 @media(max-width:900px){.vehicle-types-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){
   .settings-page{padding-bottom:18px}
   .settings-form-grid{grid-template-columns:1fr}
   .setting-field-wide{grid-column:auto}
-  .settings-section-head h3{font-size:13px}
-  .settings-section-head small{font-size:8px}
+  .settings-section-head h3{font-size: var(--type-body-compact,13px)}
+  .settings-section-head small{font-size: var(--type-help,10px)}
   .vehicle-types-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
   .vehicle-type-card{padding:7px;border-radius:11px}
   .vehicle-type-actions{grid-template-columns:repeat(3,1fr)}
-  .vehicle-type-actions .btn,.vehicle-type-actions form .btn{font-size:8px;min-height:28px}
+  .vehicle-type-actions .btn,.vehicle-type-actions form .btn{font-size: var(--type-help,10px);min-height:28px}
   .settings-policy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 </style>
@@ -81,15 +81,15 @@
         <div class="setting-field"><label>الوصف تحت الاسم</label><input name="setting_project_name" class="form-control" value="{{project_name}}"></div>
         <div class="setting-field"><label>العملة</label><input name="setting_currency_name" class="form-control" value="{{currency_name}}"></div>
         <div class="setting-field"><label>اللون الرئيسي</label><div class="brand-color-input"><input type="color" id="brand-color-picker" value="{{brand_color}}" aria-label="اختيار اللون"><input id="brand-color-text" name="setting_brand_color" class="form-control" value="{{brand_color}}" maxlength="7" oninput="syncColorFromText()"></div></div>
-        <div class="setting-field"><label>الشعار الرئيسي</label><input type="file" name="brand_logo" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size:8px">اختياري. عند الحذف سيبقى الاسم كنص بدون تحميل صورة.</small></div>
-        <div class="setting-field"><label>أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size:8px">تُضغط تلقائيًا لتقليل الحجم.</small></div>
+        <div class="setting-field"><label>الشعار الرئيسي</label><input type="file" name="brand_logo" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">اختياري. عند الحذف سيبقى الاسم كنص بدون تحميل صورة.</small></div>
+        <div class="setting-field"><label>أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">تُضغط تلقائيًا لتقليل الحجم.</small></div>
         <div class="setting-field"><label>المظهر</label><select name="setting_ui_theme" class="form-select">{% set theme=settings|selectattr('key','equalto','ui_theme')|map(attribute='value')|first %}<option value="light" {% if theme!='dark' %}selected{% endif %}>فاتح</option><option value="dark" {% if theme=='dark' %}selected{% endif %}>داكن</option></select></div>
-        <div class="setting-field"><label>تصميم لوحة الإدارة</label>{% set admin_theme_current=settings|selectattr('key','equalto','admin_theme')|map(attribute='value')|first %}<select name="setting_admin_theme" class="form-select"><option value="classic" {% if admin_theme_current not in ['water','water_project'] %}selected{% endif %}>التصميم الحالي</option><option value="water" {% if admin_theme_current=='water' %}selected{% endif %}>التصميم الحديث — بطابع Water POS</option><option value="water_project" {% if admin_theme_current=='water_project' %}selected{% endif %}>تصميم مطابق لواجهة مشروع المياه</option></select><small class="text-muted d-block mt-1" style="font-size:8px">يُطبّق على المدير ومدير النظام فقط؛ ولا يغيّر تصميم بقية الحسابات.</small></div>
+        <div class="setting-field"><label>تصميم لوحة الإدارة</label>{% set admin_theme_current=settings|selectattr('key','equalto','admin_theme')|map(attribute='value')|first %}<select name="setting_admin_theme" class="form-select"><option value="classic" {% if admin_theme_current not in ['water','water_project'] %}selected{% endif %}>التصميم الحالي</option><option value="water" {% if admin_theme_current=='water' %}selected{% endif %}>التصميم الحديث — بطابع Water POS</option><option value="water_project" {% if admin_theme_current=='water_project' %}selected{% endif %}>تصميم مطابق لواجهة مشروع المياه</option></select><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">يُطبّق على المدير ومدير النظام فقط؛ ولا يغيّر تصميم بقية الحسابات.</small></div>
         {% set rental_theme_current = settings|selectattr('key','equalto','rental_ui_theme')|map(attribute='value')|first %}
-        <div class="setting-field"><label>ثيم العقود والاستحقاقات</label><select name="setting_rental_ui_theme" class="form-select"><option value="mobile" {% if rental_theme_current in [none,'mobile'] %}selected{% endif %}>بطاقات الهاتف الحديثة</option><option value="classic" {% if rental_theme_current=='classic' %}selected{% endif %}>التصميم التقليدي</option></select><small class="text-muted d-block mt-1" style="font-size:9px">يخص العقود والإيجارات والاستحقاقات فقط، ولا يغيّر بقية صفحات النظام.</small></div>
+        <div class="setting-field"><label>ثيم العقود والاستحقاقات</label><select name="setting_rental_ui_theme" class="form-select"><option value="mobile" {% if rental_theme_current in [none,'mobile'] %}selected{% endif %}>بطاقات الهاتف الحديثة</option><option value="classic" {% if rental_theme_current=='classic' %}selected{% endif %}>التصميم التقليدي</option></select><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">يخص العقود والإيجارات والاستحقاقات فقط، ولا يغيّر بقية صفحات النظام.</small></div>
         {% set party_cards_theme_current=settings|selectattr('key','equalto','party_cards_theme')|map(attribute='value')|first %}
-        <div class="setting-field"><label>تصميم بطاقات العملاء والوكلاء</label><select name="setting_party_cards_theme" class="form-select"><option value="water" {% if party_cards_theme_current in [none,'water'] %}selected{% endif %}>مطابق لطابع واجهة المشتركين في مشروع المياه</option><option value="classic" {% if party_cards_theme_current=='classic' %}selected{% endif %}>بطاقات كلاسيكية هادئة</option></select><small class="text-muted d-block mt-1" style="font-size:9px">يخص صفحتي العملاء والوكلاء فقط، ولا يغيّر بقية شاشات النظام.</small></div>
-        {% if admin_theme_current == 'water_project' and can_manage %}<div class="setting-field setting-field-wide"><label>تخصيص الواجهة الثالثة</label><a class="btn btn-outline-primary w-100" href="{{url_for('settings.water_project_theme')}}"><i class="bi bi-sliders2"></i> تخصيص الأزرار العلوية والأيقونات</a><small class="text-muted d-block mt-1" style="font-size:9px">تغيير نص كل زر وأيقونته ووظيفته وترتيب الأزرار الثلاثة.</small></div>{% endif %}
+        <div class="setting-field"><label>تصميم بطاقات العملاء والوكلاء</label><select name="setting_party_cards_theme" class="form-select"><option value="water" {% if party_cards_theme_current in [none,'water'] %}selected{% endif %}>مطابق لطابع واجهة المشتركين في مشروع المياه</option><option value="classic" {% if party_cards_theme_current=='classic' %}selected{% endif %}>بطاقات كلاسيكية هادئة</option></select><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">يخص صفحتي العملاء والوكلاء فقط، ولا يغيّر بقية شاشات النظام.</small></div>
+        {% if admin_theme_current == 'water_project' and can_manage %}<div class="setting-field setting-field-wide"><label>تخصيص الواجهة الثالثة</label><a class="btn btn-outline-primary w-100" href="{{url_for('settings.water_project_theme')}}"><i class="bi bi-sliders2"></i> تخصيص الأزرار العلوية والأيقونات</a><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">تغيير نص كل زر وأيقونته ووظيفته وترتيب الأزرار الثلاثة.</small></div>{% endif %}
         <div class="setting-field"><label>حجم خط التطبيق</label>{% set font_size=settings|selectattr('key','equalto','font_size')|map(attribute='value')|first %}<select name="setting_font_size" class="form-select"><option value="100" {% if font_size in [none,'100'] %}selected{% endif %}>عادي 100%</option><option value="110" {% if font_size=='110' %}selected{% endif %}>كبير 110%</option><option value="120" {% if font_size=='120' %}selected{% endif %}>أكبر 120%</option><option value="130" {% if font_size=='130' %}selected{% endif %}>كبير جدًا 130%</option></select></div>
         <div class="setting-field"><label>حجم خط نموذج التحصيل</label>{% set collector_font_size=settings|selectattr('key','equalto','collector_font_size')|map(attribute='value')|first %}<select name="setting_collector_font_size" class="form-select"><option value="100" {% if collector_font_size=='100' %}selected{% endif %}>عادي 100%</option><option value="110" {% if collector_font_size=='110' %}selected{% endif %}>كبير 110%</option><option value="120" {% if collector_font_size in [none,'120'] %}selected{% endif %}>أكبر 120%</option><option value="130" {% if collector_font_size=='130' %}selected{% endif %}>كبير جدًا 130%</option><option value="140" {% if collector_font_size=='140' %}selected{% endif %}>ضخم 140%</option></select></div>
         <div class="setting-field"><label>تحميل الأيقونة</label><select name="setting_brand_icon_enabled" class="form-select"><option value="1" {% if brand_icon_enabled %}selected{% endif %}>مفعلة</option><option value="0" {% if not brand_icon_enabled %}selected{% endif %}>متوقفة</option></select></div>
@@ -170,7 +170,7 @@
       <button type="button" class="btn btn-light btn-sm" onclick="closeVehicleTypeEdit()" aria-label="إغلاق"><i class="bi bi-x-lg"></i></button>
     </div>
     <form method="post" id="vehicle-type-edit-form">
-      <label class="form-label mt-2" style="font-size:10px">اسم النوع</label>
+      <label class="form-label mt-2" style="font-size: var(--type-help,10px)">اسم النوع</label>
       <input type="text" class="form-control" name="name" id="vehicle-type-edit-name" required>
       <div class="type-modal-actions">
         <button type="button" class="btn btn-light" onclick="closeVehicleTypeEdit()">إلغاء</button>
