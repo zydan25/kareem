@@ -5,7 +5,7 @@ from flask_login import current_user
 from sqlalchemy import desc, func, or_
 
 from ..extensions import db
-from ..models import Agent, Client, ClientAgent, GateTransaction, Shift, Vehicle, VehicleAgent, VehicleType
+from ..models import Account, Agent, Client, ClientAgent, GateTransaction, Shift, Vehicle, VehicleAgent, VehicleType
 from ..permissions import permission_required
 from ..services.accounting import D, account_balance, create_posted_entry, get_system_account
 from ..services.accounts import ensure_agent_account, ensure_client_account, ensure_user_collector_account
@@ -163,7 +163,13 @@ def index():
     daily_entries=len([x for x in counted_rows if x.direction=="entry"])
     daily_exits=len([x for x in counted_rows if x.direction=="exit"])
     employee=current_user.employee
-    custody_balance=account_balance(employee.account_id) if employee and employee.account_id else D(0)
+    # Collections are posted to the employee cashbox, not the employee's general account.
+    cashbox_account = (
+        employee.cashbox_account
+        if employee else Account.query.filter_by(code=f"102U{current_user.id:06d}").first()
+    )
+    cashbox_balance = account_balance(cashbox_account.id) if cashbox_account else D(0)
+    cashbox_label = "صندوق الموظف" if employee else "صندوق المتحصل"
 
     initial_clients=[]
     default_type=default_vehicle_type(db.session)
@@ -198,7 +204,7 @@ def index():
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
         recent=day_rows[:20],current_shift=current_shift(),initial_clients=initial_clients,
         daily_total=daily_total,daily_count=daily_count,daily_entries=daily_entries,
-        daily_exits=daily_exits,custody_balance=custody_balance,today=today)
+        daily_exits=daily_exits,cashbox_balance=cashbox_balance,cashbox_label=cashbox_label,today=today)
 
 @bp.get("/transactions/<int:transaction_id>")
 @permission_required("collector.view")
