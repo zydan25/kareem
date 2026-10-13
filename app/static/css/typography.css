@@ -1,0 +1,86 @@
+/*
+ * Shared typography foundation.
+ * Scale and role sizes are based on the approved third (Water Project) theme.
+ * Component-specific refinements remain in their existing stylesheets.
+ */
+:root {
+  --ui-font-family: "Tajawal", "Noto Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --type-page-title: calc(20px * var(--ui-font-scale, 1));
+  --type-page-title-large: calc(22px * var(--ui-font-scale, 1));
+  --type-brand-title: calc(16px * var(--ui-font-scale, 1));
+  --type-section-title: calc(16px * var(--ui-font-scale, 1));
+  --type-body: calc(14px * var(--ui-font-scale, 1));
+  --type-body-compact: calc(13px * var(--ui-font-scale, 1));
+  --type-small: calc(12px * var(--ui-font-scale, 1));
+  --type-button: calc(12px * var(--ui-font-scale, 1));
+  --type-button-small: calc(11px * var(--ui-font-scale, 1));
+  --type-button-compact: calc(11.5px * var(--ui-font-scale, 1));
+  --type-label: calc(11px * var(--ui-font-scale, 1));
+  --type-control: calc(12px * var(--ui-font-scale, 1));
+  --type-help: calc(10px * var(--ui-font-scale, 1));
+  --type-table: calc(12px * var(--ui-font-scale, 1));
+  --type-stat-value: calc(20px * var(--ui-font-scale, 1));
+
+  --type-icon-13: calc(13px * var(--ui-font-scale, 1));
+  --type-icon-14: calc(14px * var(--ui-font-scale, 1));
+  --type-icon-16: calc(16px * var(--ui-font-scale, 1));
+  --type-icon-22: calc(22px * var(--ui-font-scale, 1));
+  --type-icon-23: calc(23px * var(--ui-font-scale, 1));
+  --type-icon-24: calc(24px * var(--ui-font-scale, 1));
+
+  --type-line-height-body: 1.6;
+  --type-line-height-heading: 1.4;
+}
+
+html {
+  font-size: calc(16px * var(--ui-font-scale, 1));
+}
+
+body {
+  font-family: var(--ui-font-family);
+  font-size: var(--type-body);
+  line-height: var(--type-line-height-body);
+}
+
+.page-head h1 {
+  font-size: var(--type-page-title);
+  line-height: var(--type-line-height-heading);
+}
+
+.page-head p {
+  font-size: var(--type-small);
+  line-height: 1.7;
+}
+
+.eyebrow,
+.form-label {
+  font-size: var(--type-label);
+  line-height: 1.5;
+}
+
+.form-control,
+.form-select {
+  font-size: var(--type-control);
+  line-height: 1.5;
+}
+
+.btn {
+  font-size: var(--type-button);
+  line-height: 1.4;
+}
+
+.btn.btn-sm {
+  font-size: var(--type-button-compact);
+}
+
+.section-title h3,
+.form-section-title {
+  font-size: var(--type-section-title);
+  line-height: var(--type-line-height-heading);
+}
+
+.table thead th,
+.table tbody td {
+  font-size: var(--type-table);
+}
