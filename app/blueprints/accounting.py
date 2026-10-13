@@ -1,11 +1,11 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from ..extensions import db
-from ..models import Account, JournalEntry
+from ..models import Account, FiscalYear, JournalEntry
 from sqlalchemy import or_
 from ..permissions import can, permission_required
 from ..services.accounting import account_balance, create_posted_entry, get_system_account, reverse_entry
@@ -309,3 +309,121 @@ def reverse(entry_id):
     except Exception as exc:
         db.session.rollback(); flash(str(exc),"danger")
     return redirect(url_for("accounting.journal_detail",entry_id=entry_id))
+
+
+@bp.get("/fiscal-years")
+@permission_required("accounting.view")
+def fiscal_years():
+    rows = FiscalYear.query.order_by(FiscalYear.start_date.desc(), FiscalYear.id.desc()).all()
+    return render_template("accounting/fiscal_years.html", rows=rows)
+
+
+@bp.post("/fiscal-years")
+@permission_required("accounting.view")
+def fiscal_year_create():
+    if not can("accounting.periods.manage"):
+        from flask import abort
+        abort(403)
+    try:
+        name = request.form.get("name", "").strip()[:80]
+        start_date = date.fromisoformat(request.form.get("start_date", ""))
+        end_date = date.fromisoformat(request.form.get("end_date", ""))
+        notes = request.form.get("notes", "").strip() or None
+        if not name:
+            raise ValueError("اسم السنة المالية مطلوب")
+        if end_date < start_date:
+            raise ValueError("تاريخ نهاية السنة يجب ألا يسبق تاريخ بدايتها")
+        if FiscalYear.query.filter_by(name=name).first():
+            raise ValueError("اسم السنة المالية مستخدم مسبقًا")
+        overlap = FiscalYear.query.filter(
+            FiscalYear.start_date <= end_date,
+            FiscalYear.end_date >= start_date,
+        ).first()
+        if overlap:
+            raise ValueError(f"الفترة تتداخل مع السنة المالية «{overlap.name}»")
+        latest = FiscalYear.query.order_by(FiscalYear.end_date.desc()).first()
+        if latest and start_date <= latest.end_date:
+            raise ValueError("يجب إنشاء السنوات المالية بالتسلسل الزمني بعد آخر سنة موجودة")
+        row = FiscalYear(name=name, start_date=start_date, end_date=end_date,
+                         notes=notes, status="open", created_by_id=current_user.id)
+        db.session.add(row)
+        db.session.flush()
+        audit("create_fiscal_year", "fiscal_year", row.id, f"{name}|{start_date}|{end_date}")
+        db.session.commit()
+        flash("تم إنشاء السنة المالية بنجاح", "success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc), "danger")
+    return redirect(url_for("accounting.fiscal_years"))
+
+
+@bp.post("/fiscal-years/<int:fiscal_year_id>/close")
+@permission_required("accounting.periods.manage")
+def fiscal_year_close(fiscal_year_id):
+    year = db.session.get(FiscalYear, fiscal_year_id)
+    if not year:
+        return ("السنة المالية غير موجودة", 404)
+    try:
+        if year.status == "closed":
+            raise ValueError("هذه السنة المالية مقفلة مسبقًا")
+        earlier_open = FiscalYear.query.filter(
+            FiscalYear.status == "open", FiscalYear.end_date < year.start_date,
+        ).first()
+        if earlier_open:
+            raise ValueError(f"يجب إقفال السنة المالية السابقة «{earlier_open.name}» أولًا")
+        drafts = JournalEntry.query.filter(
+            JournalEntry.status == "draft",
+            JournalEntry.entry_date >= year.start_date,
+            JournalEntry.entry_date <= year.end_date,
+        ).count()
+        if drafts:
+            raise ValueError("لا يمكن إقفال السنة قبل ترحيل أو إلغاء جميع القيود المسودة داخلها")
+
+        pnl_accounts = Account.query.filter(
+            Account.is_group.is_(False),
+            Account.account_type.in_(["revenue", "expense"]),
+        ).order_by(Account.code).all()
+        close_lines = []
+        signed_total = Decimal("0")
+        for account in pnl_accounts:
+            balance = account_balance(account.id, start=year.start_date, end=year.end_date)
+            if not balance:
+                continue
+            signed_total += balance
+            if balance > 0:
+                close_lines.append({"account": account, "debit": Decimal("0"), "credit": balance,
+                                    "description": f"إقفال حساب {account.code} — {account.name}"})
+            else:
+                close_lines.append({"account": account, "debit": abs(balance), "credit": Decimal("0"),
+                                    "description": f"إقفال حساب {account.code} — {account.name}"})
+
+        net_income = -signed_total
+        closing_entry = None
+        if close_lines:
+            retained = get_system_account("retained_earnings")
+            if net_income > 0:
+                close_lines.append({"account": retained, "debit": Decimal("0"), "credit": net_income,
+                                    "description": f"صافي ربح السنة المالية {year.name}"})
+            elif net_income < 0:
+                close_lines.append({"account": retained, "debit": abs(net_income), "credit": Decimal("0"),
+                                    "description": f"صافي خسارة السنة المالية {year.name}"})
+            closing_entry = create_posted_entry(
+                description=f"إقفال نتائج السنة المالية {year.name}",
+                entry_date=year.end_date, created_by_id=current_user.id, lines=close_lines,
+                source_type="fiscal_year_close", source_id=year.id, prefix="CLOSE",
+                audit=f"إقفال السنة {year.name} | صافي النتيجة={net_income}",
+            )
+        year.status = "closed"
+        year.closed_at = datetime.now(timezone.utc)
+        year.closed_by_id = current_user.id
+        year.closing_journal_entry_id = closing_entry.id if closing_entry else None
+        audit("close_fiscal_year", "fiscal_year", year.id,
+              f"{year.name}|net_income={net_income}|closing_entry={closing_entry.number if closing_entry else 'none'}")
+        db.session.commit()
+        flash(f"تم إقفال السنة المالية {year.name} بنجاح" +
+              (f" بالقيد {closing_entry.number}" if closing_entry else "؛ لا توجد حركة إيرادات أو مصروفات تحتاج إلى قيد إقفال"),
+              "success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc), "danger")
+    return redirect(url_for("accounting.fiscal_years"))

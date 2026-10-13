@@ -3,7 +3,7 @@ from decimal import Decimal
 from sqlalchemy import func, update
 
 from ..extensions import db
-from ..models import Account, EntryStatus, JournalEntry, JournalLine, JournalNumberCounter
+from ..models import Account, EntryStatus, FiscalYear, JournalEntry, JournalLine, JournalNumberCounter
 
 def D(value):
     return Decimal(str(value or 0)).quantize(Decimal("0.01"))
@@ -44,8 +44,28 @@ def account_balance(account_id, start=None, end=None):
     if end: q=q.filter(JournalEntry.entry_date<=end)
     return D(q.scalar())
 
+def _assert_fiscal_period_open(entry_date):
+    """Enforce fiscal-year boundaries after the first period has been configured."""
+    if not isinstance(entry_date, date):
+        try:
+            entry_date = date.fromisoformat(str(entry_date))
+        except (TypeError, ValueError):
+            raise ValueError("تاريخ القيد غير صالح")
+    if not db.session.query(FiscalYear.id).first():
+        return
+    year = FiscalYear.query.filter(
+        FiscalYear.start_date <= entry_date,
+        FiscalYear.end_date >= entry_date,
+    ).order_by(FiscalYear.start_date.desc()).first()
+    if not year:
+        raise ValueError("لا توجد سنة مالية تغطي تاريخ القيد؛ أنشئ السنة المالية أولًا")
+    if year.status != "open":
+        raise ValueError(f"السنة المالية «{year.name}» مغلقة ولا تقبل قيودًا جديدة")
+
+
 def create_posted_entry(*,description,entry_date,created_by_id,lines,
                         source_type="manual",source_id=None,prefix="JE",audit=None):
+    _assert_fiscal_period_open(entry_date)
     normalized=[]; debit_total=Decimal("0"); credit_total=Decimal("0")
     for item in lines:
         account=item.get("account")

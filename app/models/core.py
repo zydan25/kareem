@@ -188,6 +188,31 @@ class JournalNumberCounter(db.Model):
     )
 
 
+class FiscalYear(TimestampMixin, db.Model):
+    """An accounting period permanently locked after it is closed."""
+    __tablename__ = "fiscal_years"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False, unique=True)
+    start_date = db.Column(db.Date, nullable=False, index=True)
+    end_date = db.Column(db.Date, nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default="open", index=True)
+    notes = db.Column(db.Text)
+    created_by_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"))
+    closed_by_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"))
+    closed_at = db.Column(db.DateTime(timezone=True))
+    closing_journal_entry_id = db.Column(
+        db.Integer, db.ForeignKey("journal_entries.id", ondelete="SET NULL"), unique=True
+    )
+    created_by = db.relationship("User", foreign_keys=[created_by_id])
+    closed_by = db.relationship("User", foreign_keys=[closed_by_id])
+    closing_journal_entry = db.relationship("JournalEntry", foreign_keys=[closing_journal_entry_id])
+    __table_args__ = (
+        CheckConstraint("end_date >= start_date", name="ck_fiscal_year_dates"),
+        CheckConstraint("status IN ('open','closed')", name="ck_fiscal_year_status"),
+        Index("ix_fiscal_year_status_dates", "status", "start_date", "end_date"),
+    )
+
+
 class JournalLine(db.Model):
     __tablename__="journal_lines"
     id=db.Column(db.Integer,primary_key=True)
