@@ -28,71 +28,71 @@
 <style>
 .rents-page{max-width:780px;margin:0 auto;color:var(--text,#24352d)}
 .rents-page .rents-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
-.rents-page .rents-heading h1{margin:2px 0 4px;font-size:clamp(20px,5vw,25px);font-weight:950;letter-spacing:-.3px}
-.rents-page .rents-heading p{font-size:12px;line-height:1.65;color:var(--muted,#75827c);margin:0}
-.rents-page .rents-eyebrow{color:var(--primary,#168354);font-size:10px;font-weight:900}
+.rents-page .rents-heading h1{margin:2px 0 4px;font-size: var(--type-page-title-large,22px);font-weight:950;letter-spacing:-.3px}
+.rents-page .rents-heading p{font-size: var(--type-small,12px);line-height:1.65;color:var(--muted,#75827c);margin:0}
+.rents-page .rents-eyebrow{color:var(--primary,#168354);font-size: var(--type-help,10px);font-weight:900}
 .rents-page .rents-head-actions{display:flex;gap:7px;flex-wrap:wrap}
-.rents-page .rents-head-actions .btn{min-height:42px;border-radius:12px;font-size:11px;font-weight:850;display:inline-flex;align-items:center;gap:6px}
+.rents-page .rents-head-actions .btn{min-height:42px;border-radius:12px;font-size: var(--type-label,11px);font-weight:850;display:inline-flex;align-items:center;gap:6px}
 .rents-page .rent-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
 .rents-page .rent-stat{min-width:0;display:flex;align-items:center;gap:9px;padding:10px;border:1px solid #e1e9e4;border-radius:14px;background:#fff}
-.rents-page .rent-stat-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:#eaf6ef;color:#17804a;font-size:16px}
-.rents-page .rent-stat small{display:block;font-size:9px;line-height:1.3;color:#7b8982;font-weight:800}
-.rents-page .rent-stat strong{display:block;margin-top:3px;font-size:14px;line-height:1.25;color:#293e33;font-weight:950;overflow-wrap:anywhere}
+.rents-page .rent-stat-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:#eaf6ef;color:#17804a;font-size: var(--type-section-title,16px)}
+.rents-page .rent-stat small{display:block;font-size: var(--type-help,10px);line-height:1.3;color:#7b8982;font-weight:800}
+.rents-page .rent-stat strong{display:block;margin-top:3px;font-size: var(--type-body,14px);line-height:1.25;color:#293e33;font-weight:950;overflow-wrap:anywhere}
 .rents-page .rent-form-panel{display:none;margin-bottom:12px}
 .rents-page .rent-form-panel.is-open{display:block}
 .rents-page .rent-form-panel,.rents-page .rent-list-panel{border:1px solid #e0e8e3;border-radius:17px;background:#fff;box-shadow:0 4px 15px rgba(20,45,34,.035);padding:14px}
 .rents-page .rent-form-head,.rents-page .rent-list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
-.rents-page .rent-form-head h2,.rents-page .rent-list-head h2{margin:0;font-size:15px;font-weight:950}
-.rents-page .rent-form-head p,.rents-page .rent-list-head p{margin:3px 0 0;color:#78877f;font-size:10px;line-height:1.5}
-.rents-page .rent-form-panel .form-label{font-size:11px;font-weight:850;color:#516159;margin-bottom:5px}
-.rents-page .rent-form-panel .form-control,.rents-page .rent-form-panel .form-select{min-height:44px;border-radius:11px;font-size:13px;border-color:#dce6e0}
+.rents-page .rent-form-head h2,.rents-page .rent-list-head h2{margin:0;font-size: var(--type-card-title,15px);font-weight:950}
+.rents-page .rent-form-head p,.rents-page .rent-list-head p{margin:3px 0 0;color:#78877f;font-size: var(--type-help,10px);line-height:1.5}
+.rents-page .rent-form-panel .form-label{font-size: var(--type-label,11px);font-weight:850;color:#516159;margin-bottom:5px}
+.rents-page .rent-form-panel .form-control,.rents-page .rent-form-panel .form-select{min-height:44px;border-radius:11px;font-size: var(--type-body-compact,13px);border-color:#dce6e0}
 .rents-page .rent-form-panel .form-control:focus,.rents-page .rent-form-panel .form-select:focus{border-color:#93c3a7;box-shadow:0 0 0 .2rem rgba(22,131,84,.12)}
 .rents-page .rent-total-wrap{border:1px solid #dcefe3;background:#f0faf4;border-radius:12px;padding:9px 11px}
-.rents-page .rent-total-wrap small{display:block;color:#5b7e69;font-size:9px;font-weight:850}
-.rents-page .rent-total-wrap strong{display:block;color:#187748;font-size:17px;font-weight:950;margin-top:3px}
-.rents-page .rent-form-submit{min-height:46px;border-radius:12px;font-size:13px;font-weight:900}
+.rents-page .rent-total-wrap small{display:block;color:#5b7e69;font-size: var(--type-help,10px);font-weight:850}
+.rents-page .rent-total-wrap strong{display:block;color:#187748;font-size: var(--type-subheading,18px);font-weight:950;margin-top:3px}
+.rents-page .rent-form-submit{min-height:46px;border-radius:12px;font-size: var(--type-body-compact,13px);font-weight:900}
 .rents-page .rent-filter-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:7px;margin-bottom:11px}
-.rents-page .rent-filter-form .form-control,.rents-page .rent-filter-form .form-select{min-height:42px;border-radius:11px;font-size:11px;border-color:#dce5df}
+.rents-page .rent-filter-form .form-control,.rents-page .rent-filter-form .form-select{min-height:42px;border-radius:11px;font-size: var(--type-label,11px);border-color:#dce5df}
 .rents-page .rent-search{position:relative;margin-bottom:10px}
 .rents-page .rent-search i{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#87958d;pointer-events:none}
-.rents-page .rent-search input{padding-right:35px;min-height:42px;border-radius:11px;font-size:12px}
+.rents-page .rent-search input{padding-right:35px;min-height:42px;border-radius:11px;font-size: var(--type-small,12px)}
 .rents-page .rent-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
 .rents-page .rent-card{min-width:0;padding:12px;border:1px solid #e2e9e4;border-radius:15px;background:#fff}
 .rents-page .rent-card[hidden]{display:none!important}
 .rents-page .rent-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
 .rents-page .rent-identity{display:flex;align-items:center;gap:9px;min-width:0}
-.rents-page .rent-icon{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:12px;background:#eaf6ef;color:#17804a;font-size:18px}
+.rents-page .rent-icon{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:12px;background:#eaf6ef;color:#17804a;font-size: var(--type-subheading,18px)}
 .rents-page .rent-identity-copy{min-width:0}
-.rents-page .rent-contract{display:block;color:#7d8a82;font-size:9px;font-weight:850;margin-bottom:3px}
-.rents-page .rent-identity h3{margin:0;font-size:13px;line-height:1.4;font-weight:950;color:#293e33;overflow-wrap:anywhere}
-.rents-page .rent-identity p{margin:3px 0 0;color:#74837b;font-size:10px;overflow-wrap:anywhere}
-.rents-page .rent-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:6px 8px;border-radius:99px;font-size:9px;font-weight:900}
+.rents-page .rent-contract{display:block;color:#7d8a82;font-size: var(--type-help,10px);font-weight:850;margin-bottom:3px}
+.rents-page .rent-identity h3{margin:0;font-size: var(--type-body-compact,13px);line-height:1.4;font-weight:950;color:#293e33;overflow-wrap:anywhere}
+.rents-page .rent-identity p{margin:3px 0 0;color:#74837b;font-size: var(--type-help,10px);overflow-wrap:anywhere}
+.rents-page .rent-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:6px 8px;border-radius:99px;font-size: var(--type-help,10px);font-weight:900}
 .rents-page .rent-status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .rents-page .rent-status.paid{background:#e5f7eb;color:#18804b}
 .rents-page .rent-status.unpaid{background:#fff0e8;color:#b14e24}
 .rents-page .rent-amount-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:11px 0 9px;padding:10px 11px;border-radius:12px;background:#f5faf7;border:1px solid #e2efe6}
-.rents-page .rent-amount-bar span{font-size:10px;font-weight:850;color:#5e7969}
-.rents-page .rent-amount-bar strong{color:#177747;font-size:17px;font-weight:950;white-space:nowrap}
-.rents-page .rent-amount-bar small{font-size:9px;color:#75907e;font-weight:800}
+.rents-page .rent-amount-bar span{font-size: var(--type-help,10px);font-weight:850;color:#5e7969}
+.rents-page .rent-amount-bar strong{color:#177747;font-size: var(--type-subheading,18px);font-weight:950;white-space:nowrap}
+.rents-page .rent-amount-bar small{font-size: var(--type-help,10px);color:#75907e;font-weight:800}
 .rents-page .rent-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .rents-page .rent-detail{min-width:0;padding:8px 7px;border-radius:10px;background:#f7f9f8;border:1px solid #edf1ee}
-.rents-page .rent-detail small{display:block;color:#7e8d84;font-size:9px;margin-bottom:4px}
-.rents-page .rent-detail strong{display:block;color:#40554a;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rents-page .rent-detail small{display:block;color:#7e8d84;font-size: var(--type-help,10px);margin-bottom:4px}
+.rents-page .rent-detail strong{display:block;color:#40554a;font-size: var(--type-help,10px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rents-page .rent-card-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid #eef2ef}
-.rents-page .rent-card-actions .btn,.rents-page .rent-card-actions a{min-height:41px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border-radius:10px;font-size:10px;font-weight:900;text-decoration:none}
+.rents-page .rent-card-actions .btn,.rents-page .rent-card-actions a{min-height:41px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border-radius:10px;font-size: var(--type-help,10px);font-weight:900;text-decoration:none}
 .rents-page .rent-card-actions form{margin:0;flex:1 1 130px}
 .rents-page .rent-card-actions form .btn{width:100%}
 .rents-page .rent-card-actions a{border:1px solid #dfe8e2;background:#fff;color:#51665a}
 .rents-page .rent-card-actions .btn-primary{background:var(--primary,#168354);border-color:var(--primary,#168354);color:#fff}
 .rents-page .rent-empty{padding:29px 15px;text-align:center;border:1px dashed #cfded4;border-radius:15px;background:#fbfdfb}
-.rents-page .rent-empty i{display:grid;place-items:center;width:49px;height:49px;margin:0 auto 10px;border-radius:15px;background:#edf7f0;color:#198754;font-size:22px}
-.rents-page .rent-empty strong{display:block;font-size:13px;font-weight:950;color:#31473a}
-.rents-page .rent-empty p{font-size:11px;color:#7b8980;margin:5px 0 0}
-.rents-page .rent-theme-notice{display:flex;align-items:flex-start;gap:8px;margin-bottom:11px;padding:10px 11px;border-radius:12px;border:1px solid #dbece1;background:#f5fbf7;color:#516a5b;font-size:10px;line-height:1.6}
+.rents-page .rent-empty i{display:grid;place-items:center;width:49px;height:49px;margin:0 auto 10px;border-radius:15px;background:#edf7f0;color:#198754;font-size: var(--type-page-title-large,22px)}
+.rents-page .rent-empty strong{display:block;font-size: var(--type-body-compact,13px);font-weight:950;color:#31473a}
+.rents-page .rent-empty p{font-size: var(--type-label,11px);color:#7b8980;margin:5px 0 0}
+.rents-page .rent-theme-notice{display:flex;align-items:flex-start;gap:8px;margin-bottom:11px;padding:10px 11px;border-radius:12px;border:1px solid #dbece1;background:#f5fbf7;color:#516a5b;font-size: var(--type-help,10px);line-height:1.6}
 .rents-mobile-theme .rents-heading{align-items:flex-start}
 .rents-mobile-theme .rent-stat{padding:8px 7px;box-shadow:none}
-.rents-mobile-theme .rent-stat-icon{width:30px;height:30px;flex-basis:30px;border-radius:10px;font-size:14px}
-.rents-mobile-theme .rent-stat strong{font-size:13px}
+.rents-mobile-theme .rent-stat-icon{width:30px;height:30px;flex-basis:30px;border-radius:10px;font-size: var(--type-body,14px)}
+.rents-mobile-theme .rent-stat strong{font-size: var(--type-body-compact,13px)}
 .rents-mobile-theme .rent-form-panel,.rents-mobile-theme .rent-list-panel{border-radius:18px;box-shadow:0 3px 12px rgba(20,45,34,.035)}
 .rents-mobile-theme .rent-card{border-radius:17px;box-shadow:0 3px 12px rgba(20,45,34,.03)}
 .rents-mobile-theme .rent-card-actions .btn,.rents-mobile-theme .rent-card-actions a{min-height:44px}
@@ -100,22 +100,22 @@
 @media(max-width:600px){
  .rents-page .rents-heading{display:block}
  .rents-page .rents-head-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}
- .rents-page .rents-head-actions .btn{justify-content:center;padding-inline:7px;font-size:11px}
+ .rents-page .rents-head-actions .btn{justify-content:center;padding-inline:7px;font-size: var(--type-label,11px)}
  .rents-page .rent-stats{gap:6px}
  .rents-page .rent-stat{display:block;text-align:center;padding:8px 5px}
  .rents-page .rent-stat-icon{margin:0 auto 5px;width:29px;height:29px}
- .rents-page .rent-stat small{font-size:8px}
- .rents-page .rent-stat strong{font-size:12px;overflow-wrap:anywhere}
+ .rents-page .rent-stat small{font-size: var(--type-help,10px)}
+ .rents-page .rent-stat strong{font-size: var(--type-small,12px);overflow-wrap:anywhere}
  .rents-page .rent-form-panel,.rents-page .rent-list-panel{padding:11px}
  .rents-page .rent-filter-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
  .rents-page .rent-filter-form .btn{grid-column:1/-1;min-height:42px}
  .rents-page .rent-details{gap:5px}
  .rents-page .rent-detail{padding:7px 5px}
- .rents-page .rent-detail small{font-size:8px}
- .rents-page .rent-detail strong{font-size:9px}
+ .rents-page .rent-detail small{font-size: var(--type-help,10px)}
+ .rents-page .rent-detail strong{font-size: var(--type-help,10px)}
  .rents-page .rent-card-top{gap:6px}
- .rents-page .rent-status{font-size:8px;padding:5px 7px}
- .rents-page .rent-amount-bar strong{font-size:16px}
+ .rents-page .rent-status{font-size: var(--type-help,10px);padding:5px 7px}
+ .rents-page .rent-amount-bar strong{font-size: var(--type-section-title,16px)}
 }
 @media(max-width:360px){
  .rents-page .rent-filter-form{grid-template-columns:minmax(0,1fr)}
