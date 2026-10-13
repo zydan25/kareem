@@ -6,8 +6,8 @@
 <div class="card-soft mb-4">
 <form method="post" id="rent-post-form" class="row g-3">
 <div class="col-12"><div class="form-section-title">إثبات إيجار شهر</div><small class="text-muted">القيمة = الأساسي - الخصم + الإضافة. لا يمكن أن يصبح الصافي صفرًا أو سالبًا.</small></div>
-<div class="col-12 col-lg-5"><label class="form-label">العقد</label><select id="rent-lease" class="form-select form-select-lg" {% if not leases %}disabled{% endif %}><option value="">اختر العقد</option>{% for l in leases %}<option value="{{l.id}}" data-agent="{{l.agent_id}}" data-amount="{{l.monthly_amount}}">{{l.agent.name}} — {{l.name}} — {{'{:,.2f}'.format(l.monthly_amount)}} {{currency}}</option>{% endfor %}</select></div>
-<div class="col-6 col-lg-2"><label class="form-label">الشهر</label><input id="rent-month" type="month" class="form-control" {% if not leases %}disabled{% endif %}></div>
+<div class="col-12 col-lg-5"><label class="form-label">العقد</label><select id="rent-lease" class="form-select form-select-lg" {% if not leases %}disabled{% endif %}><option value="">اختر العقد</option>{% for l in leases %}<option value="{{l.id}}" data-agent="{{l.agent_id}}" data-amount="{{l.monthly_amount}}" {% if selected_lease_id == l.id %}selected{% endif %}>{{l.agent.name}} — {{l.name}} — {{'{:,.2f}'.format(l.monthly_amount)}} {{currency}}</option>{% endfor %}</select></div>
+<div class="col-6 col-lg-2"><label class="form-label">الشهر</label><input id="rent-month" type="month" class="form-control" value="{{current_month}}" {% if not leases %}disabled{% endif %}></div>
 <div class="col-6 col-lg-2"><label class="form-label">الأساسي</label><input id="rent-base" class="form-control" inputmode="decimal" {% if not leases %}disabled{% endif %}></div>
 <div class="col-6 col-lg-1"><label class="form-label">خصم</label><input id="rent-discount" class="form-control" value="0" inputmode="decimal" {% if not leases %}disabled{% endif %}></div>
 <div class="col-6 col-lg-1"><label class="form-label">إضافة</label><input id="rent-addition" class="form-control" value="0" inputmode="decimal" {% if not leases %}disabled{% endif %}></div>
