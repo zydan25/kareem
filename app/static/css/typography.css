@@ -24,6 +24,12 @@
   --type-table: calc(12px * var(--ui-font-scale, 1));
   --type-stat-value: calc(20px * var(--ui-font-scale, 1));
 
+  --type-card-title: calc(15px * var(--ui-font-scale, 1));
+  --type-subheading: calc(18px * var(--ui-font-scale, 1));
+  --type-display: calc(24px * var(--ui-font-scale, 1));
+  --type-display-large: calc(28px * var(--ui-font-scale, 1));
+  --type-icon-large: calc(32px * var(--ui-font-scale, 1));
+
   --type-icon-13: calc(13px * var(--ui-font-scale, 1));
   --type-icon-14: calc(14px * var(--ui-font-scale, 1));
   --type-icon-16: calc(16px * var(--ui-font-scale, 1));
