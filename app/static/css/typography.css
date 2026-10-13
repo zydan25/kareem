@@ -1,7 +1,7 @@
 /*
  * Shared typography foundation.
- * Scale and role sizes are based on the approved third (Water Project) theme.
- * Component-specific refinements remain in their existing stylesheets.
+ * Base values and hierarchy follow the approved third (Water Project) theme.
+ * Pages may refine layout, but shared text roles stay consistent application-wide.
  */
 :root {
   --ui-font-family: "Tajawal", "Noto Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -15,6 +15,7 @@
   --type-small: calc(12px * var(--ui-font-scale, 1));
   --type-button: calc(12px * var(--ui-font-scale, 1));
   --type-button-roomy: calc(13px * var(--ui-font-scale, 1));
+  --type-button-large: calc(14px * var(--ui-font-scale, 1));
   --type-button-small: calc(11px * var(--ui-font-scale, 1));
   --type-button-compact: calc(11.5px * var(--ui-font-scale, 1));
   --type-label: calc(11px * var(--ui-font-scale, 1));
@@ -66,13 +67,19 @@ body {
   line-height: 1.5;
 }
 
-.btn {
+.btn:not(.btn-sm):not(.btn-lg) {
   font-size: var(--type-button);
   line-height: 1.4;
 }
 
 .btn.btn-sm {
   font-size: var(--type-button-compact);
+  line-height: 1.4;
+}
+
+.btn.btn-lg {
+  font-size: var(--type-button-large);
+  line-height: 1.4;
 }
 
 .section-title h3,
