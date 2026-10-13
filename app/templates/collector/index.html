@@ -507,8 +507,6 @@ function syncCollectorVehicleLink(){
 }
 syncCollectorVehicleLink();
 
-const collectorAddVehicle=document.getElementById('collector-add-vehicle');
-
 document.getElementById('add-real-vehicle')?.addEventListener('click',()=>{
   newVehiclePanel.hidden=false;vehiclePanel.hidden=true;selectedVehicle.hidden=true;defaultHidden.value='';window.focusSearchableSelect?.(newType);
 });
