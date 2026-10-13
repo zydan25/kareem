@@ -49,17 +49,37 @@ def index():
     start,end=parse_dates()
     return render_template("reports/index.html",start=start,end=end)
 
+def _gate_transactions_query(start_dt,end_dt):
+    """Shared query/filter policy for the HTML gate report and its CSV export."""
+    q=GateTransaction.query.filter(
+        GateTransaction.transaction_date>=start_dt,
+        GateTransaction.transaction_date<end_dt,
+    )
+    # A collector remains scoped to their own movements even when extra report
+    # permissions are granted. Ignore attempts to override their collector ID.
+    if current_user.role=="collector":
+        q=q.filter(GateTransaction.collector_id==current_user.id)
+    else:
+        collector_id=request.args.get("collector_id",type=int)
+        if collector_id:
+            q=q.filter(GateTransaction.collector_id==collector_id)
+
+    for parameter,column in (
+        ("agent_id",GateTransaction.agent_id),
+        ("client_id",GateTransaction.client_id),
+        ("shift_id",GateTransaction.shift_id),
+    ):
+        value=request.args.get(parameter,type=int)
+        if value:
+            q=q.filter(column==value)
+    return q
+
+
 @bp.get("/gate")
 @permission_required("reports.view")
 def gate():
     start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
-    q=GateTransaction.query.filter(GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt)
-    if current_user.role=="collector":
-        q=q.filter_by(collector_id=current_user.id)
-    elif request.args.get("collector_id"): q=q.filter_by(collector_id=int(request.args["collector_id"]))
-    if request.args.get("agent_id"): q=q.filter_by(agent_id=int(request.args["agent_id"]))
-    if request.args.get("client_id"): q=q.filter_by(client_id=int(request.args["client_id"]))
-    if request.args.get("shift_id"): q=q.filter_by(shift_id=int(request.args["shift_id"]))
+    q=_gate_transactions_query(start_dt,end_dt)
     rows=q.order_by(GateTransaction.transaction_date.desc()).all()
     total=sum((D(x.amount) for x in rows),D(0))
     entry_total=sum((D(x.amount) for x in rows if x.direction=="entry"),D(0))
@@ -71,13 +91,13 @@ def gate():
         shifts=Shift.query.order_by(Shift.opened_at.desc()).limit(150).all())
 
 @bp.get("/gate.csv")
+@permission_required("reports.view")
 @permission_required("reports.export")
 def gate_csv():
     start,end=parse_dates(); start_dt,end_dt=period_query(start,end)
-    q=GateTransaction.query.filter(GateTransaction.transaction_date>=start_dt,GateTransaction.transaction_date<end_dt)
-    if request.args.get("collector_id"): q=q.filter_by(collector_id=int(request.args["collector_id"]))
-    if request.args.get("agent_id"): q=q.filter_by(agent_id=int(request.args["agent_id"]))
-    if request.args.get("shift_id"): q=q.filter_by(shift_id=int(request.args["shift_id"]))
+    # Export is subject to the same view permission, filters, and collector
+    # data scope as the on-screen report.
+    q=_gate_transactions_query(start_dt,end_dt)
     rows=q.order_by(GateTransaction.transaction_date).all()
     out=StringIO(); w=csv.writer(out); w.writerow(["السند","التاريخ","الحركة","اللوحة","العميل","الوكيل","المتحصل","المبلغ"])
     for x in rows:
