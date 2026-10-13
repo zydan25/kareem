@@ -1,6 +1,6 @@
 from decimal import Decimal
 import pytest
-from app.models import Account, Employee, User, VehicleType, JournalEntry, JournalLine
+from app.models import Account, Employee, Setting, User, VehicleType, JournalEntry, JournalLine
 from app.extensions import db
 from app.services.accounting import create_posted_entry
 
@@ -913,3 +913,33 @@ def test_fiscal_year_close_posts_balanced_entry_and_locks_closed_year(app, clien
                     {"account": revenue, "debit": Decimal("0"), "credit": Decimal("10")},
                 ], prefix="LOCK")
         db.session.rollback()
+
+
+
+def test_admin_theme_is_optional_and_only_loaded_after_selection(app, client):
+    login(client)
+    classic = client.get("/reports/")
+    assert classic.status_code == 200
+    classic_body = classic.get_data(as_text=True)
+    assert "css/admin-theme.css" not in classic_body
+    assert "<body>" in classic_body
+
+    with app.app_context():
+        row = Setting.query.filter_by(key="admin_theme").one_or_none()
+        if row is None:
+            db.session.add(Setting(
+                key="admin_theme",
+                value="water",
+                value_type="string",
+                description="تصميم لوحة الإدارة",
+            ))
+        else:
+            row.value = "water"
+        db.session.commit()
+
+    modern = client.get("/reports/")
+    assert modern.status_code == 200
+    modern_body = modern.get_data(as_text=True)
+    assert 'class="theme-water-pos"' in modern_body
+    assert "css/admin-theme.css" in modern_body
+    assert modern_body.index("css/app.css") < modern_body.index("css/admin-theme.css")

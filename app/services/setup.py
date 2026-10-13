@@ -91,6 +91,7 @@ def seed():
         ("project_name","سوق الجملة","string","اسم المشروع الظاهر"),
         ("currency_name","ريال يمني","string","العملة"),
         ("ui_theme","light","string","المظهر"),
+        ("admin_theme","classic","string","تصميم لوحة الإدارة"),
         ("customer_portal","0","boolean","إتاحة لوحة العميل"),
         ("brand_color","#0b6e4f","string","اللون الرئيسي"),
         ("brand_version","1","string","نسخة الهوية"),
