@@ -46,9 +46,9 @@
         <span class="party-account-label"><i class="bi bi-building"></i>العقود والإيجارات</span>
         <div class="party-card-actions">
           {% if can_manage %}<a class="btn btn-light btn-sm" href="{{url_for('master_data.edit_agent',agent_id=a.id)}}" title="تعديل" aria-label="تعديل"><i class="bi bi-pencil"></i></a>{% endif %}
-          {% if a.account %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=a.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
-          <a class="btn btn-outline-primary btn-sm" href="{{url_for('operations.leases')}}" title="العقود" aria-label="العقود"><i class="bi bi-building"></i></a>
-          <a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.agent_report',agent_id=a.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>
+          {% if a.account and can("reports.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=a.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
+          {% if can("leases.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('operations.leases')}}" title="العقود" aria-label="العقود"><i class="bi bi-building"></i></a>{% endif %}
+          {% if can("reports.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.agent_report',agent_id=a.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>{% endif %}
           {% if can_manage %}<form method="post" action="{{url_for('master_data.delete_agent',agent_id=a.id)}}" onsubmit="return confirm('سيتم إيقاف الوكيل وحفظ تاريخه. متابعة؟')"><button class="btn btn-outline-danger btn-sm" type="submit" title="إيقاف الوكيل" aria-label="إيقاف الوكيل"><i class="bi bi-person-dash"></i></button></form>{% endif %}
         </div>
       </div>

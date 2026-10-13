@@ -66,8 +66,8 @@
         <span class="party-account-label"><i class="bi bi-wallet2"></i>{{c.account.name if c.account else 'الحساب التلقائي'}}</span>
         <div class="party-card-actions">
           {% if can_manage %}<a class="btn btn-light btn-sm" href="{{url_for('master_data.edit_client',client_id=c.id)}}" title="تعديل" aria-label="تعديل"><i class="bi bi-pencil"></i></a>{% endif %}
-          {% if c.account %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=c.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
-          <a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.client_report',client_id=c.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>
+          {% if c.account and can("reports.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=c.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
+          {% if can("reports.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.client_report',client_id=c.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>{% endif %}
           {% if can_manage %}<form method="post" action="{{url_for('master_data.delete_client',client_id=c.id)}}" onsubmit="return confirm('سيتم إيقاف العميل مع حفظ تاريخه. متابعة؟')"><button class="btn btn-outline-danger btn-sm" type="submit" title="إيقاف العميل" aria-label="إيقاف العميل"><i class="bi bi-person-dash"></i></button></form>{% endif %}
         </div>
       </div>
