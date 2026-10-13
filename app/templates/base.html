@@ -19,6 +19,7 @@
 <link href="{{ url_for('static',filename='css/party-cards.css',v='20261013-typography-5') }}" rel="stylesheet">
 <link href="{{ url_for('static',filename='css/stat-cards.css',v='20261013-3') }}" rel="stylesheet">
 <link href="{{ url_for('static',filename='css/mobile-polish.css',v='20261013-1') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/daily-ledgers.css',v='20261013-1') }}" rel="stylesheet">
 <link href="{{ url_for('static',filename='css/typography.css',v='20261013-typography-3') }}" rel="stylesheet">
 <style>:root{--primary:{{brand_color}};--primary-dark:color-mix(in srgb, {{brand_color}} 82%, #000);--accent:color-mix(in srgb, {{brand_color}} 12%, #fff);--ui-font-scale:{{ui_font_scale|default('1')}}</style>
 <title>{% block title %}{{ app_name }}{% endblock %}</title>
@@ -90,10 +91,12 @@
 
     {% if can("accounting.view") or can("vouchers.view") or can("expenses.view") %}
     <details class="nav-tree" {% if request.path.startswith('/accounting/') or request.path.startswith('/operations/vouchers') or request.path.startswith('/operations/manual-journal') or request.path.startswith('/operations/expenses') %}open{% endif %}>
-      <summary><i class="bi bi-calculator-fill"></i><span>الحسابات</span><b class="nav-count">5</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
+      <summary><i class="bi bi-calculator-fill"></i><span>الحسابات</span><b class="nav-count">7</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/accounts') %}active{% endif %}" href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3"></i><span>شجرة الحسابات</span></a>{% endif %}
-        {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/journal') %}active{% endif %}" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i><span>اليوميات</span></a>{% endif %}
+        {% if can("accounting.view") %}<a class="{% if request.path == url_for('accounting.journal') %}active{% endif %}" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i><span>اليوميات</span></a>{% endif %}
+        {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/employee-journals') %}active{% endif %}" href="{{url_for('accounting.employee_journals')}}"><i class="bi bi-person-lines-fill"></i><span>يوميات الموظفين</span></a>{% endif %}
+        {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/client-journals') %}active{% endif %}" href="{{url_for('accounting.client_journals')}}"><i class="bi bi-people"></i><span>يوميات العملاء</span></a>{% endif %}
         {% if can("vouchers.view") %}<a class="{% if request.path.startswith('/operations/vouchers') %}active{% endif %}" href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt-cutoff"></i><span>السندات</span></a>{% endif %}
         {% if can("accounting.post") %}<a class="{% if request.path.startswith('/operations/manual-journal') %}active{% endif %}" href="{{url_for('operations.manual_journal')}}"><i class="bi bi-pencil-square"></i><span>القيد اليدوي</span></a>{% endif %}
         {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/fiscal-years') %}active{% endif %}" href="{{url_for('accounting.fiscal_years')}}"><i class="bi bi-calendar2-check"></i><span>السنوات المالية والإقفال</span></a>{% endif %}
@@ -164,6 +167,7 @@
 <script src="{{url_for('static',filename='js/app.js',v='20261004-1')}}"></script>
 <script src="{{url_for('static',filename='js/searchable-select.js',v='20261014-4')}}"></script>
 <script src="{{url_for('static',filename='js/searchable-select-fallback.js',v='20261014-1')}}"></script>
+<script src="{{url_for('static',filename='js/amount-words.js',v='20261013-1')}}"></script>
 {% block scripts %}{% endblock %}
 {% else %}
 {% block guest_content %}{% endblock %}
