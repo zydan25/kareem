@@ -1,72 +1,98 @@
 {% extends 'base.html' %}
-{% block title %}إدارة العملاء - {{app_name}}{% endblock %}
+{% block title %}العملاء - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">البيانات الأساسية</span><h1>إدارة العملاء</h1><p>ملف العميل، مركباته، وكلاؤه، كشف حسابه وحركة البوابة.</p></div>{% if can_manage %}<button class="btn btn-primary" type="button" data-toggle-panel="add-client"><i class="bi bi-plus-lg"></i> إضافة عميل</button>{% endif %}</div>
-<div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="ابحث بالاسم أو الهاتف أو الكود"></div><button class="btn btn-outline-primary">بحث</button>{% if q %}<a class="btn btn-light" href="{{url_for('master_data.clients')}}">مسح</a>{% endif %}</form></div>
-{% if can_manage %}<div id="add-client" class="card-soft add-panel">
-<form method="post" enctype="multipart/form-data" class="row g-3" id="new-client-form">
-  <div class="col-12"><div class="form-section-title">بيانات العميل <span>الحساب يُنشأ تلقائيًا · ستُنشأ مركبة افتراضية تلقائيًا إذا لم تضف مركبة</span></div></div>
-  <div class="col-12 col-lg-4"><label class="form-label">اسم العميل</label><input name="name" class="form-control form-control-lg" required></div>
-  <div class="col-6 col-lg-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
-  <div class="col-6 col-lg-3"><label class="form-label">نوع الهوية <small>(اختياري)</small></label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
-  <div class="col-6 col-lg-3"><label class="form-label">رقم الهوية <small>(اختياري)</small></label><input name="identity_number" class="form-control"></div>
-  <div class="col-12 col-lg-3"><label class="form-label">صورة الهوية <small>(اختياري)</small></label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div>
-  <div class="col-12 col-lg-6"><label class="form-label">العنوان</label><input name="address" class="form-control"></div>
-  <div class="col-12"><label class="form-label">الوكلاء المرتبطون <small>(اختياري)</small></label><select name="agent_ids" class="form-select" multiple size="3">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
-
-  <div class="col-12">
-    <div class="form-section-title"><strong>مركبات العميل</strong><span>يمكن إضافة أكثر من مركبة</span></div>
-    <div id="client-vehicles-builder" class="vehicle-builder">
-      <div class="client-vehicle-row">
-        <input type="hidden" name="vehicle_id" value="">
-        <div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div>
-        <div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اتركه فارغًا للمركبة الافتراضية"></div>
-        <div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" data-searchable-select data-ss-placeholder="نوع المركبة"><option value="">إضافة لاحقًا / تلقائي</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div>
-        <div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div>
-        <button type="button" class="btn btn-sm btn-light vehicle-remove" disabled><i class="bi bi-x"></i></button>
-      </div>
-    </div>
-    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-client-vehicle"><i class="bi bi-plus"></i> إضافة مركبة أخرى</button>
+<div class="party-page party-theme-{{party_cards_theme|default('water')}}">
+  <div class="party-page-head">
+    <div><span class="eyebrow">البيانات الأساسية</span><h1>العملاء</h1><small>ملفات العملاء ومركباتهم وحساباتهم.</small></div>
+    <div class="party-head-badge"><i class="bi bi-people-fill"></i><span>{{clients|length}} عميل</span></div>
   </div>
-  <div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات العميل"></textarea></div>
-  <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-person-plus"></i> حفظ العميل والمركبات</button></div>
-</form>
-</div>{% endif %}
-<div class="card-soft"><div class="section-title"><div><h3>قائمة العملاء</h3><small class="text-muted">{{clients|length}} نتيجة</small></div></div><div class="entity-list">
-{% for c in clients %}<div class="entity-row"><div class="entity-main"><div class="entity-icon"><i class="bi bi-person-vcard"></i></div><div><strong>{{c.name}}</strong><div class="entity-meta"><span>{{c.code}}</span><span>{{c.phone or 'بدون هاتف'}}</span><span>{{c.vehicles|length}} مركبة</span><span>{{c.account.name if c.account else 'حساب تلقائي'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if c.active else 'off'}}"></span>{{'نشط' if c.active else 'موقوف'}}</div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('master_data.client_detail',client_id=c.id)}}">تفاصيل</a>{% if can_manage %}<a href="{{url_for('master_data.edit_client',client_id=c.id)}}">تعديل</a>{% endif %}{% if c.account %}<a href="{{url_for('reports.account_statement',account_id=c.account.id)}}">كشف الحساب</a>{% endif %}<a href="{{url_for('reports.client_report',client_id=c.id)}}">تقرير العميل</a>{% if can_manage %}<form method="post" action="{{url_for('master_data.delete_client',client_id=c.id)}}" onsubmit="return confirm('سيتم إيقاف العميل مع حفظ تاريخه. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}</div></details></div></div>{% else %}<div class="empty-state"><i class="bi bi-people"></i><strong>لا توجد نتائج</strong><span>أضف أول عميل أو غيّر البحث.</span></div>{% endfor %}
-</div></div>
+  <form class="party-toolbar" method="get" id="clients-toolbar">
+    <div class="party-search-box"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="بحث بالاسم أو الهاتف أو الكود"><button class="btn btn-outline-primary btn-sm" type="submit">بحث</button></div>
+    <label class="party-sort"><span>فرز حسب</span><select name="sort" class="form-select form-select-sm" onchange="this.form.requestSubmit()"><option value="name" {% if sort=='name' %}selected{% endif %}>الاسم</option><option value="code" {% if sort=='code' %}selected{% endif %}>الكود</option><option value="vehicles" {% if sort=='vehicles' %}selected{% endif %}>عدد المركبات</option><option value="status" {% if sort=='status' %}selected{% endif %}>الحالة</option><option value="newest" {% if sort=='newest' %}selected{% endif %}>الأحدث</option></select></label>
+    {% if can_manage %}<button class="btn btn-primary btn-sm party-add-trigger" type="button" data-toggle-panel="add-client"><i class="bi bi-plus-lg"></i> إضافة</button>{% endif %}
+    {% if q or sort!='name' %}<a class="btn btn-light btn-sm party-reset" href="{{url_for('master_data.clients')}}"><i class="bi bi-arrow-counterclockwise"></i><span>إعادة</span></a>{% endif %}
+  </form>
+
+  {% if can_manage %}
+  <div id="add-client" class="card-soft add-panel party-add-panel">
+    <div class="party-form-head"><div><h2>إضافة عميل</h2><small>يُنشأ الحساب تلقائيًا، وتُنشأ المركبة الافتراضية عند الحفظ.</small></div><button type="button" class="btn btn-light btn-sm" data-toggle-panel="add-client" aria-label="إغلاق"><i class="bi bi-x-lg"></i></button></div>
+    <form method="post" enctype="multipart/form-data" class="row g-3" id="new-client-form">
+      <div class="col-12"><div class="form-section-title">بيانات العميل <span>الهوية والوكلاء حقول اختيارية</span></div></div>
+      <div class="col-12 col-lg-4"><label class="form-label">اسم العميل</label><input name="name" class="form-control" required></div>
+      <div class="col-6 col-lg-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
+      <div class="col-6 col-lg-2"><label class="form-label">نوع الهوية</label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
+      <div class="col-6 col-lg-3"><label class="form-label">رقم الهوية</label><input name="identity_number" class="form-control"></div>
+      <div class="col-12 col-lg-4"><label class="form-label">صورة الهوية</label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div>
+      <div class="col-12 col-lg-8"><label class="form-label">العنوان</label><input name="address" class="form-control"></div>
+      <div class="col-12"><label class="form-label">الوكلاء المرتبطون <small>(اختياري)</small></label><select name="agent_ids" class="form-select" multiple size="3">{% for a in agents %}<option value="{{a.id}}">{{a.name}}</option>{% endfor %}</select></div>
+      <div class="col-12">
+        <div class="form-section-title"><strong>مركبات العميل</strong><span>اختيار النوع اختياري للمركبة الافتراضية</span></div>
+        <div id="client-vehicles-builder" class="vehicle-builder">
+          <div class="client-vehicle-row">
+            <input type="hidden" name="vehicle_id" value="">
+            <div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div>
+            <div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اتركه فارغًا للمركبة الافتراضية"></div>
+            <div><label class="form-label">الفاصل</label><input name="vehicle_plate_separator" class="form-control" placeholder="مثال: /"></div>
+            <div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" data-searchable-select data-ss-placeholder="نوع المركبة"><option value="">إضافة لاحقًا / تلقائي</option>{% for t in vehicle_types %}<option value="{{t.id}}" data-search="{{t.name}}">{{t.name}}</option>{% endfor %}</select></div>
+            <div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div>
+            <button type="button" class="btn btn-sm btn-light vehicle-remove" disabled><i class="bi bi-x"></i></button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-client-vehicle"><i class="bi bi-plus"></i> إضافة مركبة أخرى</button>
+      </div>
+      <div class="col-12"><textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات العميل"></textarea></div>
+      <div class="col-12 d-flex gap-2"><button class="btn btn-primary"><i class="bi bi-check2"></i> حفظ العميل</button><button type="button" class="btn btn-light" data-toggle-panel="add-client">إلغاء</button></div>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="party-result-bar"><strong>قائمة العملاء</strong><span>{{clients|length}} نتيجة</span></div>
+  <div class="party-card-grid">
+    {% for c in clients %}
+    <article class="party-card" data-card-href="{{url_for('master_data.client_detail',client_id=c.id)}}" role="link" tabindex="0" aria-label="فتح ملف العميل {{c.name}}">
+      <div class="party-card-head">
+        <div class="party-avatar"><i class="bi bi-person-vcard-fill"></i></div>
+        <div class="party-title"><strong>{{c.name}}</strong><small>{{c.code}}</small></div>
+        <span class="party-status {{'is-active' if c.active else 'is-inactive'}}"><i class="bi {{'bi-check-circle-fill' if c.active else 'bi-pause-circle-fill'}}"></i>{{'نشط' if c.active else 'موقوف'}}</span>
+      </div>
+      <div class="party-card-facts">
+        <div><span><i class="bi bi-telephone"></i> الهاتف</span><strong dir="auto">{{c.phone or 'غير مسجل'}}</strong></div>
+        <div><span><i class="bi bi-truck"></i> المركبات</span><strong>{{c.vehicles|length}}</strong></div>
+        <div class="party-fact-wide"><span><i class="bi bi-geo-alt"></i> العنوان</span><strong>{{c.address or 'غير مسجل'}}</strong></div>
+      </div>
+      <div class="party-card-foot">
+        <span class="party-account-label"><i class="bi bi-wallet2"></i>{{c.account.name if c.account else 'الحساب التلقائي'}}</span>
+        <div class="party-card-actions">
+          {% if can_manage %}<a class="btn btn-light btn-sm" href="{{url_for('master_data.edit_client',client_id=c.id)}}" title="تعديل" aria-label="تعديل"><i class="bi bi-pencil"></i></a>{% endif %}
+          {% if c.account %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=c.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
+          <a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.client_report',client_id=c.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>
+          {% if can_manage %}<form method="post" action="{{url_for('master_data.delete_client',client_id=c.id)}}" onsubmit="return confirm('سيتم إيقاف العميل مع حفظ تاريخه. متابعة؟')"><button class="btn btn-outline-danger btn-sm" type="submit" title="إيقاف العميل" aria-label="إيقاف العميل"><i class="bi bi-person-dash"></i></button></form>{% endif %}
+        </div>
+      </div>
+    </article>
+    {% else %}<div class="empty-state party-empty"><i class="bi bi-people"></i><strong>لا توجد نتائج</strong><span>غيّر البحث أو أضف أول عميل.</span></div>{% endfor %}
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script>
 const builder=document.getElementById('client-vehicles-builder');
-function setVehicleRequirement(row){
-  const status=row?.querySelector('.vehicle-status');
-  const plate=row?.querySelector('.vehicle-plate');
-  if(status&&plate) plate.required=status.value==='registered';
-}
+function setVehicleRequirement(row){const status=row?.querySelector('.vehicle-status');const plate=row?.querySelector('.vehicle-plate');const type=row?.querySelector('[name="vehicle_type_id"]');if(plate)plate.required=Boolean(type?.value)&&status?.value==='registered';}
 function vehicleTemplate(){
-  return '<div class="client-vehicle-row"><input type="hidden" name="vehicle_id" value=""><div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div><div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اتركه فارغًا للمركبة الافتراضية"></div><div><label class="form-label">الفاصل</label><input name="vehicle_plate_separator" class="form-control" placeholder="مثال: /"></div><div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" data-searchable-select data-ss-placeholder="اختر النوع" required><option value="">اختر النوع</option>{% for t in vehicle_types %}<option value="{{t.id}}">{{t.name}}</option>{% endfor %}</select></div><div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div><button type="button" class="btn btn-sm btn-light vehicle-remove"><i class="bi bi-x"></i></button></div>';
+ return '<div class="client-vehicle-row"><input type="hidden" name="vehicle_id" value=""><div><label class="form-label">حالة المركبة</label><select name="vehicle_registration_status" class="form-select vehicle-status"><option value="registered">بلوحة جمركية</option><option value="without_customs">بدون جمارك / بدون رقم</option></select></div><div><label class="form-label">رقم اللوحة</label><input name="vehicle_plate_number" class="form-control vehicle-plate" placeholder="اتركه فارغًا للمركبة الافتراضية"></div><div><label class="form-label">الفاصل</label><input name="vehicle_plate_separator" class="form-control" placeholder="مثال: /"></div><div><label class="form-label">نوع المركبة</label><select name="vehicle_type_id" class="form-select" data-searchable-select data-ss-placeholder="اختر النوع"><option value="">إضافة لاحقًا / تلقائي</option>{% for t in vehicle_types %}<option value="{{t.id}}" data-search="{{t.name}}">{{t.name}}</option>{% endfor %}</select></div><div><label class="form-label">وصف المركبة</label><input name="vehicle_notes" class="form-control" placeholder="مثال: شاحنة بيضاء"></div><button type="button" class="btn btn-sm btn-light vehicle-remove"><i class="bi bi-x"></i></button></div>';
 }
 document.getElementById('add-client-vehicle')?.addEventListener('click',()=>{
   builder.insertAdjacentHTML('beforeend',vehicleTemplate());
-  setVehicleRequirement(builder.lastElementChild);
+  const row=builder.lastElementChild;
+  setVehicleRequirement(row);
+  row?.querySelectorAll('select[data-searchable-select]').forEach(x=>window.refreshSearchableSelect?.(x));
 });
-builder?.addEventListener('click',e=>{
-  const btn=e.target.closest('.vehicle-remove'); if(!btn)return;
-  const rows=builder.querySelectorAll('.client-vehicle-row');
-  if(rows.length<=1)return;
-  btn.closest('.client-vehicle-row')?.remove();
+builder?.addEventListener('click',e=>{const btn=e.target.closest('.vehicle-remove');if(!btn)return;const rows=builder.querySelectorAll('.client-vehicle-row');if(rows.length<=1)return;btn.closest('.client-vehicle-row')?.remove();});
+builder?.addEventListener('change',e=>{if(e.target.classList.contains('vehicle-status')||e.target.name==='vehicle_type_id')setVehicleRequirement(e.target.closest('.client-vehicle-row'));});
+builder?.querySelectorAll('.client-vehicle-row').forEach(setVehicleRequirement);
+document.querySelectorAll('[data-card-href]').forEach(card=>{
+ card.addEventListener('click',e=>{if(e.target.closest('a,button,form,input,select,textarea,details,summary'))return;window.location.href=card.dataset.cardHref;});
+ card.addEventListener('keydown',e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();window.location.href=card.dataset.cardHref;}});
 });
-builder?.addEventListener('change',e=>{
-  if(e.target.classList.contains('vehicle-status')) setVehicleRequirement(e.target.closest('.client-vehicle-row'));
-});
-const firstVehicle=builder?.querySelector('.client-vehicle-row'); if(firstVehicle)setVehicleRequirement(firstVehicle);
-
-const openClientPanel=new URLSearchParams(window.location.search).get('open');
-if(openClientPanel==='add'){
-  const panel=document.getElementById('add-client');
-  if(panel) panel.classList.add('is-open');
-  document.getElementById('new-client-form')?.querySelector('input[name="name"]')?.focus();
-}
 </script>
 {% endblock %}

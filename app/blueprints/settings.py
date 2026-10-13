@@ -104,6 +104,9 @@ def index():
             rental_ui_theme=(request.form.get("setting_rental_ui_theme","mobile") or "mobile").strip()
             if rental_ui_theme not in {"classic","mobile"}: rental_ui_theme="mobile"
             _save_setting("rental_ui_theme",rental_ui_theme,"string","ثيم العقود والاستحقاقات")
+            party_cards_theme=(request.form.get("setting_party_cards_theme","water") or "water").strip()
+            if party_cards_theme not in {"water","classic"}: party_cards_theme="water"
+            _save_setting("party_cards_theme",party_cards_theme,"string","تصميم بطاقات العملاء والوكلاء")
             font_size=request.form.get("setting_font_size","100")
             if font_size not in {"100","110","120","130"}: font_size="100"
             _save_setting("font_size",font_size,"string","حجم الخط العام")

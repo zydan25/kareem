@@ -15,7 +15,8 @@
 {% elif current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water_project' %}
 <link href="{{ url_for('static',filename='css/admin-theme-water-project.css',v='20261013-3') }}" rel="stylesheet">
 {% endif %}
-<link href="{{ url_for('static',filename='css/searchable-select.css',v='20261013-1') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/searchable-select.css',v='20261013-2') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/party-cards.css',v='20261013-1') }}" rel="stylesheet">
 <title>{% block title %}{{ app_name }}{% endblock %}</title>
 </head>
 <style>:root{--primary:{{brand_color}};--primary-dark:color-mix(in srgb, {{brand_color}} 82%, #000);--accent:color-mix(in srgb, {{brand_color}} 12%, #fff);--ui-font-scale:{{ui_font_scale|default('1')}}}html{font-size:calc(16px * var(--ui-font-scale,1))}</style>
@@ -61,12 +62,13 @@
     {% endif %}
 
     {% if can("agents.view") or can("clients.view") or can("vehicles.view") %}
-    <details class="nav-tree" {% if request.path.startswith('/master-data/agents') or request.path.startswith('/master-data/clients') or request.path.startswith('/master-data/vehicles') %}open{% endif %}>
-      <summary><i class="bi bi-database-fill"></i><span>البيانات الأساسية</span><b class="nav-count">3</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
+    <details class="nav-tree" {% if request.path.startswith('/master-data/agents') or request.path.startswith('/master-data/clients') or request.path.startswith('/master-data/vehicles') or request.path.startswith('/master-data/vehicle-types') %}open{% endif %}>
+      <summary><i class="bi bi-database-fill"></i><span>البيانات الأساسية</span><b class="nav-count">4</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("agents.view") %}<a class="{% if request.path.startswith('/master-data/agents') %}active{% endif %}" href="{{url_for('master_data.agents')}}"><i class="bi bi-person-badge"></i><span>الوكلاء</span></a>{% endif %}
         {% if can("clients.view") %}<a class="{% if request.path.startswith('/master-data/clients') %}active{% endif %}" href="{{url_for('master_data.clients')}}"><i class="bi bi-people"></i><span>العملاء</span></a>{% endif %}
-        {% if can("vehicles.view") %}<a class="{% if request.path.startswith('/master-data/vehicles') %}active{% endif %}" href="{{url_for('master_data.vehicles')}}"><i class="bi bi-truck"></i><span>المركبات واللوحات</span></a>{% endif %}
+        {% if can("vehicles.view") %}<a class="{% if request.path.startswith('/master-data/vehicles') and not request.path.startswith('/master-data/vehicle-types') %}active{% endif %}" href="{{url_for('master_data.vehicles')}}"><i class="bi bi-truck"></i><span>المركبات واللوحات</span></a>{% endif %}
+        {% if can("vehicles.view") %}<a class="{% if request.path.startswith('/master-data/vehicle-types') %}active{% endif %}" href="{{url_for('master_data.vehicle_types')}}"><i class="bi bi-truck-front"></i><span>أنواع المركبات</span></a>{% endif %}
       </div>
     </details>
     {% endif %}

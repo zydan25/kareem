@@ -1,14 +1,65 @@
 {% extends 'base.html' %}
-{% block title %}إدارة الوكلاء - {{app_name}}{% endblock %}
+{% block title %}الوكلاء - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">البيانات الأساسية</span><h1>إدارة الوكلاء</h1><p>ملف الوكيل، حسابه، مركباته، عقوده وإيجاراته.</p></div>{% if can_manage %}<button class="btn btn-primary" data-toggle-panel="add-agent"><i class="bi bi-plus-lg"></i> إضافة وكيل</button>{% endif %}</div>
-<div class="toolbar-card"><form class="search-form" method="get"><div class="search-input"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="بحث بالاسم أو الهاتف أو الكود"></div><button class="btn btn-outline-primary">بحث</button></form></div>
-{% if can_manage %}<div id="add-agent" class="card-soft add-panel"><form method="post" enctype="multipart/form-data" class="row g-3"><div class="col-12 col-lg-4"><label class="form-label">اسم الوكيل</label><input name="name" class="form-control" required></div><div class="col-6 col-lg-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
-<div class="col-6 col-lg-2"><label class="form-label">نوع الهوية <small>(اختياري)</small></label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
-<div class="col-6 col-lg-2"><label class="form-label">رقم الهوية <small>(اختياري)</small></label><input name="identity_number" class="form-control"></div>
-<div class="col-12 col-lg-2"><label class="form-label">صورة الهوية <small>(اختياري)</small></label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div><div class="col-12"><textarea name="notes" class="form-control" placeholder="ملاحظات"></textarea></div><div class="col-12"><button class="btn btn-primary">حفظ</button></div></form></div>{% endif %}
-<div class="card-soft"><div class="section-title"><div><h3>قائمة الوكلاء</h3><small class="text-muted">{{agents|length}} وكيل</small></div></div><div class="entity-list">
-{% for a in agents %}<div class="entity-row"><div class="entity-main"><div class="entity-icon agent"><i class="bi bi-briefcase"></i></div><div><strong>{{a.name}}</strong><div class="entity-meta"><span>{{a.code}}</span><span>{{a.phone or 'بدون هاتف'}}</span><span>{{a.account.name if a.account else 'حساب تلقائي'}}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if a.active else 'off'}}"></span>{{'نشط' if a.active else 'موقوف'}}</div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('master_data.agent_detail',agent_id=a.id)}}"><i class="bi bi-eye"></i> تفاصيل</a><a href="{{url_for('master_data.edit_agent',agent_id=a.id)}}"><i class="bi bi-pencil"></i> تعديل</a>{% if a.account %}<a href="{{url_for('reports.account_statement',account_id=a.account.id)}}"><i class="bi bi-file-earmark-text"></i> كشف حساب</a>{% endif %}<a href="{{url_for('operations.leases')}}">الإيجارات</a><a href="{{url_for('reports.agent_report',agent_id=a.id)}}"><i class="bi bi-bar-chart"></i> تقرير</a>{% if can_manage %}<form method="post" action="{{url_for('master_data.delete_agent',agent_id=a.id)}}" onsubmit="return confirm('سيتم إيقاف الوكيل وحفظ تاريخه. متابعة؟')"><button><i class="bi bi-trash"></i> حذف/إيقاف</button></form>{% endif %}</div></details></div></div>
-{% else %}<div class="empty-state"><i class="bi bi-people"></i><strong>لا يوجد وكلاء</strong><span>أضف أول وكيل.</span></div>{% endfor %}
-</div></div>
+<div class="party-page party-theme-{{party_cards_theme|default('water')}}">
+  <div class="party-page-head">
+    <div><span class="eyebrow">البيانات الأساسية</span><h1>الوكلاء</h1><small>ملفات الوكلاء ومركباتهم وعقودهم وحساباتهم.</small></div>
+    <div class="party-head-badge"><i class="bi bi-person-badge-fill"></i><span>{{agents|length}} وكيل</span></div>
+  </div>
+  <form class="party-toolbar" method="get" id="agents-toolbar">
+    <div class="party-search-box"><i class="bi bi-search"></i><input name="q" value="{{q}}" class="form-control" placeholder="بحث بالاسم أو الهاتف أو الكود"><button class="btn btn-outline-primary btn-sm" type="submit">بحث</button></div>
+    <label class="party-sort"><span>فرز حسب</span><select name="sort" class="form-select form-select-sm" onchange="this.form.requestSubmit()"><option value="name" {% if sort=='name' %}selected{% endif %}>الاسم</option><option value="code" {% if sort=='code' %}selected{% endif %}>الكود</option><option value="vehicles" {% if sort=='vehicles' %}selected{% endif %}>عدد المركبات</option><option value="status" {% if sort=='status' %}selected{% endif %}>الحالة</option></select></label>
+    {% if can_manage %}<button class="btn btn-primary btn-sm party-add-trigger" type="button" data-toggle-panel="add-agent"><i class="bi bi-plus-lg"></i> إضافة</button>{% endif %}
+    {% if q or sort!='name' %}<a class="btn btn-light btn-sm party-reset" href="{{url_for('master_data.agents')}}"><i class="bi bi-arrow-counterclockwise"></i><span>إعادة</span></a>{% endif %}
+  </form>
+  {% if can_manage %}
+  <div id="add-agent" class="card-soft add-panel party-add-panel">
+    <div class="party-form-head"><div><h2>إضافة وكيل</h2><small>إنشاء حساب الوكيل وربطه المالي يتم تلقائيًا.</small></div><button type="button" class="btn btn-light btn-sm" data-toggle-panel="add-agent" aria-label="إغلاق"><i class="bi bi-x-lg"></i></button></div>
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+      <div class="col-12 col-md-5"><label class="form-label">اسم الوكيل</label><input name="name" class="form-control" required></div>
+      <div class="col-12 col-md-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
+      <div class="col-6 col-md-2"><label class="form-label">نوع الهوية</label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
+      <div class="col-6 col-md-2"><label class="form-label">رقم الهوية</label><input name="identity_number" class="form-control"></div>
+      <div class="col-12"><label class="form-label">صورة الهوية</label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div>
+      <div class="col-12"><textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات الوكيل"></textarea></div>
+      <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ الوكيل</button><button class="btn btn-light" type="button" data-toggle-panel="add-agent">إلغاء</button></div>
+    </form>
+  </div>
+  {% endif %}
+  <div class="party-result-bar"><strong>قائمة الوكلاء</strong><span>{{agents|length}} نتيجة</span></div>
+  <div class="party-card-grid">
+    {% for a in agents %}
+    <article class="party-card" data-card-href="{{url_for('master_data.agent_detail',agent_id=a.id)}}" role="link" tabindex="0" aria-label="فتح ملف الوكيل {{a.name}}">
+      <div class="party-card-head">
+        <div class="party-avatar agent-avatar"><i class="bi bi-briefcase-fill"></i></div>
+        <div class="party-title"><strong>{{a.name}}</strong><small>{{a.code}}</small></div>
+        <span class="party-status {{'is-active' if a.active else 'is-inactive'}}"><i class="bi {{'bi-check-circle-fill' if a.active else 'bi-pause-circle-fill'}}"></i>{{'نشط' if a.active else 'موقوف'}}</span>
+      </div>
+      <div class="party-card-facts">
+        <div><span><i class="bi bi-telephone"></i> الهاتف</span><strong dir="auto">{{a.phone or 'غير مسجل'}}</strong></div>
+        <div><span><i class="bi bi-truck"></i> المركبات</span><strong>{{agent_vehicle_counts.get(a.id,0)}}</strong></div>
+        <div class="party-fact-wide"><span><i class="bi bi-wallet2"></i> الحساب</span><strong>{{a.account.name if a.account else 'الحساب التلقائي'}}</strong></div>
+      </div>
+      <div class="party-card-foot">
+        <span class="party-account-label"><i class="bi bi-building"></i>العقود والإيجارات</span>
+        <div class="party-card-actions">
+          {% if can_manage %}<a class="btn btn-light btn-sm" href="{{url_for('master_data.edit_agent',agent_id=a.id)}}" title="تعديل" aria-label="تعديل"><i class="bi bi-pencil"></i></a>{% endif %}
+          {% if a.account %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=a.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
+          <a class="btn btn-outline-primary btn-sm" href="{{url_for('operations.leases')}}" title="العقود" aria-label="العقود"><i class="bi bi-building"></i></a>
+          <a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.agent_report',agent_id=a.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>
+          {% if can_manage %}<form method="post" action="{{url_for('master_data.delete_agent',agent_id=a.id)}}" onsubmit="return confirm('سيتم إيقاف الوكيل وحفظ تاريخه. متابعة؟')"><button class="btn btn-outline-danger btn-sm" type="submit" title="إيقاف الوكيل" aria-label="إيقاف الوكيل"><i class="bi bi-person-dash"></i></button></form>{% endif %}
+        </div>
+      </div>
+    </article>
+    {% else %}<div class="empty-state party-empty"><i class="bi bi-person-badge"></i><strong>لا يوجد وكلاء</strong><span>غيّر البحث أو أضف أول وكيل.</span></div>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-card-href]').forEach(card=>{
+ card.addEventListener('click',e=>{if(e.target.closest('a,button,form,input,select,textarea,details,summary'))return;window.location.href=card.dataset.cardHref;});
+ card.addEventListener('keydown',e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();window.location.href=card.dataset.cardHref;}});
+});
+</script>
 {% endblock %}

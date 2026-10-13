@@ -85,7 +85,7 @@ document.addEventListener("click",e=>{if(opened&&!opened.wrap.contains(e.target)
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&opened){e.preventDefault();close(opened,true);}});
 function scan(root){if(!root)return;if(root.matches?.(selector))setup(root);root.querySelectorAll?.(selector).forEach(setup);}
 window.focusSearchableSelect=function(input){const s=typeof input==="string"?document.getElementById(input):input,x=s?instances.get(s):null;x?x.trigger.focus({preventScroll:true}):s?.focus?.({preventScroll:true});};
-window.refreshSearchableSelect=function(input){const s=typeof input==="string"?document.getElementById(input):input,x=s?instances.get(s):null;if(x){x.trigger.disabled=s.disabled;x.trigger.setAttribute("aria-label",labelFor(s));x.value.textContent=optText(selected(s))||s.dataset.ssPlaceholder||"اختر...";x.value.classList.toggle("ss-select-placeholder",!s.value);}};
+window.refreshSearchableSelect=function(input){const s=typeof input==="string"?document.getElementById(input):input;if(s instanceof HTMLSelectElement&&s.matches(selector)&&!instances.has(s))setup(s);const x=s?instances.get(s):null;if(x){x.trigger.disabled=s.disabled;x.trigger.setAttribute("aria-label",labelFor(s));x.value.textContent=optText(selected(s))||s.dataset.ssPlaceholder||"اختر...";x.value.classList.toggle("ss-select-placeholder",!s.value);}};
 scan(document);
 const observer=new MutationObserver(items=>items.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n);})));
 if(document.body)observer.observe(document.body,{childList:true,subtree:true});else document.addEventListener("DOMContentLoaded",()=>observer.observe(document.body,{childList:true,subtree:true}));

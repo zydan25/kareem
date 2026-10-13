@@ -6,7 +6,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import func, or_
 
 from ..extensions import db
-from ..models import Agent, AgentLease, AgentRent, AuditLog, Client, ClientAgent, Employee, EmployeeFine, EmployeeSchedule, GateTransaction, PayrollLine, Role, Shift, User, Vehicle, VehicleAgent, VehicleType
+from ..models import Agent, AgentLease, AgentRent, AuditLog, Client, ClientAgent, Employee, EmployeeFine, EmployeeSchedule, GateTransaction, PayrollLine, Role, Setting, Shift, User, Vehicle, VehicleAgent, VehicleType
 from ..permissions import can, permission_required
 from ..services.accounting import account_balance, create_posted_entry, get_system_account
 from ..services.audit import audit
@@ -127,9 +127,16 @@ def _save_employee_login(emp):
 @permission_required("agents.view")
 def agents():
     q=request.args.get("q","").strip()
+    sort=request.args.get("sort","name")
+    if sort not in {"name","code","vehicles","status"}: sort="name"
     query=Agent.query
     if q: query=query.filter(or_(Agent.name.ilike(f"%{q}%"),Agent.code.ilike(f"%{q}%"),Agent.phone.ilike(f"%{q}%")))
     rows=query.order_by(Agent.active.desc(),Agent.name).all()
+    agent_vehicle_counts={row.agent_id:row.count for row in db.session.query(VehicleAgent.agent_id,func.count(VehicleAgent.id).label("count")).filter(VehicleAgent.active.is_(True)).group_by(VehicleAgent.agent_id).all()}
+    if sort=="vehicles": rows.sort(key=lambda x:(not x.active,-agent_vehicle_counts.get(x.id,0),x.name.casefold()))
+    elif sort=="code": rows.sort(key=lambda x:(not x.active,x.code.casefold()))
+    elif sort=="status": rows.sort(key=lambda x:(not x.active,x.name.casefold()))
+    else: rows.sort(key=lambda x:(not x.active,x.name.casefold()))
     if request.method=="POST":
         if not can("agents.manage"): return ("Forbidden",403)
         try:
@@ -141,7 +148,8 @@ def agents():
             return redirect(url_for("master_data.agents"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    return render_template("master_data/agents.html",agents=rows,can_manage=can("agents.manage"),q=q)
+    party_theme_row=Setting.query.filter_by(key="party_cards_theme").first()
+    return render_template("master_data/agents.html",agents=rows,can_manage=can("agents.manage"),q=q,sort=sort,agent_vehicle_counts=agent_vehicle_counts,party_cards_theme=(party_theme_row.value if party_theme_row and party_theme_row.value in {"water","classic"} else "water"))
 
 @bp.get("/agents/<int:agent_id>")
 @permission_required("agents.view")
@@ -195,9 +203,16 @@ def _toggle_agent_on(agent_id):
 @permission_required("clients.view")
 def clients():
     q=request.args.get("q","").strip()
+    sort=request.args.get("sort","name")
+    if sort not in {"name","code","vehicles","status","newest"}: sort="name"
     query=Client.query
-    if q: query=query.filter(or_(Client.name.ilike(f"%{q}%"),Client.code.ilike(f"%{q}%"),Client.phone.ilike(f"%{q}%")))
+    if q: query=query.filter(or_(Client.name.ilike(f"%{q}%"),Client.code.ilike(f"%{q}%"),Client.phone.ilike(f"%{q}%"),Client.address.ilike(f"%{q}%")))
     rows=query.order_by(Client.active.desc(),Client.name).all()
+    if sort=="vehicles": rows.sort(key=lambda x:(not x.active,-len(x.vehicles),x.name.casefold()))
+    elif sort=="code": rows.sort(key=lambda x:(not x.active,x.code.casefold()))
+    elif sort=="status": rows.sort(key=lambda x:(not x.active,x.name.casefold()))
+    elif sort=="newest": rows.sort(key=lambda x:(not x.active,-x.id))
+    else: rows.sort(key=lambda x:(not x.active,x.name.casefold()))
     agents=Agent.query.filter_by(active=True).order_by(Agent.name).all()
     if request.method=="POST":
         if not can("clients.manage"): return ("Forbidden",403)
@@ -244,7 +259,8 @@ def clients():
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
     vehicle_types=VehicleType.query.filter_by(active=True).order_by(VehicleType.name).all()
-    return render_template("master_data/clients.html",clients=rows,agents=agents,vehicle_types=vehicle_types,can_manage=can("clients.manage"),q=q)
+    party_theme_row=Setting.query.filter_by(key="party_cards_theme").first()
+    return render_template("master_data/clients.html",clients=rows,agents=agents,vehicle_types=vehicle_types,can_manage=can("clients.manage"),q=q,sort=sort,party_cards_theme=(party_theme_row.value if party_theme_row and party_theme_row.value in {"water","classic"} else "water"))
 
 @bp.get("/clients/<int:client_id>")
 @permission_required("clients.view")
@@ -434,13 +450,72 @@ def toggle_vehicle(vehicle_id):
     if not v: return ("غير موجود",404)
     v.active=not v.active; audit("toggle","vehicle",v.id,v.plate_number); db.session.commit(); return redirect(url_for("master_data.vehicles"))
 
+@bp.get("/vehicle-types")
+@permission_required("vehicles.view")
+def vehicle_types():
+    q=request.args.get("q","").strip()
+    query=VehicleType.query
+    if q:
+        query=query.filter(VehicleType.name.ilike(f"%{q}%"))
+    types=query.order_by(VehicleType.active.desc(),VehicleType.name).all()
+    vehicle_counts={row.vehicle_type_id:row.count for row in db.session.query(Vehicle.vehicle_type_id,func.count(Vehicle.id).label("count")).group_by(Vehicle.vehicle_type_id).all()}
+    return render_template("master_data/vehicle_types.html",vehicle_types=types,vehicle_counts=vehicle_counts,q=q,can_manage=can("vehicles.manage"))
+
+@bp.route("/vehicle-types/<int:type_id>/edit",methods=["GET","POST"])
+@permission_required("vehicles.manage")
+def edit_vehicle_type(type_id):
+    row=db.session.get(VehicleType,type_id)
+    if not row:
+        return ("غير موجود",404)
+    linked_count=Vehicle.query.filter_by(vehicle_type_id=row.id).count()
+    if request.method=="POST":
+        name=request.form.get("name","").strip()
+        if not name:
+            flash("اسم النوع مطلوب","danger")
+            return redirect(url_for("master_data.edit_vehicle_type",type_id=row.id))
+        try:
+            other=VehicleType.query.filter(func.lower(VehicleType.name)==name.lower(),VehicleType.id!=row.id).first()
+            if other:
+                raise ValueError("يوجد نوع مركبة بهذا الاسم بالفعل")
+            old=row.name
+            row.name=name
+            audit("update","vehicle_type",row.id,f"{old}->{name}")
+            db.session.commit()
+            flash("تم تعديل نوع المركبة بنجاح","success")
+            return redirect(url_for("master_data.vehicle_types"))
+        except Exception as exc:
+            db.session.rollback()
+            flash(str(exc),"danger")
+    return render_template("master_data/vehicle_type_form.html",vehicle_type=row,linked_count=linked_count)
+
+@bp.post("/vehicle-types/<int:type_id>/delete")
+@permission_required("vehicles.manage")
+def delete_vehicle_type(type_id):
+    row=db.session.get(VehicleType,type_id)
+    if not row:
+        return ("غير موجود",404)
+    linked=Vehicle.query.filter_by(vehicle_type_id=row.id).count()
+    if linked:
+        flash(f"لا يمكن حذف النوع لأنه مرتبط بـ {linked} مركبة، بما فيها المركبات الموقوفة.","warning")
+        return redirect(url_for("master_data.vehicle_types"))
+    try:
+        audit("delete","vehicle_type",row.id,row.name)
+        db.session.delete(row)
+        db.session.commit()
+        flash("تم حذف نوع المركبة","success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("master_data.vehicle_types"))
+
+
 @bp.route("/vehicle-types",methods=["POST"])
 @permission_required("vehicles.manage")
 def add_vehicle_type():
     name=request.form.get("name","").strip()
     if not name:
         flash("اكتب اسم نوع المركبة","danger")
-        return redirect(url_for("master_data.vehicles"))
+        return redirect(url_for("master_data.vehicle_types"))
     try:
         existing=VehicleType.query.filter(func.lower(VehicleType.name)==name.lower()).first()
         if existing:
@@ -452,7 +527,7 @@ def add_vehicle_type():
     except Exception as exc:
         db.session.rollback()
         flash(str(exc),"danger")
-    return redirect(url_for("master_data.vehicles"))
+    return redirect(url_for("master_data.vehicle_types"))
 
 
 @bp.post("/vehicle-types/<int:type_id>/toggle")
@@ -464,7 +539,7 @@ def toggle_vehicle_type(type_id):
     row.active=not row.active
     audit("toggle","vehicle_type",row.id,f"{row.name}|{row.active}")
     db.session.commit()
-    return redirect(url_for("master_data.vehicles"))
+    return redirect(url_for("master_data.vehicle_types"))
 
 
 @bp.route("/employees",methods=["GET","POST"])
