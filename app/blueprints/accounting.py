@@ -5,10 +5,12 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from ..extensions import db
-from ..models import Account, FiscalYear, JournalEntry
+from ..models import Account, Client, Employee, FiscalYear, JournalEntry
 from sqlalchemy import or_
 from ..permissions import can, permission_required
-from ..services.accounting import account_balance, create_posted_entry, get_system_account, reverse_entry
+from ..services.accounting import D, account_balance, create_posted_entry, get_system_account, reverse_entry
+from ..services.accounts import ensure_client_account, ensure_employee_account
+from ..services.operations import is_cash_account
 from ..services.audit import audit
 
 bp=Blueprint("accounting",__name__,url_prefix="/accounting")
@@ -288,6 +290,8 @@ def journal():
         "salary_payment":"صرف راتب",
         "gate":"البوابة",
         "manual":"قيد يدوي",
+        "employee_daily":"يومية موظف",
+        "client_daily":"يومية عميل",
         "reverse":"قيد عكسي",
         "opening_balance":"رصيد افتتاحي",
     }
@@ -427,3 +431,220 @@ def fiscal_year_close(fiscal_year_id):
         db.session.rollback()
         flash(str(exc), "danger")
     return redirect(url_for("accounting.fiscal_years"))
+
+
+def _daily_party_config(kind):
+    if kind == "employee":
+        return Employee, "employee_daily", "الموظف", "الموظفين", "full_name", ensure_employee_account, "EMP"
+    if kind == "client":
+        return Client, "client_daily", "العميل", "العملاء", "name", ensure_client_account, "CLI"
+    raise ValueError("نوع اليومية غير صالح")
+
+
+def _daily_account_options():
+    rows = Account.query.filter_by(active=True).order_by(Account.code).all()
+    children = {}
+    for row in rows:
+        children.setdefault(row.parent_id, []).append(row)
+    flattened = []
+    def walk(parent_id=None, depth=0):
+        for row in sorted(children.get(parent_id, []), key=lambda x: x.code or ""):
+            flattened.append((row, depth))
+            walk(row.id, depth + 1)
+    walk(None)
+    cash_ids = set()
+    for row in rows:
+        if row.is_group or not row.allow_manual_posting:
+            continue
+        try:
+            if is_cash_account(row):
+                cash_ids.add(row.id)
+        except Exception:
+            if row.system_key == "main_cash":
+                cash_ids.add(row.id)
+    return flattened, cash_ids
+
+
+def _daily_amount(raw):
+    value = str(raw or "").strip()
+    for src, dst in zip("٠١٢٣٤٥٦٧٨٩", "0123456789"):
+        value = value.replace(src, dst)
+    for src, dst in zip("۰۱۲۳۴۵۶۷۸۹", "0123456789"):
+        value = value.replace(src, dst)
+    value = value.replace("٫", ".").replace("٬", "").replace(",", "").replace(" ", "")
+    if not value or value.count(".") > 1 or any(ch not in "0123456789." for ch in value):
+        raise ValueError("أدخل مبلغًا صحيحًا بالأرقام فقط")
+    try:
+        amount = Decimal(value).quantize(Decimal("0.01"))
+    except Exception:
+        raise ValueError("أدخل مبلغًا صحيحًا")
+    if amount <= 0:
+        raise ValueError("المبلغ يجب أن يكون أكبر من صفر")
+    return amount
+
+
+def _daily_journals_page(kind):
+    model, source_type, singular, plural, name_attr, ensure_account, prefix = _daily_party_config(kind)
+    endpoint = "accounting.employee_journals" if kind == "employee" else "accounting.client_journals"
+    parties = model.query.order_by(getattr(model, name_attr)).all()
+    show_form = request.args.get("new") == "1"
+    edit_id = request.args.get("edit", type=int)
+    if request.method == "POST":
+        show_form = True
+        edit_id = request.form.get("edit_entry_id", type=int) or None
+        try:
+            if not can("accounting.post"):
+                raise ValueError("ليست لديك صلاحية إضافة أو تعديل اليوميات")
+            party = db.session.get(model, request.form.get("party_id", type=int))
+            if not party or not party.active:
+                raise ValueError(f"اختر {singular} نشطًا")
+            party_account = ensure_account(party)
+            if not party_account or party_account.is_group or not party_account.active or not party_account.allow_manual_posting:
+                raise ValueError(f"لا يوجد حساب تفصيلي نشط لـ{singular}")
+            cash = db.session.get(Account, request.form.get("cash_account_id", type=int))
+            try:
+                valid_cash = bool(cash and is_cash_account(cash))
+            except Exception:
+                valid_cash = bool(cash and cash.system_key == "main_cash")
+            if not cash or not cash.active or cash.is_group or not cash.allow_manual_posting or not valid_cash:
+                raise ValueError("اختر صندوقًا تفصيليًا نشطًا من شجرة الحسابات")
+            if cash.id == party_account.id:
+                raise ValueError("حساب الطرف والصندوق يجب أن يكونا مختلفين")
+            side = (request.form.get("party_side") or "").strip()
+            if side not in {"debit", "credit"}:
+                raise ValueError("اختر طبيعة اليومية: مدين أو دائن")
+            amount = _daily_amount(request.form.get("amount"))
+            description = (request.form.get("description") or "").strip()
+            if not description:
+                raise ValueError("البيان إجباري")
+            if len(description) > 500:
+                raise ValueError("البيان أطول من الحد المسموح")
+            try:
+                entry_date = date.fromisoformat(request.form.get("entry_date") or date.today().isoformat())
+            except ValueError:
+                raise ValueError("تاريخ اليومية غير صحيح")
+
+            original = None
+            if edit_id:
+                original = JournalEntry.query.filter_by(id=edit_id, source_type=source_type).with_for_update().first()
+                if not original:
+                    raise ValueError("اليومية المطلوب تعديلها غير موجودة")
+                if original.status != "posted" or original.reversed_entry_id:
+                    raise ValueError("لا يمكن تعديل يومية غير مرحلة أو سبق عكسها")
+                # Preserve accounting history: reverse the prior posted entry, then post its replacement.
+                reverse_entry(original, current_user.id, f"عكس قبل تعديل يومية {singular}")
+
+            lines = [
+                {"account": party_account, "debit": amount if side == "debit" else 0,
+                 "credit": amount if side == "credit" else 0, "description": description},
+                {"account": cash, "debit": amount if side == "credit" else 0,
+                 "credit": amount if side == "debit" else 0, "description": description},
+            ]
+            entry = create_posted_entry(
+                description=description, entry_date=entry_date, created_by_id=current_user.id,
+                lines=lines, source_type=source_type, source_id=party.id, prefix=prefix,
+                audit=f"{'تعديل' if original else 'إضافة'} يومية {singular}: {getattr(party, name_attr)}",
+            )
+            audit("edit" if original else "create", f"{kind}_daily_journal", entry.id,
+                  f"{getattr(party, name_attr)}|{entry.number}|{amount}|{side}")
+            db.session.commit()
+            flash((f"تم تعديل اليومية وترحيل القيد الجديد {entry.number} مع حفظ أثر القيد السابق"
+                   if original else f"تمت إضافة اليومية وترحيل القيد {entry.number}"), "success")
+            return redirect(url_for(endpoint))
+        except Exception as exc:
+            db.session.rollback()
+            flash(str(exc), "danger")
+
+    edit_entry = None
+    if edit_id:
+        edit_entry = JournalEntry.query.filter_by(id=edit_id, source_type=source_type).first()
+        if edit_entry and (edit_entry.status != "posted" or edit_entry.reversed_entry_id):
+            edit_entry = None
+        if edit_entry:
+            show_form = True
+        elif request.method != "POST" and request.args.get("edit"):
+            flash("لا يمكن تعديل هذه اليومية؛ ربما عُكست أو لم تعد موجودة", "warning")
+
+    account_options, cash_account_ids = _daily_account_options()
+    party_map = {p.id: p for p in parties}
+    selected_filter = request.args.get("party_id", type=int)
+    start_raw, end_raw = request.args.get("start", "").strip(), request.args.get("end", "").strip()
+    search, sort = request.args.get("q", "").strip(), request.args.get("sort", "latest")
+    if sort not in {"latest", "oldest", "highest", "lowest"}:
+        sort = "latest"
+    query = JournalEntry.query.filter_by(source_type=source_type)
+    if selected_filter:
+        query = query.filter(JournalEntry.source_id == selected_filter)
+    for raw, label in ((start_raw, "البداية"), (end_raw, "النهاية")):
+        if raw:
+            try:
+                parsed = date.fromisoformat(raw)
+                query = query.filter(JournalEntry.entry_date >= parsed if label == "البداية" else JournalEntry.entry_date <= parsed)
+            except ValueError:
+                flash(f"تاريخ {label} غير صالح وتم تجاهله", "warning")
+    if search:
+        like = f"%{search}%"
+        query = query.filter((JournalEntry.number.ilike(like)) | (JournalEntry.description.ilike(like)))
+    if sort == "oldest":
+        entries = query.order_by(JournalEntry.entry_date.asc(), JournalEntry.id.asc()).limit(500).all()
+    elif sort in {"highest", "lowest"}:
+        entries = query.order_by(JournalEntry.id.desc()).limit(1000).all()
+        entries.sort(key=lambda row: (row.totals()[0], row.id), reverse=(sort == "highest"))
+        entries = entries[:500]
+    else:
+        entries = query.order_by(JournalEntry.entry_date.desc(), JournalEntry.id.desc()).limit(500).all()
+
+    edit_party_id = edit_entry.source_id if edit_entry else None
+    edit_party = party_map.get(edit_party_id) if edit_party_id else None
+    edit_party_account = getattr(edit_party, "account_id", None) if edit_party else None
+    edit_cash_id, edit_side, edit_amount = None, "", ""
+    if edit_entry:
+        edit_amount = f"{edit_entry.totals()[0]:.2f}"
+        for line in edit_entry.lines:
+            if edit_party_account and line.account_id == edit_party_account:
+                edit_side = "debit" if line.debit > 0 else "credit"
+            else:
+                edit_cash_id = line.account_id
+    submitted_party = request.form.get("party_id", str(edit_party_id) if edit_party_id else "")
+    return render_template(
+        "accounting/party_journals.html", kind=kind, singular=singular, plural=plural, name_attr=name_attr,
+        entries=entries, parties=parties, party_map=party_map, selected_filter=selected_filter,
+        start_raw=start_raw, end_raw=end_raw, search=search, sort=sort, account_options=account_options,
+        cash_account_ids=cash_account_ids, show_form=show_form, edit_entry=edit_entry,
+        edit_party_id=edit_party_id, edit_cash_id=edit_cash_id, edit_side=edit_side, edit_amount=edit_amount,
+        submitted_party=submitted_party, today=date.today(),
+        form_values=request.form if request.method == "POST" else {},
+    )
+
+
+@bp.route("/employee-journals", methods=["GET", "POST"])
+@permission_required("accounting.view")
+def employee_journals():
+    return _daily_journals_page("employee")
+
+
+@bp.route("/client-journals", methods=["GET", "POST"])
+@permission_required("accounting.view")
+def client_journals():
+    return _daily_journals_page("client")
+
+
+@bp.post("/<string:kind>-journals/<int:entry_id>/reverse")
+@permission_required("accounting.post")
+def party_journal_reverse(kind, entry_id):
+    if kind not in {"employee", "client"}:
+        return ("نوع اليومية غير صالح", 404)
+    _, source_type, singular, _, _, _, _ = _daily_party_config(kind)
+    entry = JournalEntry.query.filter_by(id=entry_id, source_type=source_type).first()
+    try:
+        if not entry:
+            raise ValueError("اليومية غير موجودة")
+        reverse = reverse_entry(entry, current_user.id, request.form.get("reason", f"عكس يومية {singular}"))
+        audit("reverse_party_journal", f"{kind}_daily_journal", entry.id, reverse.number)
+        db.session.commit()
+        flash(f"تم إنشاء القيد العكسي {reverse.number} مع الحفاظ على اليومية الأصلية", "success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc), "danger")
+    endpoint = "accounting.employee_journals" if kind == "employee" else "accounting.client_journals"
+    return redirect(url_for(endpoint))
