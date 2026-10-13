@@ -15,13 +15,20 @@ def ensure_user_shift(user_id, shift_name="وردية تشغيل"):
     return shift
 
 def is_cash_account(account):
-    if not account or account.is_group:
+    """Recognize the configured main cash even in legacy databases with a different parent tree."""
+    if not account or account.is_group or account.account_type != "asset":
         return False
+
+    # The main cash account is a system account. Its identity is authoritative;
+    # older databases may have a different parent_id from the current seed tree.
+    if account.system_key == "main_cash":
+        return True
+
     cash_root=get_system_account("cash_root")
     node=account
     seen=set()
     while node and node.id not in seen:
-        if node.parent_id==cash_root.id:
+        if node.id == cash_root.id:
             return True
         seen.add(node.id)
         node=db.session.get(Account,node.parent_id) if node.parent_id else None
