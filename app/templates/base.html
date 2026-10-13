@@ -17,9 +17,10 @@
 {% endif %}
 <link href="{{ url_for('static',filename='css/searchable-select.css',v='20261014-4') }}" rel="stylesheet">
 <link href="{{ url_for('static',filename='css/party-cards.css',v='20261014-4') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/typography.css',v='20261013-1') }}" rel="stylesheet">
+<style>:root{--primary:{{brand_color}};--primary-dark:color-mix(in srgb, {{brand_color}} 82%, #000);--accent:color-mix(in srgb, {{brand_color}} 12%, #fff);--ui-font-scale:{{ui_font_scale|default('1')}}</style>
 <title>{% block title %}{{ app_name }}{% endblock %}</title>
 </head>
-<style>:root{--primary:{{brand_color}};--primary-dark:color-mix(in srgb, {{brand_color}} 82%, #000);--accent:color-mix(in srgb, {{brand_color}} 12%, #fff);--ui-font-scale:{{ui_font_scale|default('1')}}}html{font-size:calc(16px * var(--ui-font-scale,1))}</style>
 <body{% if current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water' %} class="theme-water-pos"{% elif current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water_project' %} class="theme-water-project"{% endif %}>
 {% if current_user.is_authenticated %}
 <header class="topbar">
