@@ -4,20 +4,20 @@
 <style>
 .vehicle-types-page{max-width:950px;margin:auto}
 .vehicle-types-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center;margin-bottom:12px}
-.vehicle-types-toolbar .form-control{min-height:38px;border-radius:11px;font-size:11px}
-.vehicle-types-toolbar .btn{font-size:10px;border-radius:10px;font-weight:850}
+.vehicle-types-toolbar .form-control{min-height:38px;border-radius:11px;font-size: var(--type-label,11px)}
+.vehicle-types-toolbar .btn{font-size: var(--type-help,10px);border-radius:10px;font-weight:850}
 .vehicle-type-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .vehicle-type-card{background:#fff;border:1px solid var(--border);border-radius:15px;padding:12px;box-shadow:0 4px 14px rgba(17,39,32,.035)}
 .vehicle-type-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.vehicle-type-card h3{margin:0;font-size:13px;font-weight:950;overflow-wrap:anywhere}
-.vehicle-type-card small{display:block;color:var(--muted);font-size:9px;margin-top:4px}
-.vehicle-type-count{display:grid;place-items:center;min-width:37px;height:37px;border-radius:11px;background:var(--primary-faint);color:var(--primary);font-size:14px;font-weight:950}
+.vehicle-type-card h3{margin:0;font-size: var(--type-body-compact,13px);font-weight:950;overflow-wrap:anywhere}
+.vehicle-type-card small{display:block;color:var(--muted);font-size: var(--type-help,10px);margin-top:4px}
+.vehicle-type-count{display:grid;place-items:center;min-width:37px;height:37px;border-radius:11px;background:var(--primary-faint);color:var(--primary);font-size: var(--type-body,14px);font-weight:950}
 .vehicle-type-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-.vehicle-type-actions .btn{min-height:31px;padding:5px 8px;border-radius:9px;font-size:9px;font-weight:850}
+.vehicle-type-actions .btn{min-height:31px;padding:5px 8px;border-radius:9px;font-size: var(--type-help,10px);font-weight:850}
 .vehicle-type-actions form{margin:0}.vehicle-type-actions .btn[disabled]{opacity:.45}
 .vehicle-add-form{display:flex;gap:6px;margin-bottom:12px}
-.vehicle-add-form .form-control{min-height:39px;border-radius:11px;font-size:11px}
-.vehicle-add-form .btn{white-space:nowrap;border-radius:10px;font-size:10px;font-weight:900}
+.vehicle-add-form .form-control{min-height:39px;border-radius:11px;font-size: var(--type-label,11px)}
+.vehicle-add-form .btn{white-space:nowrap;border-radius:10px;font-size: var(--type-help,10px);font-weight:900}
 @media(max-width:600px){.vehicle-type-grid{grid-template-columns:1fr}.vehicle-types-toolbar{grid-template-columns:1fr}}
 </style>
 <div class="vehicle-types-page">
