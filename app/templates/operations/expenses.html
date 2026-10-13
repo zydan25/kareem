@@ -1,18 +1,49 @@
-{% from 'components/account_picker.html' import picker %}
+{% from 'components.account_picker.html' import picker %}
 {% extends 'base.html' %}
 {% block title %}إدارة المصروفات - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">المالية</span><h1>إدارة المصروفات</h1><p>صرف المصروف من حساب نقدي إلى حساب مصروف تفصيلي مع قيد تلقائي.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
-<div class="stat-grid mb-4"><div class="stat-card primary"><span>عدد المصروفات</span><strong>{{rows|length}}</strong><small>آخر المصروفات</small></div><div class="stat-card"><span>حساب افتراضي</span><strong>{{default_expense.name}}</strong><small>{{default_expense.name}}</small></div><div class="stat-card"><span>النقدية</span><strong>{{default_cash.name}}</strong><small>{{default_cash.name}}</small></div><div class="stat-card"><span>الوصف</span><strong>قيد مزدوج</strong><small>مدين مصروف / دائن نقدية</small></div></div>
-<div class="card-soft add-panel mb-4"><form method="post" class="row g-3">
-<div class="col-12"><div class="form-section-title">إضافة مصروف</div></div>
-<div class="col-6 col-lg-2"><label class="form-label">التاريخ</label><input type="date" name="expense_date" class="form-control"></div>
-<div class="col-6 col-lg-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control form-control-lg" inputmode="decimal" required></div>
-<div class="col-12 col-lg-4"><label class="form-label">حساب المصروف</label>{{picker('expense_account_id','حساب المصروف',account_options,default_expense.id,'حساب المصروف الافتراضي',expense_account_ids)}}</div>
-<div class="col-12 col-lg-4"><label class="form-label">الحساب النقدي</label>{{picker('cash_account_id','الحساب النقدي',account_options,default_cash.id,'الحساب النقدي',cash_account_ids)}}</div>
-<div class="col-12 col-lg-4"><label class="form-label">المستفيد</label><input name="beneficiary" class="form-control"></div>
-<div class="col-12 col-lg-8"><label class="form-label">البيان</label><input name="description" class="form-control" placeholder="مثال: كهرباء / نقل / صيانة" required></div>
-<div class="col-12"><button class="btn btn-primary btn-lg">ترحيل المصروف</button></div>
-</form></div>
-<div class="card-soft"><div class="section-title"><h3>سجل المصروفات</h3></div><div class="entity-list">{% for e in rows %}<div class="entity-row"><div class="entity-main"><div class="entity-icon expense"><i class="bi bi-wallet2"></i></div><div><strong>{{e.description}}</strong><div class="entity-meta"><span>{{e.number}}</span><span>{{e.expense_date}}</span><span>{{e.beneficiary or 'بدون مستفيد'}}</span></div></div></div><div class="entity-balance"><strong>{{'{:,.2f}'.format(e.amount)}} {{currency}}</strong><small>{{e.expense_account.name}}</small></div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('operations.expense_detail',expense_id=e.id)}}">تفاصيل وطباعة</a><a href="{{url_for('reports.expenses_report',start=e.expense_date,end=e.expense_date)}}">تقرير اليوم</a>{% if e.journal_entry_id %}<a href="{{url_for('accounting.journal_detail',entry_id=e.journal_entry_id)}}">القيد</a>{% endif %}</div></details></div></div>{% else %}<div class="empty-state"><i class="bi bi-wallet2"></i><strong>لا توجد مصروفات</strong><span>أضف أول مصروف.</span></div>{% endfor %}</div></div>
+<div class="page-head expense-page-head">
+  <div><span class="eyebrow">المالية</span><h1>إدارة المصروفات</h1><p>سجّل المصروف مع اختيار حساب المصروف والصندوق وترحيل القيد تلقائيًا.</p></div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if can("expenses.manage") %}<button class="btn btn-primary btn-lg" id="toggle-expense-form" type="button" aria-expanded="{{ 'true' if show_add_form else 'false' }}"><i class="bi bi-plus-circle"></i> إضافة مصروف</button>{% endif %}
+    <button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
+  </div>
+</div>
+<div class="stat-grid mb-4">
+  <div class="stat-card primary"><span>عدد المصروفات</span><strong>{{rows|length}}</strong><small>آخر المصروفات</small></div>
+  <div class="stat-card"><span>حساب افتراضي</span><strong>{{default_expense.name}}</strong><small>حساب المصروف</small></div>
+  <div class="stat-card"><span>النقدية</span><strong>{{default_cash.name}}</strong><small>الصندوق الافتراضي</small></div>
+  <div class="stat-card"><span>طريقة المعالجة</span><strong>قيد مزدوج</strong><small>مدين مصروف / دائن نقدية</small></div>
+</div>
+{% if can("expenses.manage") %}
+<div id="expense-add-panel" class="card-soft expense-add-panel mb-4" {% if not show_add_form %}hidden{% endif %}>
+  <div class="expense-form-heading"><div><span class="eyebrow">مصروف جديد</span><h2>بيانات المصروف</h2><p>نموذج واضح ومهيأ للهاتف.</p></div><button type="button" class="btn btn-light" id="close-expense-form" aria-label="إغلاق النموذج"><i class="bi bi-x-lg"></i></button></div>
+  <form method="post" id="expense-form" class="expense-entry-form">
+    <div class="expense-field expense-date"><label class="form-label" for="expense-date">التاريخ</label><input id="expense-date" type="date" name="expense_date" class="form-control" value="{{request.form.get('expense_date', '')}}"></div>
+    <div class="expense-field expense-amount"><label class="form-label" for="expense-amount">المبلغ</label><div class="input-group"><input id="expense-amount" name="amount" type="text" class="form-control amount-words-input" data-words-target="expense-amount-words" data-currency="{{currency}}" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="20" required placeholder="0.00" value="{{request.form.get('amount', '')}}"><span class="input-group-text">{{currency}}</span></div><div id="expense-amount-words" class="amount-words" aria-live="polite"></div></div>
+    <div class="expense-field expense-expense-account"><label class="form-label">حساب المصروف</label>{{picker('expense_account_id','حساب المصروف',account_options,request.form.get('expense_account_id',default_expense.id),'اختر حساب المصروف',expense_account_ids)}}</div>
+    <div class="expense-field expense-cash-account"><label class="form-label">الصندوق</label>{{picker('cash_account_id','الصندوق',account_options,request.form.get('cash_account_id',default_cash.id),'اختر الصندوق',cash_account_ids)}}</div>
+    <div class="expense-field expense-beneficiary"><label class="form-label" for="expense-beneficiary">المستفيد</label><input id="expense-beneficiary" name="beneficiary" class="form-control" maxlength="180" value="{{request.form.get('beneficiary', '')}}" placeholder="اسم المستفيد (اختياري)"></div>
+    <div class="expense-field expense-description"><label class="form-label" for="expense-description">البيان <span class="required-star">*</span></label><input id="expense-description" name="description" class="form-control" maxlength="500" value="{{request.form.get('description', '')}}" placeholder="مثال: كهرباء / نقل / صيانة" required></div>
+    <div class="expense-form-footer"><button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-check2-circle"></i> ترحيل المصروف</button><span><i class="bi bi-shield-check"></i> يتم التحقق من المبلغ والحسابات قبل الترحيل.</span></div>
+  </form>
+</div>
+{% endif %}
+<div class="card-soft">
+  <div class="section-title"><h3>سجل المصروفات</h3><span class="text-muted">{{rows|length}} حركة</span></div>
+  <div class="entity-list">
+  {% for e in rows %}
+    <div class="entity-row">
+      <div class="entity-main"><div class="entity-icon expense"><i class="bi bi-wallet2"></i></div><div><strong>{{e.description}}</strong><div class="entity-meta"><span>{{e.number}}</span><span>{{e.expense_date}}</span><span>{{e.beneficiary or 'بدون مستفيد'}}</span></div></div></div>
+      <div class="entity-balance"><strong>{{'{:,.2f}'.format(e.amount)}} {{currency}}</strong><small>{{e.expense_account.name}}</small></div>
+      <div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('operations.expense_detail',expense_id=e.id)}}">تفاصيل وطباعة</a><a href="{{url_for('reports.expenses_report',start=e.expense_date,end=e.expense_date)}}">تقرير اليوم</a>{% if e.journal_entry_id %}<a href="{{url_for('accounting.journal_detail',entry_id=e.journal_entry_id)}}">القيد</a>{% endif %}</div></details></div>
+    </div>
+  {% else %}<div class="empty-state"><i class="bi bi-wallet2"></i><strong>لا توجد مصروفات</strong><span>اضغط «إضافة مصروف» لتسجيل أول حركة.</span></div>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(()=>{const panel=document.getElementById('expense-add-panel'),btn=document.getElementById('toggle-expense-form'),closeBtn=document.getElementById('close-expense-form');const open=()=>{if(!panel)return;panel.hidden=false;btn?.setAttribute('aria-expanded','true');panel.scrollIntoView({behavior:'smooth',block:'start'});panel.querySelector('input')?.focus({preventScroll:true});};const close=()=>{if(!panel)return;panel.hidden=true;btn?.setAttribute('aria-expanded','false');btn?.focus({preventScroll:true});};btn?.addEventListener('click',()=>panel?.hidden?open():close());closeBtn?.addEventListener('click',close);{% if show_add_form %}open();{% endif %}})();
+</script>
 {% endblock %}
