@@ -1,18 +1,315 @@
 {% extends 'base.html' %}
 {% block title %}عقود إيجار الوكلاء - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الوكلاء والإيجارات</span><h1>إدارة عقود الإيجار</h1><p>العقد يحدد المبلغ الشهري، ويمكن تعديل شهر محدد بخصم أو إضافة.</p></div><div class="d-flex gap-2"><a class="btn btn-light" href="{{url_for('master_data.agents')}}">الوكلاء</a><a class="btn btn-outline-primary" href="{{url_for('operations.rents')}}">الاستحقاقات</a></div></div>
-<div class="card-soft add-panel" id="lease-form"><form method="post" class="row g-3">
-<div class="col-12"><div class="form-section-title">إضافة عقد</div></div>
-<div class="col-12 col-lg-4"><label class="form-label">الوكيل</label><select name="agent_id" class="form-select" required>{% for a in agents %}<option value="{{a.id}}">{{a.code}} — {{a.name}}</option>{% endfor %}</select></div>
-<div class="col-12 col-lg-3"><label class="form-label">اسم العقد</label><input name="name" class="form-control" value="إيجار"></div>
-<div class="col-6 col-lg-2"><label class="form-label">المبلغ الشهري</label><input name="monthly_amount" class="form-control" inputmode="decimal" required></div>
-<div class="col-6 col-lg-1"><label class="form-label">اليوم</label><input name="due_day" class="form-control" value="1" type="number" min="1" max="31"></div>
-<div class="col-6 col-lg-3"><label class="form-label">البداية</label><input type="date" name="starts_on" class="form-control" required></div>
-<div class="col-6 col-lg-3"><label class="form-label">النهاية</label><input type="date" name="ends_on" class="form-control"></div>
-<div class="col-12"><button class="btn btn-primary">حفظ العقد</button></div>
-</form></div>
-<div class="card-soft mt-4"><div class="section-title"><div><h3>العقود الحالية</h3><small class="text-muted">{{leases|length}} عقد</small></div></div><div class="entity-list">
-{% for l in leases %}<div class="entity-row"><div class="entity-main"><div class="entity-icon agent"><i class="bi bi-building"></i></div><div><strong>{{l.agent.name}}</strong><div class="entity-meta"><span>{{l.name}}</span><span>{{'{:,.2f}'.format(l.monthly_amount)}} {{currency}}</span><span>{{l.starts_on}}{% if l.ends_on %} → {{l.ends_on}}{% endif %}</span></div></div></div><div class="entity-balance"><span class="status-dot {{'on' if l.active else 'off'}}"></span>{{'نشط' if l.active else 'موقوف'}}</div><a class="btn btn-sm btn-outline-primary" href="{{url_for('master_data.agent_detail',agent_id=l.agent_id)}}">الوكيل</a><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('master_data.agent_detail',agent_id=l.agent_id)}}">ملف الوكيل</a><a href="{{url_for('reports.agent_report',agent_id=l.agent_id)}}">تقرير الوكيل</a><form method="post" action="{{url_for('operations.charge_lease',lease_id=l.id)}}"><input type="hidden" name="rent_month" value="{{l.starts_on.strftime('%Y-%m')}}"><input type="hidden" name="base_amount" value="{{l.monthly_amount}}"><input type="hidden" name="discount" value="0"><input type="hidden" name="addition" value="0"><button><i class="bi bi-check2"></i> إثبات حسب الشهر</button></form></div></details></div></div>
-{% else %}<div class="empty-state"><i class="bi bi-building"></i><strong>لا توجد عقود</strong><span>أضف أول عقد للوكيل.</span></div>{% endfor %}</div></div>
+<style>
+.lease-page{--lease-green:#198754;--lease-green-soft:#eaf7ef;--lease-red:#b94a48}
+.lease-page-head{align-items:center;gap:18px}
+.lease-page-head .page-head-copy{min-width:0}
+.lease-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lease-head-actions .btn{min-height:42px;border-radius:12px;font-weight:850;display:inline-flex;align-items:center;gap:7px}
+.lease-primary-btn{background:var(--primary,#0b6e4f)!important;border-color:var(--primary,#0b6e4f)!important;color:#fff!important;box-shadow:0 7px 18px rgba(11,110,79,.16)}
+.lease-primary-btn:hover{filter:brightness(.94)}
+.lease-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.lease-stat{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;min-width:0;padding:14px 15px;border:1px solid var(--border,#e3eae7);border-radius:16px;background:linear-gradient(135deg,#fff,#fbfdfc);box-shadow:0 6px 20px rgba(15,35,30,.035)}
+.lease-stat:after{content:"";position:absolute;width:74px;height:74px;border-radius:50%;left:-20px;bottom:-38px;background:var(--stat-tint,#eaf7ef);opacity:.75}
+.lease-stat-icon{position:relative;z-index:1;display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:var(--stat-tint,#eaf7ef);color:var(--stat-color,#198754);font-size:19px}
+.lease-stat-copy{position:relative;z-index:1;min-width:0}
+.lease-stat-copy small{display:block;color:var(--muted,#718080);font-size:10px;font-weight:750}
+.lease-stat-copy strong{display:block;margin-top:3px;color:var(--text,#263735);font-size:19px;line-height:1.2;font-weight:950;white-space:nowrap}
+.lease-form-panel{padding:0;border:1px solid #cfe2d7;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 18px 45px rgba(15,35,30,.08);margin-bottom:18px}
+.lease-form-panel.add-panel{display:none}
+.lease-form-panel.add-panel.is-open{display:block}
+.lease-form-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 17px;background:linear-gradient(115deg,#edf8f1,#f8fbf9);border-bottom:1px solid #e1eee6}
+.lease-form-heading{display:flex;align-items:center;gap:11px;min-width:0}
+.lease-form-heading .icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#d9f0e1;color:#177d49;font-size:20px}
+.lease-form-heading h2{margin:0;font-size:16px;font-weight:950;color:#243d32}
+.lease-form-heading p{margin:3px 0 0;color:#72867a;font-size:10px}
+.lease-form-body{padding:17px}
+.lease-form-body .form-label{font-size:11px;font-weight:850;color:#526460;margin-bottom:5px}
+.lease-form-body .form-control,.lease-form-body .form-select{min-height:42px;border-radius:11px;border-color:#dce6e1;font-size:12px}
+.lease-form-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:13px;margin-top:12px;border-top:1px solid #edf1ef}
+.lease-form-footer small{font-size:10px;color:var(--muted,#778582)}
+.lease-form-footer .btn{min-height:42px;border-radius:12px;font-weight:900;padding-inline:18px}
+.lease-list-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 1px 10px}
+.lease-list-title{display:flex;align-items:center;gap:9px;min-width:0}
+.lease-list-title .title-icon{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:12px;background:#edf5f0;color:var(--primary,#0b6e4f);font-size:18px}
+.lease-list-title h2{margin:0;font-size:17px;font-weight:950}
+.lease-list-title p{margin:3px 0 0;color:var(--muted,#788785);font-size:10px}
+.lease-list-count{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;padding:0 8px;border-radius:99px;background:#edf3ef;color:#426254;font-size:10px;font-weight:900}
+.lease-tools{display:grid;grid-template-columns:minmax(190px,1fr) 175px;gap:7px;width:min(490px,100%)}
+.lease-search{position:relative;min-width:0}
+.lease-search i{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#879793;pointer-events:none}
+.lease-search input{padding-right:35px;min-height:40px;border-radius:12px;font-size:11px}
+.lease-tools select{min-height:40px;border-radius:12px;font-size:11px;font-weight:800;border-color:#dce6e1}
+.lease-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.lease-card{position:relative;min-width:0;padding:14px;border:1px solid var(--border,#e0e8e4);border-radius:18px;background:#fff;box-shadow:0 7px 23px rgba(15,35,30,.045);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.lease-card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(15,35,30,.085);border-color:#c9ddd1}
+.lease-card[hidden]{display:none!important}
+.lease-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.lease-card-identity{display:flex;gap:10px;align-items:center;min-width:0}
+.lease-card-icon{display:grid;place-items:center;width:45px;height:45px;flex:0 0 45px;border-radius:14px;background:linear-gradient(145deg,#e5f5eb,#f1f9f4);border:1px solid #d5eadc;color:#16834a;font-size:21px}
+.lease-card-identity-copy{min-width:0}
+.lease-card-number{display:block;color:#8a9993;font-size:9px;font-weight:850;letter-spacing:.25px;margin-bottom:3px}
+.lease-card-identity h3{margin:0;color:#253934;font-size:14px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lease-card-identity p{margin:4px 0 0;color:#72817b;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lease-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:6px 9px;border-radius:99px;font-size:9px;font-weight:900}
+.lease-status:before{content:"";width:6px;height:6px;border-radius:99px;background:currentColor}
+.lease-status.active{background:#e8f7ed;color:#18824a}
+.lease-status.inactive{background:#f1f3f2;color:#7b8783}
+.lease-amount-panel{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;margin:13px 0 11px;border:1px solid #deeee4;border-radius:14px;background:linear-gradient(110deg,#f0faf4,#fbfdfb)}
+.lease-amount-label{display:flex;align-items:center;gap:7px;color:#47745b;font-size:10px;font-weight:800}
+.lease-amount-label i{font-size:15px}
+.lease-amount-value{color:#167646;font-size:19px;line-height:1.15;font-weight:1000;white-space:nowrap}
+.lease-amount-value small{font-size:9px;font-weight:800;color:#6d8a78}
+.lease-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.lease-info{min-width:0;padding:9px 9px 8px;border-radius:11px;background:#f7f9f8;border:1px solid #eef2ef}
+.lease-info small{display:flex;align-items:center;gap:5px;color:#86938e;font-size:9px;margin-bottom:5px}
+.lease-info small i{font-size:11px}
+.lease-info strong{display:block;color:#465851;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lease-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:11px;border-top:1px solid #edf1ef}
+.lease-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 10px;border-radius:10px;text-decoration:none;font-size:10px;font-weight:900;border:1px solid #dfe8e3;color:#52645b;background:#fff;transition:.15s}
+.lease-action:hover{background:#f4f8f5;color:#254b36;border-color:#cfdfd5}
+.lease-action.primary{background:var(--primary,#0b6e4f);border-color:var(--primary,#0b6e4f);color:#fff;margin-inline-start:auto}
+.lease-action.primary:hover{filter:brightness(.94);color:#fff}
+.lease-empty{grid-column:1/-1;background:linear-gradient(145deg,#fff,#fbfdfc);border:1px dashed #cfdbd4;border-radius:18px;padding:36px 18px;text-align:center}
+.lease-empty .empty-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:#edf7f0;color:#198754;font-size:27px;margin:0 auto 12px}
+.lease-empty strong{display:block;color:#2e443a;font-size:14px;font-weight:950}
+.lease-empty p{color:#7a8982;font-size:11px;margin:5px 0 14px}
+@media(max-width:850px){.lease-cards{grid-template-columns:1fr}.lease-head-actions{align-items:stretch}}
+@media(max-width:600px){
+  .lease-page-head{display:block}
+  .lease-head-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+  .lease-head-actions .btn{justify-content:center;font-size:11px;padding-inline:8px}
+  .lease-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .lease-stat{display:block;padding:10px 8px;border-radius:13px;text-align:center}
+  .lease-stat-icon{width:33px;height:33px;margin:0 auto 7px;border-radius:10px;font-size:16px}
+  .lease-stat-copy small{font-size:9px;white-space:nowrap}
+  .lease-stat-copy strong{font-size:13px}
+  .lease-form-head{padding:12px}
+  .lease-form-heading h2{font-size:14px}
+  .lease-form-body{padding:12px}
+  .lease-form-footer{align-items:stretch;flex-direction:column}
+  .lease-form-footer>div{display:flex;gap:7px}
+  .lease-form-footer .btn{flex:1}
+  .lease-list-tools{align-items:stretch;flex-direction:column;gap:10px}
+  .lease-tools{grid-template-columns:1fr 135px;width:100%}
+  .lease-card{padding:12px;border-radius:16px}
+  .lease-card-identity h3{font-size:13px}
+  .lease-card-icon{width:40px;height:40px;flex-basis:40px}
+  .lease-status{padding:5px 7px;font-size:8px}
+  .lease-amount-value{font-size:17px}
+  .lease-info-grid{gap:5px}
+  .lease-info{padding:8px 6px}
+  .lease-info small{font-size:8px}
+  .lease-info strong{font-size:9px}
+  .lease-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lease-action{min-width:0;padding:7px 5px}
+  .lease-action.primary{margin-inline-start:0;grid-column:1/-1;grid-row:1}
+}
+</style>
+<div class="lease-page">
+  <div class="page-head lease-page-head">
+    <div class="page-head-copy">
+      <span class="eyebrow">إدارة الوكلاء والعقود</span>
+      <h1>عقود إيجار الوكلاء</h1>
+      <p>أنشئ العقود وتابع قيمتها ومواعيد استحقاقها، ثم انتقل مباشرة إلى إثبات الإيجار وتحصيله.</p>
+    </div>
+    <div class="lease-head-actions">
+      <button class="btn lease-primary-btn" type="button" data-lease-open aria-controls="lease-form" aria-expanded="{{'true' if form_open else 'false'}}">
+        <i class="bi bi-plus-circle"></i><span>إضافة عقد جديد</span>
+      </button>
+      <a class="btn btn-light" href="{{url_for('master_data.agents')}}"><i class="bi bi-people"></i> إدارة الوكلاء</a>
+      <a class="btn btn-outline-primary" href="{{url_for('operations.rents')}}"><i class="bi bi-cash-stack"></i> الاستحقاقات والتحصيل</a>
+    </div>
+  </div>
+
+  {% set active_count = leases|selectattr('active')|list|length %}
+  {% set inactive_count = leases|rejectattr('active')|list|length %}
+  {% set totals = namespace(value=0) %}
+  {% for l in leases %}{% if l.active %}{% set totals.value = totals.value + l.monthly_amount %}{% endif %}{% endfor %}
+  <section class="lease-stats" aria-label="ملخص العقود">
+    <div class="lease-stat" style="--stat-tint:#eaf7ef;--stat-color:#198754">
+      <div class="lease-stat-icon"><i class="bi bi-file-earmark-check"></i></div>
+      <div class="lease-stat-copy"><small>إجمالي العقود</small><strong>{{leases|length}}</strong></div>
+    </div>
+    <div class="lease-stat" style="--stat-tint:#e5f6eb;--stat-color:#17834a">
+      <div class="lease-stat-icon"><i class="bi bi-check2-circle"></i></div>
+      <div class="lease-stat-copy"><small>عقود نشطة</small><strong>{{active_count}}</strong></div>
+    </div>
+    <div class="lease-stat" style="--stat-tint:#edf1ef;--stat-color:#788680">
+      <div class="lease-stat-icon"><i class="bi bi-calendar2-check"></i></div>
+      <div class="lease-stat-copy"><small>إجمالي شهري نشط</small><strong>{{'{:,.2f}'.format(totals.value)}} <small>{{currency}}</small></strong></div>
+    </div>
+  </section>
+
+  <section class="lease-form-panel add-panel {% if form_open %}is-open{% endif %}" id="lease-form">
+    <div class="lease-form-head">
+      <div class="lease-form-heading">
+        <div class="icon"><i class="bi bi-file-earmark-plus"></i></div>
+        <div><h2>بيانات عقد الإيجار الجديد</h2><p>أدخل بيانات صحيحة ليظهر العقد فور حفظه في سجل العقود.</p></div>
+      </div>
+      <button type="button" class="icon-button" data-lease-close aria-label="إغلاق نموذج العقد"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <form method="post" class="lease-form-body" id="lease-create-form">
+      <div class="row g-3">
+        <div class="col-12 col-lg-5">
+          <label class="form-label" for="lease-agent">الوكيل <span class="text-danger">*</span></label>
+          <select id="lease-agent" name="agent_id" class="form-select" required {% if not agents %}disabled{% endif %}>
+            <option value="">اختر الوكيل صاحب العقد</option>
+            {% for a in agents %}<option value="{{a.id}}" {% if form_data.get('agent_id') == a.id|string %}selected{% endif %}>{{a.code}} — {{a.name}}{% if a.phone %} — {{a.phone}}{% endif %}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-lg-4">
+          <label class="form-label" for="lease-name">اسم العقد</label>
+          <input id="lease-name" name="name" class="form-control" maxlength="120" value="{{form_data.get('name','إيجار')}}" placeholder="مثال: إيجار موقع السوق">
+        </div>
+        <div class="col-12 col-lg-3">
+          <label class="form-label" for="lease-amount">قيمة الإيجار الشهري <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input id="lease-amount" name="monthly_amount" class="form-control text-center fw-bold" inputmode="decimal" value="{{form_data.get('monthly_amount','')}}" placeholder="0.00" required>
+            <span class="input-group-text">{{currency}}</span>
+          </div>
+        </div>
+        <div class="col-12 col-md-4 col-lg-4">
+          <label class="form-label" for="lease-start">تاريخ بداية العقد <span class="text-danger">*</span></label>
+          <input id="lease-start" type="date" name="starts_on" class="form-control" value="{{form_data.get('starts_on',today.isoformat())}}" required>
+        </div>
+        <div class="col-12 col-md-4 col-lg-4">
+          <label class="form-label" for="lease-end">تاريخ نهاية العقد <span class="text-muted">(اختياري)</span></label>
+          <input id="lease-end" type="date" name="ends_on" class="form-control" value="{{form_data.get('ends_on','')}}">
+        </div>
+        <div class="col-12 col-md-4 col-lg-4">
+          <label class="form-label" for="lease-due-day">يوم الاستحقاق من كل شهر</label>
+          <input id="lease-due-day" type="number" name="due_day" class="form-control" min="1" max="31" value="{{form_data.get('due_day','1')}}" required>
+        </div>
+      </div>
+      {% if not agents %}
+      <div class="alert alert-warning mt-3 mb-0"><i class="bi bi-info-circle"></i> لا يوجد وكيل نشط لإسناد العقد إليه. أضف وكيلًا أو فعّل أحد الوكلاء أولًا.</div>
+      {% endif %}
+      <div class="lease-form-footer">
+        <small><i class="bi bi-shield-check"></i> سيتم إنشاء حساب الوكيل المحاسبي تلقائيًا عند الحاجة.</small>
+        <div>
+          <button type="button" class="btn btn-light" data-lease-close>إلغاء</button>
+          <button type="submit" class="btn lease-primary-btn" {% if not agents %}disabled{% endif %}><i class="bi bi-check2-circle"></i> حفظ عقد الإيجار</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <div class="lease-list-tools">
+    <div class="lease-list-title">
+      <div class="title-icon"><i class="bi bi-grid-1x2-fill"></i></div>
+      <div><h2>سجل العقود</h2><p>بطاقات مختصرة توضح المبلغ والمدة وحالة كل عقد.</p></div>
+      <span class="lease-list-count" id="lease-count">{{leases|length}}</span>
+    </div>
+    <div class="lease-tools">
+      <div class="lease-search"><i class="bi bi-search"></i><input id="lease-filter" class="form-control" placeholder="ابحث باسم الوكيل أو العقد..." autocomplete="off"></div>
+      <select id="lease-sort" class="form-select" aria-label="فرز العقود">
+        <option value="active">النشطة أولًا</option>
+        <option value="newest">الأحدث إضافة</option>
+        <option value="oldest">الأقدم إضافة</option>
+        <option value="highest">الأعلى إيجارًا</option>
+        <option value="lowest">الأقل إيجارًا</option>
+        <option value="inactive">العقود الموقوفة</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="lease-cards" id="lease-cards">
+    {% for l in leases %}
+    <article class="lease-card" data-lease-card data-status="{{'active' if l.active else 'inactive'}}" data-amount="{{l.monthly_amount}}" data-start="{{l.starts_on.isoformat()}}" data-search="{{l.agent.name}} {{l.agent.code}} {{l.name}} {{l.agent.phone or ''}} {{l.id}}">
+      <div class="lease-card-top">
+        <div class="lease-card-identity">
+          <div class="lease-card-icon"><i class="bi bi-building-check"></i></div>
+          <div class="lease-card-identity-copy">
+            <span class="lease-card-number">عقد إيجار #{{'%04d'|format(l.id)}}</span>
+            <h3>{{l.agent.name}}</h3>
+            <p>{{l.name}}{% if l.agent.code %} · {{l.agent.code}}{% endif %}</p>
+          </div>
+        </div>
+        <span class="lease-status {{'active' if l.active else 'inactive'}}">{{'نشط' if l.active else 'موقوف'}}</span>
+      </div>
+
+      <div class="lease-amount-panel">
+        <div class="lease-amount-label"><i class="bi bi-cash-coin"></i><span>قيمة الإيجار الشهري</span></div>
+        <div class="lease-amount-value">{{'{:,.2f}'.format(l.monthly_amount)}} <small>{{currency}}</small></div>
+      </div>
+
+      <div class="lease-info-grid">
+        <div class="lease-info"><small><i class="bi bi-calendar-event"></i> بداية العقد</small><strong>{{l.starts_on.strftime('%Y-%m-%d')}}</strong></div>
+        <div class="lease-info"><small><i class="bi bi-calendar2-x"></i> نهاية العقد</small><strong>{{l.ends_on.strftime('%Y-%m-%d') if l.ends_on else 'مفتوح'}}</strong></div>
+        <div class="lease-info"><small><i class="bi bi-alarm"></i> يوم الاستحقاق</small><strong>يوم {{l.due_day}}</strong></div>
+      </div>
+
+      <div class="lease-card-actions">
+        <a class="lease-action primary" href="{{url_for('operations.rents',lease_id=l.id)}}"><i class="bi bi-plus-circle"></i> إثبات استحقاق الإيجار</a>
+        <a class="lease-action" href="{{url_for('master_data.agent_detail',agent_id=l.agent_id)}}"><i class="bi bi-person-vcard"></i> ملف الوكيل</a>
+        <a class="lease-action" href="{{url_for('reports.agent_report',agent_id=l.agent_id)}}"><i class="bi bi-bar-chart-line"></i> تقرير الوكيل</a>
+      </div>
+    </article>
+    {% else %}
+    <div class="lease-empty" id="lease-empty">
+      <div class="empty-icon"><i class="bi bi-file-earmark-plus"></i></div>
+      <strong>لا توجد عقود إيجار حتى الآن</strong>
+      <p>ابدأ بإضافة عقد للوكيل، وسيظهر هنا في بطاقة مستقلة يسهل متابعتها.</p>
+      <button type="button" class="btn lease-primary-btn" data-lease-open><i class="bi bi-plus-circle"></i> إضافة أول عقد</button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const panel=document.getElementById('lease-form');
+  const opener=document.querySelector('[data-lease-open]');
+  const closers=[...document.querySelectorAll('[data-lease-close]')];
+  const filter=document.getElementById('lease-filter');
+  const sort=document.getElementById('lease-sort');
+  const cards=[...document.querySelectorAll('[data-lease-card]')];
+  const count=document.getElementById('lease-count');
+
+  function setFormOpen(open){
+    if(!panel)return;
+    panel.classList.toggle('is-open',open);
+    opener?.setAttribute('aria-expanded',open?'true':'false');
+    if(open){
+      panel.scrollIntoView({behavior:'smooth',block:'start'});
+      setTimeout(()=>panel.querySelector('select:not(:disabled),input:not([type=hidden])')?.focus({preventScroll:true}),180);
+    }
+  }
+  opener?.addEventListener('click',()=>setFormOpen(!panel?.classList.contains('is-open')));
+  closers.forEach(button=>button.addEventListener('click',()=>setFormOpen(false)));
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&panel?.classList.contains('is-open'))setFormOpen(false);});
+
+  function applyList(){
+    const query=(filter?.value||'').trim().toLocaleLowerCase();
+    const mode=sort?.value||'active';
+    const visible=cards.filter(card=>{
+      const matchesQuery=(card.dataset.search||'').toLocaleLowerCase().includes(query);
+      const matchesStatus=mode!=='inactive'||card.dataset.status==='inactive';
+      card.hidden=!(matchesQuery&&matchesStatus);
+      return matchesQuery&&matchesStatus;
+    });
+    const ordered=[...visible];
+    ordered.sort((a,b)=>{
+      const amountA=Number(a.dataset.amount||0),amountB=Number(b.dataset.amount||0);
+      const dateA=a.dataset.start||'',dateB=b.dataset.start||'';
+      if(mode==='highest')return amountB-amountA;
+      if(mode==='lowest')return amountA-amountB;
+      if(mode==='oldest')return dateA.localeCompare(dateB);
+      if(mode==='newest')return dateB.localeCompare(dateA);
+      if(mode==='inactive')return Number(a.dataset.status==='inactive')-Number(b.dataset.status==='inactive');
+      return Number(b.dataset.status==='active')-Number(a.dataset.status==='active');
+    });
+    const wrap=document.getElementById('lease-cards');
+    ordered.forEach(card=>wrap?.appendChild(card));
+    if(count)count.textContent=visible.length;
+  }
+  filter?.addEventListener('input',applyList);
+  sort?.addEventListener('change',applyList);
+  applyList();
+  {% if form_open %}setFormOpen(true);{% endif %}
+})();
+</script>
 {% endblock %}
