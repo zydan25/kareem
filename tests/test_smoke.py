@@ -161,6 +161,63 @@ def test_employee_has_separate_account_and_cashbox(app):
 
 
 
+
+def test_account_tree_edit_rejects_direct_and_indirect_cycles(app, client):
+    login(client)
+    with app.app_context():
+        assets_root=Account.query.filter_by(system_key="root_assets").one()
+        parent=Account(
+            code="990CYC01", name="مجموعة اختبار الدورة", account_type="asset",
+            parent_id=assets_root.id, is_group=True, active=True, allow_manual_posting=False,
+        )
+        db.session.add(parent)
+        db.session.flush()
+        child=Account(
+            code="990CYC02", name="فرع مجموعة اختبار الدورة", account_type="asset",
+            parent_id=parent.id, is_group=True, active=True, allow_manual_posting=False,
+        )
+        db.session.add(child)
+        db.session.flush()
+        grandchild=Account(
+            code="990CYC03", name="الفرع المتداخل لاختبار الدورة", account_type="asset",
+            parent_id=child.id, is_group=True, active=True, allow_manual_posting=False,
+        )
+        db.session.add(grandchild)
+        db.session.commit()
+        parent_id, root_id = parent.id, assets_root.id
+        child_id, grandchild_id = child.id, grandchild.id
+        original_name=parent.name
+
+    edit_url=f"/accounting/accounts/{parent_id}/edit"
+    edit_page=client.get(edit_url)
+    assert edit_page.status_code==200
+    select_html=edit_page.get_data(as_text=True).split('<select name="parent_id"',1)[1].split("</select>",1)[0]
+    assert f'value="{child_id}"' not in select_html
+    assert f'value="{grandchild_id}"' not in select_html
+
+    # Attempting to move a group below a nested descendant must be blocked server-side,
+    # even though the browser normally hides that invalid option.
+    nested_cycle=client.post(edit_url,data={
+        "name":original_name,
+        "parent_id":str(grandchild_id),
+        "active":"1",
+    })
+    assert nested_cycle.status_code==200
+    assert "لا يمكن نقل الحساب إلى نفسه أو إلى أحد فروعه" in nested_cycle.get_data(as_text=True)
+
+    direct_cycle=client.post(edit_url,data={
+        "name":original_name,
+        "parent_id":str(parent_id),
+        "active":"1",
+    })
+    assert direct_cycle.status_code==200
+    assert "لا يمكن نقل الحساب إلى نفسه أو إلى أحد فروعه" in direct_cycle.get_data(as_text=True)
+
+    with app.app_context():
+        unchanged=db.session.get(Account,parent_id)
+        assert unchanged.parent_id==root_id
+        assert unchanged.name==original_name
+
 def test_collector_dashboard_shows_employee_cashbox_balance(app):
     from datetime import date
     from app.services.accounts import ensure_employee_account, ensure_employee_cashbox
