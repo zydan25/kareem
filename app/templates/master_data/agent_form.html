@@ -1,4 +1,22 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">الوكلاء</span><h1>تعديل الوكيل</h1></div></div><div class="card-soft"><form method="post" enctype="multipart/form-data" class="row g-3"><div class="col-12"><div class="form-section-title">بيانات الوكيل <span>الكود يُدار تلقائيًا من النظام</span></div></div><div class="col-md-5"><label class="form-label">الاسم</label><input name="name" class="form-control" value="{{agent.name}}" required></div><div class="col-md-4"><label class="form-label">الهاتف</label><input name="phone" class="form-control" value="{{agent.phone or ''}}"></div>
-<div class="col-md-2"><label class="form-label">نوع الهوية <small>(اختياري)</small></label><select name="identity_type" class="form-select"><option value="">بدون</option><option {% if agent.identity_type=='بطاقة شخصية' %}selected{% endif %}>بطاقة شخصية</option><option {% if agent.identity_type=='هوية' %}selected{% endif %}>هوية</option><option {% if agent.identity_type=='جواز سفر' %}selected{% endif %}>جواز سفر</option></select></div>
-<div class="col-md-2"><label class="form-label">رقم الهوية</label><input name="identity_number" class="form-control" value="{{agent.identity_number or ''}}"></div>
-<div class="col-12"><label class="form-label">صورة الهوية <small>(اختياري)</small></label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div><div class="col-12"><textarea name="notes" class="form-control">{{agent.notes or ''}}</textarea></div><div><button class="btn btn-primary">حفظ</button> <a class="btn btn-light" href="{{url_for('master_data.agents')}}">رجوع</a></div></form></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}تعديل الوكيل - {{app_name}}{% endblock %}
+{% block content %}
+<div class="party-page party-theme-water party-form-page">
+  <div class="party-page-head">
+    <div><span class="eyebrow">البيانات الأساسية</span><h1>تعديل الوكيل</h1><small>{{agent.name}} · الكود يُدار تلقائيًا من النظام.</small></div>
+    <a href="{{url_for('master_data.agent_detail',agent_id=agent.id)}}" class="btn btn-outline-primary party-page-action">ملف الوكيل</a>
+  </div>
+  <div class="card-soft party-form-card">
+    <form method="post" enctype="multipart/form-data" class="row g-3 party-form-grid" id="edit-agent-form">
+      <div class="col-12"><div class="form-section-title">بيانات الوكيل <span>الكود يُدار تلقائيًا من النظام</span></div></div>
+      <div class="col-12 col-md-5"><label class="form-label">اسم الوكيل</label><input name="name" class="form-control" value="{{agent.name}}" required></div>
+      <div class="col-12 col-md-4"><label class="form-label">الهاتف</label><input name="phone" class="form-control" value="{{agent.phone or ''}}" inputmode="tel"></div>
+      <div class="col-6 col-md-3"><label class="form-label">نوع الهوية <small>(اختياري)</small></label><select name="identity_type" class="form-select"><option value="">بدون</option><option {% if agent.identity_type=='بطاقة شخصية' %}selected{% endif %}>بطاقة شخصية</option><option {% if agent.identity_type=='هوية' %}selected{% endif %}>هوية</option><option {% if agent.identity_type=='جواز سفر' %}selected{% endif %}>جواز سفر</option></select></div>
+      <div class="col-6 col-md-3"><label class="form-label">رقم الهوية</label><input name="identity_number" class="form-control" value="{{agent.identity_number or ''}}"></div>
+      <div class="col-12"><label class="form-label">صورة الهوية <small>(اختياري)</small></label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div>
+      <div class="col-12"><label class="form-label">ملاحظات</label><textarea name="notes" class="form-control" rows="2">{{agent.notes or ''}}</textarea></div>
+      <div class="col-12 party-form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ التعديلات</button><a href="{{url_for('master_data.agents')}}" class="btn btn-light">رجوع</a></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
