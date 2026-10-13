@@ -141,6 +141,7 @@
 <script>
 document.getElementById('add-vehicle')?.classList.remove('is-open');
 // The shared app.js handler toggles this panel once; duplicate handlers break it.
+document.querySelector('[data-toggle-panel="add-vehicle"]')?.addEventListener('click',()=>requestAnimationFrame(()=>document.querySelectorAll('#add-vehicle select[data-searchable-select]').forEach(x=>window.initSearchableSelect?.(x))));
 const rs=document.getElementById('vehicle-registration-status'),plate=document.getElementById('vehicle-plate-number');
 function syncVehiclePlate(){if(rs&&plate)plate.required=rs.value==='registered';}
 rs?.addEventListener('change',syncVehiclePlate);syncVehiclePlate();

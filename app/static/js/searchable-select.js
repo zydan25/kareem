@@ -17,13 +17,22 @@ function close(inst,focus){
  if(opened===inst)opened=null;if(focus)inst.trigger.focus({preventScroll:true});
 }
 function setup(s){
- if(!(s instanceof HTMLSelectElement)||s.multiple||s.dataset.ssReady==="1")return;
- s.dataset.ssReady="1";s.dataset.ssRequired=s.required?"1":"0";s.required=false;
- const wrap=document.createElement("div");wrap.className="ss-select-wrap";s.parentNode.insertBefore(wrap,s);wrap.appendChild(s);
- s.classList.add("ss-native-select");s.tabIndex=-1;s.setAttribute("aria-hidden","true");
+ if(!(s instanceof HTMLSelectElement)||s.multiple||instances.has(s))return;
+ // Recover gracefully from a partial older initialization instead of leaving the
+ // original select hidden without a visible replacement button.
+ if(s.dataset.ssReady==="1"){
+  const oldWrap=s.closest(".ss-select-wrap");
+  if(oldWrap?.parentNode){oldWrap.parentNode.insertBefore(s,oldWrap);oldWrap.remove();}
+  s.classList.remove("ss-native-select");s.removeAttribute("aria-hidden");s.tabIndex=0;delete s.dataset.ssReady;
+ }
+ s.dataset.ssRequired=s.required?"1":"0";s.required=false;
+ const wrap=document.createElement("div");wrap.className="ss-select-wrap";wrap.style.display="block";wrap.style.width="100%";wrap.style.minWidth="0";s.parentNode.insertBefore(wrap,s);wrap.appendChild(s);
  const trigger=document.createElement("button");trigger.type="button";trigger.className="ss-select-trigger form-select";
  trigger.id=s.id?s.id+"-select-trigger":"ss-select-trigger-"+(++uid);trigger.setAttribute("aria-haspopup","listbox");trigger.setAttribute("aria-expanded","false");trigger.setAttribute("aria-label",labelFor(s));trigger.setAttribute("aria-controls",trigger.id+"-options");
  const value=document.createElement("span");value.className="ss-select-value";trigger.append(value,icon("bi bi-chevron-down ss-select-chevron"));wrap.appendChild(trigger);
+ // Hide the native control only after its visible replacement has been mounted.
+ s.classList.add("ss-native-select");s.tabIndex=-1;s.setAttribute("aria-hidden","true");s.dataset.ssReady="1";
+ trigger.style.display="flex";trigger.style.visibility="visible";trigger.style.minHeight="44px";trigger.style.width="100%";
  if(s.id)[...document.querySelectorAll("label[for]")].filter(x=>x.htmlFor===s.id).forEach(x=>x.htmlFor=trigger.id);
  const popup=document.createElement("div");popup.className="ss-dropdown";popup.hidden=true;popup.setAttribute("role","dialog");popup.setAttribute("aria-label","قائمة الاختيارات");
  const searchRow=document.createElement("div");searchRow.className="ss-search-row";searchRow.appendChild(icon("bi bi-search"));
@@ -84,8 +93,9 @@ function setup(s){
 document.addEventListener("click",e=>{if(opened&&!opened.wrap.contains(e.target)&&!opened.popup.contains(e.target))close(opened,false);});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&opened){e.preventDefault();close(opened,true);}});
 function scan(root){if(!root)return;if(root.matches?.(selector))setup(root);root.querySelectorAll?.(selector).forEach(setup);}
+window.initSearchableSelect=function(input){const s=typeof input==="string"?document.getElementById(input):input;if(s instanceof HTMLSelectElement&&s.matches(selector)&&!instances.has(s))setup(s);window.refreshSearchableSelect?.(s);};
 window.focusSearchableSelect=function(input){const s=typeof input==="string"?document.getElementById(input):input,x=s?instances.get(s):null;x?x.trigger.focus({preventScroll:true}):s?.focus?.({preventScroll:true});};
-window.refreshSearchableSelect=function(input){const s=typeof input==="string"?document.getElementById(input):input;if(s instanceof HTMLSelectElement&&s.matches(selector)&&!instances.has(s))setup(s);const x=s?instances.get(s):null;if(x){x.trigger.disabled=s.disabled;x.trigger.setAttribute("aria-label",labelFor(s));x.value.textContent=optText(selected(s))||s.dataset.ssPlaceholder||"اختر...";x.value.classList.toggle("ss-select-placeholder",!s.value);}};
+window.refreshSearchableSelect=function(input){const s=typeof input==="string"?document.getElementById(input):input;if(s instanceof HTMLSelectElement&&s.matches(selector)&&!instances.has(s))setup(s);const x=s?instances.get(s):null;if(x){x.trigger.disabled=s.disabled;x.trigger.setAttribute("aria-label",labelFor(s));const opt=selected(s);x.value.textContent=optText(opt)||s.dataset.ssPlaceholder||"اختر...";x.value.classList.toggle("ss-select-placeholder",!s.value);}};
 scan(document);
 const observer=new MutationObserver(items=>items.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n);})));
 if(document.body)observer.observe(document.body,{childList:true,subtree:true});else document.addEventListener("DOMContentLoaded",()=>observer.observe(document.body,{childList:true,subtree:true}));

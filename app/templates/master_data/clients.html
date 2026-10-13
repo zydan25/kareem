@@ -85,7 +85,7 @@ document.getElementById('add-client-vehicle')?.addEventListener('click',()=>{
   builder.insertAdjacentHTML('beforeend',vehicleTemplate());
   const row=builder.lastElementChild;
   setVehicleRequirement(row);
-  row?.querySelectorAll('select[data-searchable-select]').forEach(x=>window.refreshSearchableSelect?.(x));
+  row?.querySelectorAll('select[data-searchable-select]').forEach(x=>window.initSearchableSelect?.(x));
 });
 builder?.addEventListener('click',e=>{const btn=e.target.closest('.vehicle-remove');if(!btn)return;const rows=builder.querySelectorAll('.client-vehicle-row');if(rows.length<=1)return;btn.closest('.client-vehicle-row')?.remove();});
 builder?.addEventListener('change',e=>{if(e.target.classList.contains('vehicle-status')||e.target.name==='vehicle_type_id')setVehicleRequirement(e.target.closest('.client-vehicle-row'));});
