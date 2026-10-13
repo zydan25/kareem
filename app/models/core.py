@@ -177,6 +177,17 @@ class JournalEntry(TimestampMixin,db.Model):
         credit=sum((x.credit or Decimal("0") for x in self.lines),Decimal("0"))
         return debit,credit
 
+class JournalNumberCounter(db.Model):
+    """Transactional singleton used to allocate unique journal entry numbers."""
+    __tablename__="journal_number_counters"
+    id=db.Column(db.Integer,primary_key=True)
+    last_value=db.Column(db.Integer,nullable=False,default=0)
+    __table_args__=(
+        CheckConstraint("id = 1",name="ck_journal_number_counters_singleton"),
+        CheckConstraint("last_value >= 0",name="ck_journal_number_counters_nonnegative"),
+    )
+
+
 class JournalLine(db.Model):
     __tablename__="journal_lines"
     id=db.Column(db.Integer,primary_key=True)

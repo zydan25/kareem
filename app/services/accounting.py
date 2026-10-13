@@ -1,17 +1,33 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
-from sqlalchemy import func
+from sqlalchemy import func, update
 
 from ..extensions import db
-from ..models import Account, EntryStatus, JournalEntry, JournalLine
+from ..models import Account, EntryStatus, JournalEntry, JournalLine, JournalNumberCounter
 
 def D(value):
     return Decimal(str(value or 0)).quantize(Decimal("0.01"))
 
 def next_number(prefix="JE"):
+    """Atomically reserve the next journal number inside the current transaction.
+
+    The singleton counter row is updated by one SQL statement. PostgreSQL (the
+    production database) serializes competing updates to that row, so parallel
+    requests cannot calculate the same number from the same COUNT() snapshot.
+    The counter update commits or rolls back together with the journal entry.
+    """
     day=datetime.now(timezone.utc).strftime("%Y%m%d")
-    count=db.session.query(func.count(JournalEntry.id)).scalar() or 0
-    return f"{prefix}-{day}-{count+1:05d}"
+    result=db.session.execute(
+        update(JournalNumberCounter)
+        .where(JournalNumberCounter.id==1)
+        .values(last_value=JournalNumberCounter.last_value+1)
+        .returning(JournalNumberCounter.last_value)
+        .execution_options(synchronize_session=False)
+    )
+    sequence=result.scalar_one_or_none()
+    if sequence is None:
+        raise RuntimeError("عداد ترقيم القيود غير مهيأ؛ نفّذ ترحيلات قاعدة البيانات")
+    return f"{prefix}-{day}-{int(sequence):05d}"
 
 def get_system_account(key, session=None):
     session=session or db.session

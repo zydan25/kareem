@@ -217,6 +217,56 @@ def test_report_view_permission_does_not_grant_print_or_csv_export(app):
     assert client.get(f"/reports/gate.csv?start={today}&end={today}").status_code==403
 
 
+
+def test_journal_numbers_are_allocated_uniquely_under_concurrency(app):
+    from concurrent.futures import ThreadPoolExecutor
+    from app.services.accounting import next_number
+
+    def allocate_number(_):
+        with app.app_context():
+            try:
+                number=next_number("PAR")
+                db.session.commit()
+                return number
+            except Exception:
+                db.session.rollback()
+                raise
+            finally:
+                db.session.remove()
+
+    # Separate Flask/SQLAlchemy sessions simulate simultaneous web requests.
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        numbers=list(pool.map(allocate_number,range(24)))
+
+    assert len(numbers)==24
+    assert len(set(numbers))==24
+    suffixes=sorted(int(number.rsplit("-",1)[1]) for number in numbers)
+    assert suffixes==list(range(suffixes[0],suffixes[0]+24))
+
+
+def test_journal_number_counter_rolls_back_with_the_transaction(app):
+    from app.models import JournalNumberCounter
+    from app.services.accounting import next_number
+
+    with app.app_context():
+        counter=db.session.get(JournalNumberCounter,1)
+        assert counter is not None
+        initial=counter.last_value
+
+        first=next_number("ROLLBACK")
+        second=next_number("ROLLBACK")
+        assert int(second.rsplit("-",1)[1])==int(first.rsplit("-",1)[1])+1
+        db.session.rollback()
+
+        db.session.expire_all()
+        counter=db.session.get(JournalNumberCounter,1)
+        assert counter.last_value==initial
+        after_rollback=next_number("ROLLBACK")
+        assert after_rollback==first
+        db.session.rollback()
+
+
+
 def test_account_tree_edit_rejects_direct_and_indirect_cycles(app, client):
     login(client)
     with app.app_context():
