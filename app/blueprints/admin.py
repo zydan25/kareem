@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta, timezone
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
+from sqlalchemy import or_
 from ..extensions import db
 from ..models import Employee, Permission, User, UserPermission, Role
 from ..permissions import can, permission_required
@@ -244,12 +245,9 @@ def audit_logs():
         try:
             parsed_user_id = int(user_id_value)
             if parsed_user_id > 0:
-                query = query.filter(
-                    db.or_(
-                        AuditLog.user_id == parsed_user_id,
-                        AuditLog.actor_username == db.session.query(User.username).filter(User.id == parsed_user_id).scalar_subquery(),
-                    )
-                )
+                query = query.filter(AuditLog.user_id == parsed_user_id)
+            else:
+                filter_error = "معرّف المستخدم المحدد غير صالح."
         except (TypeError, ValueError):
             filter_error = "معرّف المستخدم المحدد غير صالح."
 
@@ -293,7 +291,7 @@ def audit_logs():
         ]
         if search.isdigit():
             search_conditions.append(AuditLog.entity_id == int(search))
-        query = query.filter(db.or_(*search_conditions))
+        query = query.filter(or_(*search_conditions))
 
     try:
         per_page = int(request.args.get("per_page", "50"))
@@ -329,6 +327,12 @@ def audit_logs():
         if key in {"q", "action", "entity_type", "user_id", "start_date", "end_date", "per_page"} and value
     }
     page_numbers = range(max(1, page - 2), min(pages, page + 2) + 1)
+    previous_url = url_for("admin.audit_logs", **{**filter_args, "page": page - 1}) if page > 1 else "#"
+    next_url = url_for("admin.audit_logs", **{**filter_args, "page": page + 1}) if page < pages else "#"
+    page_urls = {
+        page_number: url_for("admin.audit_logs", **{**filter_args, "page": page_number})
+        for page_number in page_numbers
+    }
     first_result = ((page - 1) * per_page + 1) if total_count else 0
     last_result = min(page * per_page, total_count)
 
@@ -345,6 +349,9 @@ def audit_logs():
         page=page,
         pages=pages,
         page_numbers=page_numbers,
+        previous_url=previous_url,
+        next_url=next_url,
+        page_urls=page_urls,
         total_count=total_count,
         first_result=first_result,
         last_result=last_result,

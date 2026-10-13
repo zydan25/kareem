@@ -103,11 +103,11 @@
   <small class="text-muted">عرض {{ first_result }}–{{ last_result }} من أصل {{ total_count }} عملية.</small>
   {% if pages > 1 %}
   <nav aria-label="صفحات سجل التدقيق"><ul class="pagination pagination-sm mb-0">
-    <li class="page-item {% if page <= 1 %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.audit_logs', **filter_args, page=page-1) if page > 1 else '#' }}" aria-label="السابق">السابق</a></li>
+    <li class="page-item {% if page <= 1 %}disabled{% endif %}"><a class="page-link" href="{{ previous_url }}" aria-label="السابق">السابق</a></li>
     {% for p in page_numbers %}
-      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="{{ url_for('admin.audit_logs', **filter_args, page=p) }}">{{ p }}</a></li>
+      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="{{ page_urls[p] }}">{{ p }}</a></li>
     {% endfor %}
-    <li class="page-item {% if page >= pages %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.audit_logs', **filter_args, page=page+1) if page < pages else '#' }}" aria-label="التالي">التالي</a></li>
+    <li class="page-item {% if page >= pages %}disabled{% endif %}"><a class="page-link" href="{{ next_url }}" aria-label="التالي">التالي</a></li>
   </ul></nav>
   {% endif %}
 </div>
