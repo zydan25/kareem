@@ -98,6 +98,9 @@ def index():
             _save_setting("currency_name",currency_name,"string","العملة")
             _save_setting("brand_color",brand_color,"string","اللون الرئيسي")
             _save_setting("ui_theme",request.form.get("setting_ui_theme","light"),"string","المظهر")
+            login_theme=(request.form.get("setting_login_theme","emerald") or "emerald").strip()
+            if login_theme not in {"emerald","ocean","midnight","sand","minimal"}: login_theme="emerald"
+            _save_setting("login_theme",login_theme,"string","ثيم صفحة تسجيل الدخول")
             admin_theme=request.form.get("setting_admin_theme","classic").strip()
             if admin_theme not in {"classic","water","water_project"}: admin_theme="classic"
             _save_setting("admin_theme",admin_theme,"string","تصميم لوحة الإدارة")

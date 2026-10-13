@@ -74,6 +74,8 @@ def create_app(config_class=Config):
         brand_color=_read_setting("brand_color","#0b6e4f")
         if not isinstance(brand_color,str) or not __import__("re").fullmatch(r"#[0-9a-fA-F]{6}",brand_color):
             brand_color="#0b6e4f"
+        login_theme=_read_setting("login_theme","emerald")
+        if login_theme not in {"emerald","ocean","midnight","sand","minimal"}: login_theme="emerald"
         admin_theme=_read_setting("admin_theme","classic")
         if admin_theme not in {"classic","water","water_project"}: admin_theme="classic"
         rental_ui_theme=_read_setting("rental_ui_theme","mobile")
@@ -91,6 +93,7 @@ def create_app(config_class=Config):
             "brand_icon":_read_setting("brand_icon",""),
             "brand_icon_enabled":_read_setting("brand_icon_enabled","1") == "1",
             "brand_version":_read_setting("brand_version","1"),
+            "login_theme":login_theme,
             "admin_theme":admin_theme,
             "rental_ui_theme":rental_ui_theme,
             "ui_font_scale":str(float(font_size)/100),

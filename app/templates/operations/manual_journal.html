@@ -1,72 +1,93 @@
-{% from 'components/account_picker.html' import picker %}
 {% extends 'base.html' %}
-{% block title %}قيد يومية - {{app_name}}{% endblock %}
+{% from 'components/account_picker.html' import picker %}
+{% block title %}قيد يدوي - {{app_name}}{% endblock %}
 {% block content %}
 <div class="manual-journal-page">
-<div class="page-head journal-page-head">
-  <div><span class="eyebrow">المحاسبة</span><h1>قيد من حساب إلى حساب</h1><p>أدخل الطرف الدائن والطرف المدين والمبلغ، وسيُنشئ النظام القيد المتزن تلقائيًا.</p></div>
-  <a class="btn btn-light" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i> دفتر القيود</a>
-</div>
-
-<form method="post" id="journal-form" class="journal-form">
-  <div class="card-soft mb-3">
-    <div class="from-to-journal">
-      <div class="journal-side">
-        <span class="journal-side-label">من حساب <small>دائن</small></span>
-        {{picker('from_account_id','من حساب',account_options,None,'اختر الحساب الدائن')}}
-      </div>
-      <div class="journal-transfer-arrow"><i class="bi bi-arrow-left-right"></i><span>إلى</span></div>
-      <div class="journal-side">
-        <span class="journal-side-label">إلى حساب <small>مدين</small></span>
-        {{picker('to_account_id','إلى حساب',account_options,None,'اختر الحساب المدين')}}
-      </div>
-    </div>
+  <div class="page-head journal-page-head">
+    <div><span class="eyebrow">المحاسبة</span><h1>قيد يدوي</h1><p>اختر الحساب الدائن والمدين، ثم أدخل المبلغ والبيان لمعاينة القيد قبل ترحيله.</p></div>
+    <a class="btn btn-light" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i> دفتر القيود</a>
   </div>
-
-  <div class="card-soft">
-    <div class="row g-3">
-      <div class="col-6 col-lg-4">
-        <label class="form-label">المبلغ</label>
-        <div class="input-group input-group-lg"><input name="amount" id="journal-amount" class="form-control text-center fw-bold" inputmode="decimal" required placeholder="0.00"><span class="input-group-text">{{currency}}</span></div>
-      </div>
-      <div class="col-6 col-lg-4">
-        <label class="form-label">التاريخ</label>
-        <input type="date" name="entry_date" class="form-control form-control-lg" value="{{today.isoformat()}}">
-      </div>
-      <div class="col-12">
-        <label class="form-label">البيان</label>
-        <input name="description" class="form-control form-control-lg" required placeholder="سبب القيد أو وصف العملية">
-      </div>
+  <form method="post" id="journal-form" class="journal-form">
+    <div class="card-soft journal-form-card">
+      <section class="journal-account-section" aria-label="أطراف القيد">
+        <div class="from-to-journal">
+          <div class="journal-side journal-side-credit">
+            <span class="journal-side-label"><span><i class="bi bi-arrow-up-left-circle"></i> من حساب</span><small>دائن</small></span>
+            {{picker('from_account_id','من حساب',account_options,None,'اختر الحساب الدائن')}}
+          </div>
+          <div class="journal-transfer-arrow" aria-hidden="true"><i class="bi bi-arrow-left-right"></i><span>تحويل بين الحسابات</span></div>
+          <div class="journal-side journal-side-debit">
+            <span class="journal-side-label"><span><i class="bi bi-arrow-down-right-circle"></i> إلى حساب</span><small>مدين</small></span>
+            {{picker('to_account_id','إلى حساب',account_options,None,'اختر الحساب المدين')}}
+          </div>
+        </div>
+      </section>
+      <div class="journal-section-divider"><span>تفاصيل القيد</span></div>
+      <section class="journal-detail-fields" aria-label="تفاصيل القيد">
+        <div class="journal-amount-field">
+          <label class="form-label" for="journal-amount">المبلغ</label>
+          <div class="input-group journal-amount-group">
+            <input name="amount" id="journal-amount" class="form-control" inputmode="decimal" autocomplete="off" required placeholder="0.00" aria-describedby="journal-amount-hint">
+            <span class="input-group-text">{{currency}}</span>
+          </div>
+          <small id="journal-amount-hint">أدخل المبلغ بالأرقام، مثال: 12500.00</small>
+        </div>
+        <div class="journal-date-field">
+          <label class="form-label" for="journal-entry-date">التاريخ</label>
+          <input id="journal-entry-date" type="date" name="entry_date" class="form-control" value="{{today.isoformat()}}">
+        </div>
+        <div class="journal-description-field">
+          <label class="form-label" for="journal-description">البيان</label>
+          <input id="journal-description" name="description" class="form-control" required maxlength="500" placeholder="سبب القيد أو وصف العملية">
+        </div>
+      </section>
+      <section class="journal-transfer-summary" aria-label="معاينة توازن القيد">
+        <div class="journal-preview-amount"><span><i class="bi bi-arrow-down-left-circle"></i> مدين</span><strong id="preview-debit">0.00</strong><small>{{currency}}</small></div>
+        <div class="journal-preview-amount"><span><i class="bi bi-arrow-up-left-circle"></i> دائن</span><strong id="preview-credit">0.00</strong><small>{{currency}}</small></div>
+        <div class="journal-preview-status"><span>حالة القيد</span><strong id="preview-status">استكمل البيانات</strong></div>
+        <button class="btn btn-primary journal-post-button" type="submit"><i class="bi bi-check2-circle"></i> ترحيل القيد</button>
+      </section>
     </div>
-    <div class="journal-transfer-summary">
-      <div><span>مدين</span><strong id="preview-debit">0.00</strong></div>
-      <div><span>دائن</span><strong id="preview-credit">0.00</strong></div>
-      <div><span>الحالة</span><strong id="preview-status">أدخل المبلغ</strong></div>
-      <button class="btn btn-primary btn-lg"><i class="bi bi-check2-circle"></i> ترحيل القيد</button>
-    </div>
-  </div>
-</form>
+  </form>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-const amount=document.getElementById('journal-amount');
-const debit=document.getElementById('preview-debit');
-const credit=document.getElementById('preview-credit');
-const status=document.getElementById('preview-status');
-const from=document.querySelector('[data-account-picker][data-name="from_account_id"] [data-account-value]');
-const to=document.querySelector('[data-account-picker][data-name="to_account_id"] [data-account-value]');
-function preview(){
-  const n=parseFloat(amount.value)||0;
-  debit.textContent=n.toFixed(2);
-  credit.textContent=n.toFixed(2);
-  status.textContent=n>0 && from.value && to.value && from.value!==to.value ? 'القيد متزن وجاهز' : 'استكمل البيانات';
-}
-[amount,from,to].forEach(x=>x?.addEventListener('input',preview));
-[amount,from,to].forEach(x=>x?.addEventListener('change',preview));
-preview();
-document.getElementById('journal-form')?.addEventListener('submit',e=>{
-  if(from.value===to.value){e.preventDefault();alert('اختر حسابين مختلفين.');}
-});
+(() => {
+  const form = document.getElementById('journal-form');
+  const amount = document.getElementById('journal-amount');
+  const debit = document.getElementById('preview-debit');
+  const credit = document.getElementById('preview-credit');
+  const status = document.getElementById('preview-status');
+  const from = document.querySelector('[data-account-picker][data-name="from_account_id"] [data-account-value]');
+  const to = document.querySelector('[data-account-picker][data-name="to_account_id"] [data-account-value]');
+  if (!form || !amount || !debit || !credit || !status || !from || !to) return;
+  const parseAmount = value => {
+    const normalized = String(value || '').replace(/[٬،]/g, '').replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/٫/g, '.').trim();
+    const n = Number(normalized);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  const money = n => n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const preview = () => {
+    const n = parseAmount(amount.value);
+    debit.textContent = money(n);
+    credit.textContent = money(n);
+    const accountsChosen = Boolean(from.value && to.value);
+    const accountsDifferent = from.value !== to.value;
+    const ready = n > 0 && accountsChosen && accountsDifferent;
+    status.textContent = !accountsChosen ? 'اختر الحسابين' : !accountsDifferent ? 'اختر حسابين مختلفين' : n <= 0 ? 'أدخل مبلغًا صحيحًا' : 'القيد متزن وجاهز';
+    status.classList.toggle('is-ready', ready);
+    amount.setCustomValidity(n > 0 ? '' : 'أدخل مبلغًا أكبر من صفر');
+  };
+  [amount, from, to].forEach(el => { el.addEventListener('input', preview); el.addEventListener('change', preview); });
+  form.addEventListener('submit', event => {
+    preview();
+    if (!from.value || !to.value || from.value === to.value || parseAmount(amount.value) <= 0) {
+      event.preventDefault();
+      if (!from.value || !to.value || from.value === to.value) status.textContent = from.value === to.value && from.value ? 'اختر حسابين مختلفين' : 'اختر الحساب الدائن والمدين';
+    }
+  });
+  preview();
+})();
 </script>
 {% endblock %}

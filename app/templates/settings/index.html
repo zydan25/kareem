@@ -3,6 +3,14 @@
 {% block content %}
 <style>
 .settings-page .page-head p{display:none}
+.login-theme-swatches{display:flex;gap:7px;margin-top:9px}
+.login-theme-swatches span{display:block;flex:1;height:25px;border-radius:8px;border:1px solid rgba(30,41,59,.13)}
+.login-theme-swatches .swatch-emerald{background:linear-gradient(135deg,#087f5b,#c9f3df)}
+.login-theme-swatches .swatch-ocean{background:linear-gradient(135deg,#123c87,#76b7ff)}
+.login-theme-swatches .swatch-midnight{background:linear-gradient(135deg,#101827,#44516b)}
+.login-theme-swatches .swatch-sand{background:linear-gradient(135deg,#9a642d,#f5e6c9)}
+.login-theme-swatches .swatch-minimal{background:linear-gradient(135deg,#fff,#edf1f6)}
+
 .settings-section{margin-bottom:10px}
 .settings-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .settings-section-head h3{font-size: var(--type-body,14px);margin:0;font-weight:950}
@@ -84,6 +92,21 @@
         <div class="setting-field"><label>الشعار الرئيسي</label><input type="file" name="brand_logo" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">اختياري. عند الحذف سيبقى الاسم كنص بدون تحميل صورة.</small></div>
         <div class="setting-field"><label>أيقونة الموقع والتطبيق</label><input type="file" name="brand_icon" class="form-control" accept="image/png,image/jpeg,image/webp"><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">تُضغط تلقائيًا لتقليل الحجم.</small></div>
         <div class="setting-field"><label>المظهر</label><select name="setting_ui_theme" class="form-select">{% set theme=settings|selectattr('key','equalto','ui_theme')|map(attribute='value')|first %}<option value="light" {% if theme!='dark' %}selected{% endif %}>فاتح</option><option value="dark" {% if theme=='dark' %}selected{% endif %}>داكن</option></select></div>
+        {% set login_theme_current=settings|selectattr('key','equalto','login_theme')|map(attribute='value')|first %}
+        <div class="setting-field login-theme-setting">
+          <label for="login-theme-select">ثيم صفحة تسجيل الدخول</label>
+          <select id="login-theme-select" name="setting_login_theme" class="form-select">
+            <option value="emerald" {% if login_theme_current in [none,'emerald'] %}selected{% endif %}>أخضر أنيق — افتراضي</option>
+            <option value="ocean" {% if login_theme_current=='ocean' %}selected{% endif %}>أزرق محيطي</option>
+            <option value="midnight" {% if login_theme_current=='midnight' %}selected{% endif %}>ليلي فاخر</option>
+            <option value="sand" {% if login_theme_current=='sand' %}selected{% endif %}>رملي دافئ</option>
+            <option value="minimal" {% if login_theme_current=='minimal' %}selected{% endif %}>أبيض بسيط</option>
+          </select>
+          <div class="login-theme-swatches" aria-label="معاينة ألوان ثيمات تسجيل الدخول">
+            <span class="swatch-emerald" title="أخضر أنيق"></span><span class="swatch-ocean" title="أزرق محيطي"></span><span class="swatch-midnight" title="ليلي فاخر"></span><span class="swatch-sand" title="رملي دافئ"></span><span class="swatch-minimal" title="أبيض بسيط"></span>
+          </div>
+          <small class="text-muted d-block mt-1" style="font-size:var(--type-help,10px)">يخص شاشة تسجيل الدخول فقط؛ اختر التصميم ثم اضغط «حفظ الإعدادات».</small>
+        </div>
         <div class="setting-field"><label>تصميم لوحة الإدارة</label>{% set admin_theme_current=settings|selectattr('key','equalto','admin_theme')|map(attribute='value')|first %}<select name="setting_admin_theme" class="form-select"><option value="classic" {% if admin_theme_current not in ['water','water_project'] %}selected{% endif %}>التصميم الحالي</option><option value="water" {% if admin_theme_current=='water' %}selected{% endif %}>التصميم الحديث — بطابع Water POS</option><option value="water_project" {% if admin_theme_current=='water_project' %}selected{% endif %}>تصميم مطابق لواجهة مشروع المياه</option></select><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">يُطبّق على المدير ومدير النظام فقط؛ ولا يغيّر تصميم بقية الحسابات.</small></div>
         {% set rental_theme_current = settings|selectattr('key','equalto','rental_ui_theme')|map(attribute='value')|first %}
         <div class="setting-field"><label>ثيم العقود والاستحقاقات</label><select name="setting_rental_ui_theme" class="form-select"><option value="mobile" {% if rental_theme_current in [none,'mobile'] %}selected{% endif %}>بطاقات الهاتف الحديثة</option><option value="classic" {% if rental_theme_current=='classic' %}selected{% endif %}>التصميم التقليدي</option></select><small class="text-muted d-block mt-1" style="font-size: var(--type-help,10px)">يخص العقود والإيجارات والاستحقاقات فقط، ولا يغيّر بقية صفحات النظام.</small></div>

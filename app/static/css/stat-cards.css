@@ -273,3 +273,28 @@ body.theme-water-project .stat-card::after {
   content: none !important;
   display: none !important;
 }
+
+
+/* The primary metric should not render as a solid blue rectangle. */
+.stat-card.primary,
+body.theme-water-pos .stat-card.primary,
+body.theme-water-project .stat-card.primary {
+  background: linear-gradient(180deg,#fff 0%,#f9fbff 100%) !important;
+  color: var(--ink,#18252a) !important;
+  border: 1px solid color-mix(in srgb,var(--primary,#1d55d8) 28%,#e2e8f0) !important;
+  border-inline-start: 3px solid var(--primary,#1d55d8) !important;
+  box-shadow: 0 4px 14px rgba(29,65,120,.055) !important;
+}
+.stat-card.primary span,
+.stat-card.primary small,
+body.theme-water-pos .stat-card.primary span,
+body.theme-water-pos .stat-card.primary small,
+body.theme-water-project .stat-card.primary span,
+body.theme-water-project .stat-card.primary small {
+  color: var(--muted,#718084) !important;
+}
+.stat-card.primary strong,
+body.theme-water-pos .stat-card.primary strong,
+body.theme-water-project .stat-card.primary strong {
+  color: var(--primary,#1d55d8) !important;
+}

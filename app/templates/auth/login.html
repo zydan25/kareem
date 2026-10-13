@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}تسجيل الدخول - {{app_name}}{% endblock %}
 {% block guest_content %}
-<div class="login-shell">
+<div class="login-shell login-theme-{{login_theme|default('emerald')}}">
   <div class="login-card">
     <div class="brand big mb-4">
   {% if brand_icon_enabled and brand_icon %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='icon')}}?v={{brand_version}}" alt=""></span>{% elif brand_logo %}<span class="brand-mark brand-image-wrap"><img class="brand-image" src="{{url_for('settings.brand_asset',kind='logo')}}?v={{brand_version}}" alt=""></span>{% else %}<span class="brand-mark">س</span>{% endif %}
