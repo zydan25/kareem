@@ -1,0 +1,101 @@
+{% from 'components/account_picker.html' import picker %}
+{% extends 'base.html' %}
+{% block title %}يوميات {{plural}} - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head party-journals-head">
+  <div><span class="eyebrow">الحسابات · {{plural}}</span><h1>يوميات {{plural}}</h1><p>قيود مبسطة مرتبطة بالحساب المالي لـ{{singular}}. التعديل والعكس محفوظان في دفتر القيود.</p></div>
+  <div class="d-flex flex-wrap gap-2">
+    {% if can("accounting.post") %}<button class="btn btn-primary btn-lg" id="toggle-party-form" type="button" aria-expanded="{{ 'true' if show_form else 'false' }}"><i class="bi bi-plus-circle"></i> إضافة يومية</button>{% endif %}
+    <a class="btn btn-outline-primary" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i> دفتر القيود</a>
+  </div>
+</div>
+<div class="party-journal-summary">
+  <div class="party-summary-card"><span>اليوميات المعروضة</span><strong>{{entries|length}}</strong><small>آخر 500 حركة مطابقة</small></div>
+  <div class="party-summary-card"><span>نوع السجل</span><strong>{{plural}}</strong><small>حساب الطرف وليس صندوقه الشخصي</small></div>
+  <div class="party-summary-card"><span>الحالة المحاسبية</span><strong>مدين / دائن</strong><small>قيد مزدوج متزن</small></div>
+</div>
+{% if can("accounting.post") %}
+<div class="card-soft party-journal-form-wrap mb-4" id="party-journal-form-wrap" {% if not show_form %}hidden{% endif %}>
+  <div class="party-form-heading">
+    <div><span class="eyebrow">{{'تعديل يومية' if edit_entry else 'حركة جديدة'}}</span><h2>{{'تصحيح اليومية ' ~ edit_entry.number if edit_entry else 'إضافة يومية ' ~ singular}}</h2><p>اختر {{singular}} والصندوق، ثم حدّد طبيعة الحساب والبيان.</p></div>
+    <button class="btn btn-light" type="button" id="close-party-form" aria-label="إغلاق النموذج"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <form method="post" id="party-daily-form" class="party-daily-form">
+    {% if edit_entry %}<input type="hidden" name="edit_entry_id" value="{{edit_entry.id}}">{% endif %}
+    <div class="party-form-grid">
+      <div class="party-form-field party-person-field">
+        <label class="form-label" for="party-id">{{singular}}</label>
+        <select id="party-id" name="party_id" class="form-select" data-searchable-select data-ss-placeholder="اختر {{singular}}" required>
+          <option value="">اختر {{singular}}</option>
+          {% for party in parties if party.active %}
+          <option value="{{party.id}}" data-search="{{party.code}} {{party.phone or ''}}" {% if submitted_party|string == party.id|string %}selected{% endif %}>{{party|attr(name_attr)}}</option>
+          {% endfor %}
+        </select>
+        <small>تظهر قائمة بيضاء قابلة للتمرير وبها خانة بحث؛ يعرض الحقل الاسم المختار فقط.</small>
+      </div>
+      <div class="party-form-field party-amount-field">
+        <label class="form-label" for="party-amount">المبلغ</label>
+        <div class="input-group party-amount-group"><input id="party-amount" name="amount" type="text" class="form-control amount-words-input" data-words-target="party-amount-words" data-currency="{{currency}}" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="20" required placeholder="0.00" value="{{form_values.get('amount', edit_amount)}}"><span class="input-group-text">{{currency}}</span></div>
+        <div id="party-amount-words" class="amount-words" aria-live="polite"></div>
+      </div>
+      <div class="party-form-field party-side-field">
+        <span class="form-label">طبيعة حساب {{singular}}</span>
+        <div class="party-side-options" role="radiogroup" aria-label="مدين أو دائن">
+          <label class="party-side-choice party-side-debit"><input type="radio" name="party_side" value="debit" required {% if form_values.get('party_side', edit_side) == 'debit' %}checked{% endif %}><span class="side-choice-icon"><i class="bi bi-arrow-down-left-circle"></i></span><span><strong>مدين</strong><small>قيد الطرف مدين والصندوق دائن</small></span></label>
+          <label class="party-side-choice party-side-credit"><input type="radio" name="party_side" value="credit" required {% if form_values.get('party_side', edit_side) == 'credit' %}checked{% endif %}><span class="side-choice-icon"><i class="bi bi-arrow-up-left-circle"></i></span><span><strong>دائن</strong><small>قيد الطرف دائن والصندوق مدين</small></span></label>
+        </div>
+      </div>
+      <div class="party-form-field party-cash-field">
+        <label class="form-label">الصندوق المقابل</label>
+        {{picker('cash_account_id','الصندوق',account_options,form_values.get('cash_account_id', edit_cash_id or ''),'اختر الصندوق',cash_account_ids)}}
+      </div>
+      <div class="party-form-field party-date-field">
+        <label class="form-label" for="party-entry-date">التاريخ</label>
+        <input type="date" id="party-entry-date" name="entry_date" class="form-control" value="{{form_values.get('entry_date', edit_entry.entry_date.isoformat() if edit_entry else today.isoformat())}}" required>
+      </div>
+      <div class="party-form-field party-description-field">
+        <label class="form-label" for="party-description">البيان <span class="required-star">*</span></label>
+        <input type="text" id="party-description" name="description" class="form-control" maxlength="500" value="{{form_values.get('description', edit_entry.description if edit_entry else '')}}" placeholder="اكتب سبب اليومية بوضوح" required>
+      </div>
+    </div>
+    {% if edit_entry %}<div class="edit-accounting-note"><i class="bi bi-info-circle"></i> لن يُمسح القيد المرحل؛ سيُنشأ قيد عكسي موثق ثم قيد جديد بالقيم المعدلة.</div>{% endif %}
+    <div class="party-form-footer"><button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check2-circle"></i> {{'حفظ التعديل وترحيل قيد جديد' if edit_entry else 'إضافة وترحيل اليومية'}}</button><span><i class="bi bi-shield-check"></i> لا يقبل النظام مبلغًا غير صحيح أو بيانًا فارغًا.</span></div>
+  </form>
+</div>
+{% endif %}
+<div class="card-soft party-journal-filters print-hide">
+  <div class="section-title"><h3>فرز وبحث اليوميات</h3><span class="text-muted">اختر الطرف أو التاريخ لتحديث النتائج</span></div>
+  <form id="party-journal-filters" method="get" class="party-filter-grid">
+    <div><label class="form-label" for="filter-party-id">{{singular}}</label><select id="filter-party-id" name="party_id" class="form-select" data-searchable-select data-ss-placeholder="كل {{plural}}" onchange="this.form.submit()"><option value="">كل {{plural}}</option>{% for party in parties %}<option value="{{party.id}}" data-search="{{party.code}} {{party.phone or ''}}" {% if selected_filter == party.id %}selected{% endif %}>{{party|attr(name_attr)}}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="party-filter-start">من تاريخ</label><input id="party-filter-start" type="date" name="start" class="form-control" value="{{start_raw}}" onchange="this.form.submit()"></div>
+    <div><label class="form-label" for="party-filter-end">إلى تاريخ</label><input id="party-filter-end" type="date" name="end" class="form-control" value="{{end_raw}}" onchange="this.form.submit()"></div>
+    <div><label class="form-label" for="party-filter-sort">الترتيب</label><select id="party-filter-sort" name="sort" class="form-select" onchange="this.form.submit()"><option value="latest" {% if sort=='latest' %}selected{% endif %}>الأحدث</option><option value="oldest" {% if sort=='oldest' %}selected{% endif %}>الأقدم</option><option value="highest" {% if sort=='highest' %}selected{% endif %}>الأعلى مبلغًا</option><option value="lowest" {% if sort=='lowest' %}selected{% endif %}>الأقل مبلغًا</option></select></div>
+    <div class="party-filter-search"><label class="form-label" for="party-filter-q">البحث في رقم القيد والبيان</label><input id="party-filter-q" type="search" name="q" class="form-control" value="{{search}}" placeholder="اكتب كلمة أو رقمًا..."></div>
+    <button class="btn btn-primary align-self-end"><i class="bi bi-search"></i> بحث</button><a class="btn btn-light align-self-end" href="{{request.path}}"><i class="bi bi-arrow-counterclockwise"></i> إعادة ضبط</a>
+  </form>
+</div>
+<div class="party-journal-list">
+{% for entry in entries %}
+  {% set party = party_map.get(entry.source_id) %}
+  {% set ns = namespace(party_line=none,cash_line=none) %}
+  {% for line in entry.lines %}{% if party and party.account_id and line.account_id == party.account_id %}{% set ns.party_line=line %}{% else %}{% set ns.cash_line=line %}{% endif %}{% endfor %}
+  <article class="party-daily-card">
+    <div class="party-daily-card-top"><div><span class="journal-number">{{entry.number}}</span><span class="journal-source">{{'يومية موظف' if kind=='employee' else 'يومية عميل'}}</span></div><span class="journal-date">{{entry.entry_date}}</span></div>
+    <div class="party-daily-main"><div class="party-daily-avatar"><i class="bi {{'bi-person-workspace' if kind=='employee' else 'bi-person-vcard'}}"></i></div><div class="party-daily-heading"><strong>{{party|attr(name_attr) if party else ('تم إيقاف ' ~ singular)}}</strong><span>{{entry.description}}</span></div><div class="party-daily-money"><small>إجمالي اليومية</small><strong>{{'{:,.2f}'.format(entry.totals()[0])}} {{currency}}</strong><span class="party-nature-chip {{'is-debit' if ns.party_line and ns.party_line.debit>0 else 'is-credit'}}">{{'مدين' if ns.party_line and ns.party_line.debit>0 else 'دائن'}}</span></div></div>
+    <div class="party-daily-flow"><div><small>حساب {{singular}}</small><strong>{{ns.party_line.account.name if ns.party_line else '—'}}</strong></div><i class="bi bi-arrow-left-right"></i><div><small>الصندوق المقابل</small><strong>{{ns.cash_line.account.name if ns.cash_line else '—'}}</strong></div></div>
+    <div class="party-daily-card-footer"><span class="party-posted-status"><i class="bi bi-check-circle-fill"></i> {{'عُكس القيد' if entry.reversed_entry_id else 'قيد مرحّل'}}</span><div class="party-daily-actions">
+      <a class="btn btn-sm btn-light" href="{{url_for('accounting.journal_detail',entry_id=entry.id)}}"><i class="bi bi-eye"></i> التفاصيل</a>
+      {% if can("accounting.post") and entry.status=='posted' and not entry.reversed_entry_id %}
+      <a class="btn btn-sm btn-outline-primary" href="{{request.path}}?edit={{entry.id}}"><i class="bi bi-pencil-square"></i> تعديل</a>
+      <form method="post" action="{{url_for('accounting.party_journal_reverse',kind=kind,entry_id=entry.id)}}" onsubmit="return confirm('سيتم إنشاء قيد عكسي مع الاحتفاظ بالقيد الأصلي لأغراض التدقيق. هل تريد المتابعة؟')"><input type="hidden" name="reason" value="عكس من يوميات {{plural}}"><button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-arrow-counterclockwise"></i> عكس اليومية</button></form>
+      {% endif %}
+    </div></div>
+  </article>
+{% else %}<div class="empty-state"><i class="bi {{'bi-person-lines-fill' if kind=='employee' else 'bi-journal-x'}}"></i><strong>لا توجد يوميات مطابقة</strong><span>اضغط «إضافة يومية» لتسجيل أول حركة أو غيّر خيارات البحث.</span></div>{% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(()=>{const wrap=document.getElementById('party-journal-form-wrap'),btn=document.getElementById('toggle-party-form'),closeBtn=document.getElementById('close-party-form');const open=()=>{if(!wrap)return;wrap.hidden=false;btn?.setAttribute('aria-expanded','true');wrap.scrollIntoView({behavior:'smooth',block:'start'});wrap.querySelector('select,input')?.focus({preventScroll:true});};const close=()=>{if(!wrap)return;wrap.hidden=true;btn?.setAttribute('aria-expanded','false');btn?.focus({preventScroll:true});};btn?.addEventListener('click',()=>wrap?.hidden?open():close());closeBtn?.addEventListener('click',close);{% if show_form %}open();{% endif %}const search=document.getElementById('party-filter-q'),form=document.getElementById('party-journal-filters');let timer;search?.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>form?.requestSubmit(),450);});})();
+</script>
+{% endblock %}
