@@ -163,7 +163,7 @@ def _ledger_statement_data(account, start, end):
     }
 
 
-def _account_period_rows(start, end, account_type=None):
+def _account_period_rows(start, end, account_type=None, exclude_closing=False):
     """Leaf-account movements and balances from posted journals only."""
     movement_rows = (
         db.session.query(
@@ -177,6 +177,7 @@ def _account_period_rows(start, end, account_type=None):
             JournalEntry.entry_date >= start,
             JournalEntry.entry_date <= end,
         )
+        .filter(JournalEntry.source_type != "fiscal_year_close" if exclude_closing else True)
         .group_by(JournalLine.account_id)
         .all()
     )
@@ -233,8 +234,8 @@ def general_ledger():
 @permission_required("reports.view")
 def income_expenses():
     start, end = parse_dates()
-    revenues = _account_period_rows(start, end, "revenue")
-    expenses = _account_period_rows(start, end, "expense")
+    revenues = _account_period_rows(start, end, "revenue", exclude_closing=True)
+    expenses = _account_period_rows(start, end, "expense", exclude_closing=True)
     revenue_total = sum((row["credit"] - row["debit"] for row in revenues), D(0))
     expense_total = sum((row["debit"] - row["credit"] for row in expenses), D(0))
     return render_template(

@@ -69,7 +69,9 @@ def create_posted_entry(*,description,entry_date,created_by_id,lines,
     normalized=[]; debit_total=Decimal("0"); credit_total=Decimal("0")
     for item in lines:
         account=item.get("account")
-        if not account or account.is_group or not account.active or not account.allow_manual_posting:
+        if (not account or account.is_group
+                or (not account.active and source_type != "fiscal_year_close")
+                or not account.allow_manual_posting):
             raise ValueError("لا يمكن الترحيل على حساب رئيسي أو حساب غير قابل للقيد")
         debit=D(item.get("debit")); credit=D(item.get("credit"))
         if debit<0 or credit<0 or ((debit>0)==(credit>0)):
