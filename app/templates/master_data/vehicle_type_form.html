@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-head"><div><span class="eyebrow">أنواع المركبات</span><h1>تعديل نوع المركبة</h1><p>يمكن تغيير الاسم؛ لا يمكن حذف النوع ما دامت هناك مركبات مرتبطة به.</p></div><a href="{{url_for('master_data.vehicle_types')}}" class="btn btn-light btn-sm"><i class="bi bi-arrow-right"></i> رجوع</a></div>
 <div class="card-soft" style="max-width:620px;margin:auto">
-  <div class="d-flex align-items-center gap-3 mb-3"><span style="width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:var(--primary-faint);color:var(--primary);font-size:22px"><i class="bi bi-truck-front"></i></span><div><strong>{{vehicle_type.name}}</strong><small class="text-muted d-block">مرتبط بـ {{linked_count}} مركبة</small></div></div>
+  <div class="d-flex align-items-center gap-3 mb-3"><span style="width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:var(--primary-faint);color:var(--primary);font-size: var(--type-page-title-large,22px)"><i class="bi bi-truck-front"></i></span><div><strong>{{vehicle_type.name}}</strong><small class="text-muted d-block">مرتبط بـ {{linked_count}} مركبة</small></div></div>
   <form method="post" class="row g-3">
     <div class="col-12"><label class="form-label">اسم النوع</label><input name="name" value="{{vehicle_type.name}}" class="form-control" maxlength="80" required></div>
     <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ التعديل</button><a class="btn btn-light" href="{{url_for('master_data.vehicle_types')}}">إلغاء</a></div>
