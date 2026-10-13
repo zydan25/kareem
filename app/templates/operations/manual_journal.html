@@ -2,12 +2,13 @@
 {% extends 'base.html' %}
 {% block title %}قيد يومية - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head">
+<div class="manual-journal-page">
+<div class="page-head journal-page-head">
   <div><span class="eyebrow">المحاسبة</span><h1>قيد من حساب إلى حساب</h1><p>أدخل الطرف الدائن والطرف المدين والمبلغ، وسيُنشئ النظام القيد المتزن تلقائيًا.</p></div>
-  <a class="btn btn-light" href="{{url_for('accounting.journal')}}">دفتر القيود</a>
+  <a class="btn btn-light" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i> دفتر القيود</a>
 </div>
 
-<form method="post" id="journal-form">
+<form method="post" id="journal-form" class="journal-form">
   <div class="card-soft mb-3">
     <div class="from-to-journal">
       <div class="journal-side">
@@ -24,11 +25,11 @@
 
   <div class="card-soft">
     <div class="row g-3">
-      <div class="col-12 col-lg-4">
+      <div class="col-6 col-lg-4">
         <label class="form-label">المبلغ</label>
         <div class="input-group input-group-lg"><input name="amount" id="journal-amount" class="form-control text-center fw-bold" inputmode="decimal" required placeholder="0.00"><span class="input-group-text">{{currency}}</span></div>
       </div>
-      <div class="col-12 col-lg-4">
+      <div class="col-6 col-lg-4">
         <label class="form-label">التاريخ</label>
         <input type="date" name="entry_date" class="form-control form-control-lg" value="{{today.isoformat()}}">
       </div>
@@ -45,6 +46,7 @@
     </div>
   </div>
 </form>
+</div>
 {% endblock %}
 {% block scripts %}
 <script>

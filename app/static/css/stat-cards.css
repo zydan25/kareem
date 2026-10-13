@@ -261,3 +261,15 @@ body.theme-water-pos .stat-card.primary {
     display: none !important;
   }
 }
+
+
+/* Removed decorative shapes that appeared as stray blue blocks on mobile. */
+.stat-card::before,
+.stat-card::after,
+body.theme-water-pos .stat-card::before,
+body.theme-water-pos .stat-card::after,
+body.theme-water-project .stat-card::before,
+body.theme-water-project .stat-card::after {
+  content: none !important;
+  display: none !important;
+}

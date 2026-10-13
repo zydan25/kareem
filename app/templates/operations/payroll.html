@@ -1,8 +1,46 @@
 {% extends 'base.html' %}
 {% block title %}إدارة الرواتب - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الموارد البشرية</span><h1>إدارة الرواتب</h1><p>مسير شهري، استقطاعات، ترحيل ثم صرف من المستحقات.</p></div><a class="btn btn-outline-primary" href="{{url_for('reports.employees_report')}}">تقرير الموظفين</a></div>
-<div class="card-soft add-panel mb-4"><form method="post" class="row g-3"><div class="col-12 col-md-5"><label class="form-label">شهر المسير</label><input type="month" name="payroll_month" class="form-control form-control-lg" required></div><div class="col-12 col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100">إنشاء مسير</button></div></form></div>
-<div class="card-soft"><div class="section-title"><div><h3>المسيرات</h3><small class="text-muted">{{runs|length}} مسير</small></div></div><div class="entity-list">{% for r in runs %}<div class="entity-row"><div class="entity-main"><div class="entity-icon"><i class="bi bi-wallet2"></i></div><div><strong>مسير {{r.payroll_month.strftime('%Y-%m')}}</strong><div class="entity-meta"><span>{{'مرحّل' if r.status=='posted' else 'مسودة'}}</span><span>قيد {{r.journal_entry_id or '—'}}</span></div></div></div><div class="entity-balance"><strong>{{r.status}}</strong></div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('operations.payroll_detail',run_id=r.id)}}">تفاصيل</a>{% if r.status=='draft' and can("payroll.manage") %}<form method="post" action="{{url_for('operations.payroll_post',run_id=r.id)}}"><button>ترحيل</button></form>{% endif %}{% if r.journal_entry_id %}<a href="{{url_for('accounting.journal_detail',entry_id=r.journal_entry_id)}}">القيد</a>{% endif %}</div></details></div></div>{% else %}<div class="empty-state"><i class="bi bi-wallet2"></i><strong>لا توجد مسيرات</strong><span>أنشئ مسيرًا جديدًا.</span></div>{% endfor %}</div></div>
-<div class="card-soft mt-4"><div class="section-title"><div><h3>صرف راتب</h3><small class="text-muted">المبلغ يجب ألا يتجاوز الرصيد المستحق.</small></div></div><div class="entity-list">{% for e in employees %}<div class="entity-row"><div class="entity-main"><div class="entity-icon employee"><i class="bi bi-person"></i></div><div><strong>{{e.full_name}}</strong><div class="entity-meta"><span>{{e.job_title}}</span><span>{{'{:,.2f}'.format(e.monthly_salary or 0)}} {{currency}}</span></div></div></div><form method="post" action="{{url_for('operations.payroll_pay_employee',employee_id=e.id)}}" class="d-flex gap-2"><input name="amount" value="{{e.monthly_salary}}" class="form-control" inputmode="decimal" style="width:125px"><button class="btn btn-sm btn-outline-primary">صرف</button></form></div>{% endfor %}</div></div>
+<div class="payroll-page">
+  <div class="page-head payroll-page-head">
+    <div><span class="eyebrow">الموارد البشرية</span><h1>إدارة الرواتب</h1><p>أنشئ المسيرات، راجع حالتها، ثم نفّذ صرف الرواتب ضمن المستحقات.</p></div>
+    <div class="payroll-head-actions">
+      {% if can("payroll.manage") %}<button class="btn btn-primary" type="button" data-toggle-panel="payroll-create-panel" aria-controls="payroll-create-panel" aria-expanded="false"><i class="bi bi-plus-circle"></i> إنشاء مسير</button>{% endif %}
+      <a class="btn btn-outline-primary" href="{{url_for('reports.employees_report')}}"><i class="bi bi-bar-chart"></i> تقرير الموظفين</a>
+    </div>
+  </div>
+
+  <section id="payroll-create-panel" class="card-soft add-panel payroll-create-panel mb-4" aria-hidden="true">
+    <div class="payroll-create-head"><div><h2>إنشاء مسير شهري</h2><p>اختر الشهر ثم أنشئ المسير لمراجعته قبل الترحيل.</p></div></div>
+    <form method="post" class="row g-3 payroll-create-form">
+      <div class="col-12 col-md-5"><label class="form-label">شهر المسير</label><input type="month" name="payroll_month" class="form-control form-control-lg" required></div>
+      <div class="col-12 col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100"><i class="bi bi-check2-circle"></i> إنشاء المسير</button></div>
+    </form>
+  </section>
+
+  <section class="card-soft payroll-panel">
+    <div class="section-title"><div><h3>المسيرات</h3><small class="text-muted">{{runs|length}} مسير</small></div></div>
+    <div class="entity-list">
+      {% for r in runs %}
+      <div class="entity-row payroll-run-row">
+        <div class="entity-main"><div class="entity-icon"><i class="bi bi-wallet2"></i></div><div><strong>مسير {{r.payroll_month.strftime('%Y-%m')}}</strong><div class="entity-meta"><span>{{'مرحّل' if r.status=='posted' else 'مسودة'}}</span><span>قيد {{r.journal_entry_id or '—'}}</span></div></div></div>
+        <div class="entity-balance"><strong>{{'مرحّل' if r.status=='posted' else 'مسودة'}}</strong></div>
+        <div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop"><a href="{{url_for('operations.payroll_detail',run_id=r.id)}}"><i class="bi bi-eye"></i> تفاصيل</a>{% if r.status=='draft' and can("payroll.manage") %}<form method="post" action="{{url_for('operations.payroll_post',run_id=r.id)}}"><button><i class="bi bi-check2-circle"></i> ترحيل</button></form>{% endif %}{% if r.journal_entry_id %}<a href="{{url_for('accounting.journal_detail',entry_id=r.journal_entry_id)}}"><i class="bi bi-journal-text"></i> القيد</a>{% endif %}</div></details></div>
+      </div>
+      {% else %}<div class="empty-state"><i class="bi bi-wallet2"></i><strong>لا توجد مسيرات</strong><span>استخدم زر «إنشاء مسير» لإضافة مسير شهري.</span></div>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card-soft payroll-panel mt-4">
+    <div class="section-title"><div><h3>صرف راتب</h3><small class="text-muted">المبلغ يجب ألا يتجاوز الرصيد المستحق.</small></div></div>
+    <div class="entity-list">
+      {% for e in employees %}
+      <div class="entity-row payroll-employee-row">
+        <div class="entity-main"><div class="entity-icon employee"><i class="bi bi-person"></i></div><div><strong>{{e.full_name}}</strong><div class="entity-meta"><span>{{e.job_title}}</span><span>{{'{:,.2f}'.format(e.monthly_salary or 0)}} {{currency}}</span></div></div></div>
+        <form method="post" action="{{url_for('operations.payroll_pay_employee',employee_id=e.id)}}" class="d-flex gap-2 payroll-pay-form"><label class="visually-hidden" for="payroll-amount-{{e.id}}">مبلغ صرف راتب {{e.full_name}}</label><input id="payroll-amount-{{e.id}}" name="amount" value="{{e.monthly_salary}}" class="form-control" inputmode="decimal" aria-label="مبلغ الصرف" required><button class="btn btn-outline-primary"><i class="bi bi-cash-coin"></i> صرف</button></form>
+      </div>
+      {% else %}<div class="empty-state compact"><strong>لا يوجد موظفون للصرف</strong></div>{% endfor %}
+    </div>
+  </section>
+</div>
 {% endblock %}
