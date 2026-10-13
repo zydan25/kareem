@@ -397,7 +397,7 @@
 /* Admin guide */
 .admin-guide{display:flex;flex-direction:column;gap:18px}
 .guide-hero{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-radius:24px;padding:24px;box-shadow:var(--shadow)}
-.guide-hero h1{margin:0;font-size:clamp(24px,4vw,36px);font-weight:800}
+.guide-hero h1{margin:0;font-size:clamp(calc(24px * var(--ui-font-scale,1)),calc(4vw * var(--ui-font-scale,1)),calc(36px * var(--ui-font-scale,1)));font-weight:800}
 .guide-hero p{margin:8px 0 0;opacity:.9;max-width:850px;line-height:1.9}
 .guide-search{margin-top:18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:12px}
 .guide-search input{background:#fff;border:0;min-height:48px}
