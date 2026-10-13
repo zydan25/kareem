@@ -209,6 +209,102 @@ def test_employee_login_accepts_hidden_bidi_marks_in_phone_and_password(app):
     assert response.headers["Location"].endswith("/dashboard")
 
 
+def test_agent_lease_creation_accrual_and_collection(app, client):
+    from datetime import date
+    from app.models import Agent, AgentLease, AgentRent
+
+    login(client)
+    with app.app_context():
+        agent=Agent(code="LEASE-TEST-01",name="وكيل اختبار عقد الإيجار",phone="777000111",active=True)
+        db.session.add(agent)
+        db.session.commit()
+        agent_id=agent.id
+
+    contracts_page=client.get("/operations/leases")
+    assert contracts_page.status_code==200
+    page_body=contracts_page.get_data(as_text=True)
+    assert 'data-lease-open' in page_body
+    assert 'id="lease-form"' in page_body
+    assert 'id="lease-cards"' in page_body
+    assert "إضافة عقد جديد" in page_body
+
+    start=date.today().replace(day=1)
+    response=client.post("/operations/leases",data={
+        "agent_id":str(agent_id),
+        "name":"إيجار اختبار سنوي",
+        "monthly_amount":"1500",
+        "starts_on":start.isoformat(),
+        "ends_on":"",
+        "due_day":"5",
+    },follow_redirects=True)
+    assert response.status_code==200
+    assert "تم إنشاء عقد الإيجار للوكيل" in response.get_data(as_text=True)
+
+    with app.app_context():
+        lease=AgentLease.query.filter_by(agent_id=agent_id,name="إيجار اختبار سنوي").one()
+        lease_id=lease.id
+        assert lease.monthly_amount==Decimal("1500.00")
+        assert lease.starts_on==start
+        assert lease.due_day==5
+        assert lease.agent.account_id is not None
+        assert lease.agent.account.is_group is False
+        assert lease.active is True
+
+    rents_page=client.get(f"/operations/rents?lease_id={lease_id}")
+    assert rents_page.status_code==200
+    rents_body=rents_page.get_data(as_text=True)
+    assert f'value="{lease_id}" data-agent="{agent_id}"' in rents_body
+    assert 'id="rent-month" type="month"' in rents_body
+
+    # Browser month controls submit YYYY-MM; the route must accept this format.
+    accrual=client.post(f"/operations/leases/{lease_id}/charge",data={
+        "rent_month":start.strftime("%Y-%m"),
+        "base_amount":"1500",
+        "discount":"100",
+        "addition":"25",
+    },follow_redirects=True)
+    assert accrual.status_code==200
+    assert "تم إثبات استحقاق الإيجار" in accrual.get_data(as_text=True)
+
+    with app.app_context():
+        rent=AgentRent.query.filter_by(lease_id=lease_id,rent_month=start).one()
+        rent_id=rent.id
+        agent_account_id=rent.agent.account_id
+        cash_id=db.session.query(Account).filter_by(system_key="main_cash").one().id
+        assert rent.amount==Decimal("1425.00")
+        assert rent.status=="unpaid"
+        accrual_lines={line.account_id:line for line in rent.journal_entry.lines}
+        assert accrual_lines[agent_account_id].debit==Decimal("1425.00")
+        assert accrual_lines[db.session.query(Account).filter_by(system_key="rent_revenue").one().id].credit==Decimal("1425.00")
+
+    payment=client.post(f"/operations/rents/{rent_id}/pay",data={},follow_redirects=True)
+    assert payment.status_code==200
+    assert "تم تحصيل الإيجار" in payment.get_data(as_text=True)
+
+    with app.app_context():
+        rent=db.session.get(AgentRent,rent_id)
+        assert rent.status=="paid"
+        assert rent.payment_journal_id is not None
+        payment_entry=__import__("app.models",fromlist=["JournalEntry"]).JournalEntry.query.get(rent.payment_journal_id)
+        payment_lines={line.account_id:line for line in payment_entry.lines}
+        assert payment_lines[cash_id].debit==Decimal("1425.00")
+        assert payment_lines[agent_account_id].credit==Decimal("1425.00")
+
+    # Invalid contracts should show a useful error and must not be saved.
+    invalid=client.post("/operations/leases",data={
+        "agent_id":str(agent_id),
+        "name":"عقد غير صالح",
+        "monthly_amount":"0",
+        "starts_on":start.isoformat(),
+        "ends_on":"",
+        "due_day":"5",
+    },follow_redirects=True)
+    assert invalid.status_code==200
+    assert "المبلغ الشهري يجب أن يكون أكبر من صفر" in invalid.get_data(as_text=True)
+    with app.app_context():
+        assert AgentLease.query.filter_by(agent_id=agent_id,name="عقد غير صالح").count()==0
+
+
 def test_receipt_to_main_cash_handles_legacy_account_tree(app, client):
     login(client)
     with app.app_context():
