@@ -957,6 +957,6 @@ def test_admin_theme_is_optional_and_only_loaded_after_selection(app, client):
     assert "water-project-dashboard-panel" in water_project_body
     assert "water-project-quick-actions" in water_project_body
     assert "water-project-action-grid" in water_project_body
-    settings_page = client.get("/settings/", follow_redirects=True)
+    settings_page = client.get("/settings", follow_redirects=True)
     assert settings_page.status_code == 200
     assert "تصميم مطابق لواجهة مشروع المياه" in settings_page.get_data(as_text=True)
