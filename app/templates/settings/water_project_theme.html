@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}تخصيص واجهة مشروع المياه - {{app_name}}{% endblock %}
+{% block content %}
+<div class="water-theme-customizer">
+  <div class="page-head">
+    <div>
+      <span class="eyebrow">الثيم الثالث</span>
+      <h1>تخصيص الأزرار العلوية</h1>
+      <p>غيّر وظيفة كل زر واسمه وأيقونته. ويمكنك تبديل الوظائف بين الأزرار الثلاثة؛ المعاينة تتحدث أثناء التعديل.</p>
+    </div>
+    <a class="btn btn-light border" href="{{url_for('dashboard.index')}}"><i class="bi bi-arrow-right"></i> العودة للرئيسية</a>
+  </div>
+
+  <form method="post" action="{{url_for('settings.water_project_theme')}}" id="water-project-theme-form">
+    <div class="water-theme-editor-card">
+      {% for shortcut in shortcuts %}
+      <section class="water-theme-slot" aria-labelledby="water-theme-slot-title-{{shortcut.slot}}">
+        <h2 class="water-theme-slot-title" id="water-theme-slot-title-{{shortcut.slot}}">
+          <span class="water-theme-slot-number">{{shortcut.slot}}</span>
+          الزر العلوي {{shortcut.slot}}
+        </h2>
+        <div class="row g-2">
+          <div class="col-12 col-md-4">
+            <label for="slot-{{shortcut.slot}}-action">الوظيفة والرابط</label>
+            <select class="form-select" id="slot-{{shortcut.slot}}-action" name="slot_{{shortcut.slot}}_action" required data-shortcut-action="{{shortcut.slot}}">
+              {% for action in action_options %}
+              <option value="{{action.key}}" {% if shortcut.action == action.key %}selected{% endif %}>{{action.label}}</option>
+              {% endfor %}
+            </select>
+            <small class="text-muted">اختيار وظيفة مختلفة يبدّل وجهة الزر.</small>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="slot-{{shortcut.slot}}-label">النص الظاهر</label>
+            <input class="form-control" id="slot-{{shortcut.slot}}-label" name="slot_{{shortcut.slot}}_label" value="{{shortcut.label}}" maxlength="28" required data-shortcut-label="{{shortcut.slot}}">
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="slot-{{shortcut.slot}}-icon">الأيقونة</label>
+            <select class="form-select" id="slot-{{shortcut.slot}}-icon" name="slot_{{shortcut.slot}}_icon" required data-shortcut-icon="{{shortcut.slot}}">
+              {% for icon in icon_options %}
+              <option value="{{icon.value}}" {% if shortcut.icon == icon.value %}selected{% endif %}>{{icon.label}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+
+    <div class="water-theme-editor-card">
+      <h2 class="water-theme-slot-title"><i class="bi bi-eye"></i> معاينة مباشرة</h2>
+      <div class="water-theme-preview" dir="rtl">
+        {% for shortcut in shortcuts %}
+        <a href="#" data-shortcut-preview="{{shortcut.slot}}">
+          <i class="bi {{shortcut.icon}}" data-preview-icon="{{shortcut.slot}}" aria-hidden="true"></i>
+          <span data-preview-label="{{shortcut.slot}}">{{shortcut.label}}</span>
+        </a>
+        {% endfor %}
+      </div>
+      <p class="small text-muted mt-2 mb-0">المعاينة للتنسيق فقط؛ تُحفظ الوظائف بعد الضغط على «حفظ التخصيص».</p>
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle"></i> حفظ التخصيص</button>
+      <a class="btn btn-light border" href="{{url_for('settings.index')}}">إعدادات النظام</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-shortcut-preview]').forEach(function (link) {
+    link.addEventListener('click', function (event) { event.preventDefault(); });
+  });
+  [1, 2, 3].forEach(function (slot) {
+    const label = document.querySelector('[data-shortcut-label="' + slot + '"]');
+    const action = document.querySelector('[data-shortcut-action="' + slot + '"]');
+    const icon = document.querySelector('[data-shortcut-icon="' + slot + '"]');
+    const previewLink = document.querySelector('[data-shortcut-preview="' + slot + '"]');
+    const labelPreview = document.querySelector('[data-preview-label="' + slot + '"]');
+    const iconPreview = document.querySelector('[data-preview-icon="' + slot + '"]');
+    function updatePreview() {
+      if (label && labelPreview) labelPreview.textContent = label.value.trim() || 'زر سريع';
+      if (icon && iconPreview) iconPreview.className = 'bi ' + icon.value;
+      if (action && previewLink && label) previewLink.setAttribute('aria-label', label.value.trim() || 'زر سريع');
+    }
+    label?.addEventListener('input', updatePreview);
+    icon?.addEventListener('change', updatePreview);
+    action?.addEventListener('change', updatePreview);
+    updatePreview();
+  });
+});
+</script>
+{% endblock %}

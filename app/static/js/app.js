@@ -25,7 +25,15 @@
     if(toggle){
       event.preventDefault();
       const panel=byId(toggle.dataset.togglePanel);
-      if(panel) panel.classList.toggle("is-open");
+      if(panel){
+        const isOpen=panel.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded",String(isOpen));
+        panel.setAttribute("aria-hidden",String(!isOpen));
+        if(isOpen){
+          const firstField=panel.querySelector("input:not([type='hidden']),select,textarea,button");
+          firstField?.focus({preventScroll:true});
+        }
+      }
     }
   });
 

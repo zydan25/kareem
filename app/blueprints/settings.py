@@ -8,6 +8,14 @@ from ..extensions import db
 from ..models import Setting, Vehicle, VehicleType
 from ..permissions import can, permission_required
 from ..services.audit import audit
+from ..services.water_project_theme import (
+    DEFAULT_WATER_PROJECT_SHORTCUTS,
+    WATER_PROJECT_ACTIONS,
+    WATER_PROJECT_ICON_OPTIONS,
+    WATER_PROJECT_ICON_VALUES,
+    configured_water_project_shortcuts,
+    shortcut_setting_key,
+)
 
 bp=Blueprint("settings",__name__,url_prefix="/settings")
 ALLOWED_IMAGE_EXTENSIONS={"png","jpg","jpeg","webp"}
@@ -127,6 +135,69 @@ def index():
         project_name=_setting("project_name","إدارة السوق والمحاسبة"),
         currency_name=_setting("currency_name","ريال يمني"),
     )
+
+@bp.route("/water-project-theme", methods=["GET", "POST"])
+@permission_required("settings.manage")
+def water_project_theme():
+    if _setting("admin_theme", "classic") != "water_project":
+        flash("فعّل تصميم لوحة الإدارة المطابق لمشروع المياه أولًا.", "warning")
+        return redirect(url_for("settings.index"))
+
+    if request.method == "POST":
+        try:
+            for defaults in DEFAULT_WATER_PROJECT_SHORTCUTS:
+                slot = defaults["slot"]
+                action_key = (request.form.get(f"slot_{slot}_action") or "").strip()
+                if action_key not in WATER_PROJECT_ACTIONS:
+                    raise ValueError("اختر وظيفة صحيحة لكل زر.")
+                action = WATER_PROJECT_ACTIONS[action_key]
+                if not can(action["permission"]):
+                    raise ValueError(f"ليست لديك صلاحية فتح: {action['label']}")
+
+                label = (request.form.get(f"slot_{slot}_label") or "").strip()
+                if not label:
+                    label = action["label"]
+                if len(label) > 28:
+                    raise ValueError("اسم الزر يجب ألا يتجاوز 28 حرفًا.")
+
+                icon = (request.form.get(f"slot_{slot}_icon") or "").strip()
+                if icon not in WATER_PROJECT_ICON_VALUES:
+                    raise ValueError("اختر أيقونة من الأيقونات المتاحة.")
+
+                _save_setting(
+                    shortcut_setting_key(slot, "action"), action_key, "string",
+                    f"وظيفة الزر العلوي {slot} في الثيم الثالث",
+                )
+                _save_setting(
+                    shortcut_setting_key(slot, "label"), label, "string",
+                    f"نص الزر العلوي {slot} في الثيم الثالث",
+                )
+                _save_setting(
+                    shortcut_setting_key(slot, "icon"), icon, "string",
+                    f"أيقونة الزر العلوي {slot} في الثيم الثالث",
+                )
+
+            audit("update", "water_project_theme", None, "تخصيص الأزرار العلوية الثلاثة")
+            db.session.commit()
+            flash("تم حفظ تخصيص الأزرار العلوية الثلاثة.", "success")
+            return redirect(url_for("settings.water_project_theme"))
+        except Exception as exc:
+            db.session.rollback()
+            flash(str(exc), "danger")
+
+    shortcuts = configured_water_project_shortcuts(_setting)
+    action_options = [
+        {"key": key, **value}
+        for key, value in WATER_PROJECT_ACTIONS.items()
+        if can(value["permission"])
+    ]
+    return render_template(
+        "settings/water_project_theme.html",
+        shortcuts=shortcuts,
+        action_options=action_options,
+        icon_options=WATER_PROJECT_ICON_OPTIONS,
+    )
+
 
 @bp.post("/vehicle-types")
 @permission_required("settings.manage")

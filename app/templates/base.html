@@ -13,7 +13,7 @@
 {% if current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water' %}
 <link href="{{ url_for('static',filename='css/admin-theme.css',v='20261013-1') }}" rel="stylesheet">
 {% elif current_user.is_authenticated and current_user.role in ['admin','manager'] and admin_theme == 'water_project' %}
-<link href="{{ url_for('static',filename='css/admin-theme-water-project.css',v='20261013-1') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/admin-theme-water-project.css',v='20261013-2') }}" rel="stylesheet">
 {% endif %}
 <title>{% block title %}{{ app_name }}{% endblock %}</title>
 </head>

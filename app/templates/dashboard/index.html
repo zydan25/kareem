@@ -5,11 +5,11 @@
 <section class="water-project-dashboard" aria-label="لوحة التحكم">
   <div class="water-project-dashboard-panel">
     <div class="water-project-panel-heading"><h1>إجراءات سريعة</h1></div>
-    {% if can("vouchers.post") or can("collector.post") or can("reports.view") %}
+    {% if water_project_shortcuts %}
     <nav class="water-project-quick-actions" aria-label="اختصارات سريعة">
-      {% if can("vouchers.post") %}<a href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt"></i><span>سند جديد</span></a>{% endif %}
-      {% if can("collector.post") %}<a href="{{url_for('collector.index')}}"><i class="bi bi-upc-scan"></i><span>التحصيل</span></a>{% endif %}
-      {% if can("reports.view") %}<a href="{{url_for('reports.index')}}"><i class="bi bi-bar-chart-line"></i><span>التقارير</span></a>{% endif %}
+      {% for shortcut in water_project_shortcuts %}
+      <a href="{{shortcut.url}}" data-water-project-action="{{shortcut.slot}}"><i class="bi {{shortcut.icon}}" aria-hidden="true"></i><span>{{shortcut.label}}</span></a>
+      {% endfor %}
     </nav>
     {% endif %}
     <div class="water-project-action-grid">

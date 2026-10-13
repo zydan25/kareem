@@ -960,3 +960,169 @@ def test_admin_theme_is_optional_and_only_loaded_after_selection(app, client):
     settings_page = client.get("/settings", follow_redirects=True)
     assert settings_page.status_code == 200
     assert "تصميم مطابق لواجهة مشروع المياه" in settings_page.get_data(as_text=True)
+
+
+def test_water_project_theme_shortcuts_can_be_customized_and_swapped(app, client):
+    login(client)
+    with app.app_context():
+        setting = Setting.query.filter_by(key="admin_theme").one()
+        setting.value = "water_project"
+        db.session.commit()
+
+    editor = client.get("/settings/water-project-theme")
+    assert editor.status_code == 200
+    editor_body = editor.get_data(as_text=True)
+    assert "تخصيص الأزرار العلوية" in editor_body
+    assert 'data-shortcut-label="1"' in editor_body
+    assert 'data-shortcut-icon="2"' in editor_body
+    assert 'data-shortcut-action="3"' in editor_body
+
+    saved = client.post("/settings/water-project-theme", data={
+        "slot_1_action": "employees",
+        "slot_1_label": "فريق العمل",
+        "slot_1_icon": "bi-person-workspace",
+        "slot_2_action": "clients",
+        "slot_2_label": "العملاء",
+        "slot_2_icon": "bi-people-fill",
+        "slot_3_action": "vouchers",
+        "slot_3_label": "سندات",
+        "slot_3_icon": "bi-receipt-cutoff",
+    }, follow_redirects=True)
+    assert saved.status_code == 200
+    assert "تم حفظ تخصيص الأزرار العلوية الثلاثة" in saved.get_data(as_text=True)
+
+    with app.app_context():
+        assert Setting.query.filter_by(key="water_project_shortcut_1_action").one().value == "employees"
+        assert Setting.query.filter_by(key="water_project_shortcut_1_label").one().value == "فريق العمل"
+        assert Setting.query.filter_by(key="water_project_shortcut_1_icon").one().value == "bi-person-workspace"
+        assert Setting.query.filter_by(key="water_project_shortcut_2_action").one().value == "clients"
+        assert Setting.query.filter_by(key="water_project_shortcut_3_action").one().value == "vouchers"
+
+    settings_page = client.get("/settings", follow_redirects=True)
+    assert settings_page.status_code == 200
+    assert "تخصيص الأزرار العلوية والأيقونات" in settings_page.get_data(as_text=True)
+
+    dashboard = client.get("/dashboard")
+    assert dashboard.status_code == 200
+    body = dashboard.get_data(as_text=True)
+    positions = [body.index(f'data-water-project-action="{slot}"') for slot in (1, 2, 3)]
+    assert positions == sorted(positions)
+    assert 'href="/employees"' in body
+    assert 'class="bi bi-person-workspace"' in body
+    assert "فريق العمل" in body
+    assert "سندات" in body
+
+    rejected = client.post("/settings/water-project-theme", data={
+        "slot_1_action": "employees",
+        "slot_1_label": "لا تغيّر",
+        "slot_1_icon": "bi-people-fill onerror=alert(1)",
+        "slot_2_action": "clients",
+        "slot_2_label": "العملاء",
+        "slot_2_icon": "bi-people-fill",
+        "slot_3_action": "vouchers",
+        "slot_3_label": "سندات",
+        "slot_3_icon": "bi-receipt-cutoff",
+    }, follow_redirects=True)
+    assert rejected.status_code == 200
+    assert "اختر أيقونة من الأيقونات المتاحة" in rejected.get_data(as_text=True)
+    with app.app_context():
+        assert Setting.query.filter_by(key="water_project_shortcut_1_label").one().value == "فريق العمل"
+
+
+def test_employee_add_and_fine_controls_and_employee_actions_work(app, client):
+    from datetime import date
+    from pathlib import Path
+    from app.models import EmployeeFine, EmployeeSchedule
+
+    login(client)
+    listing = client.get("/employees")
+    assert listing.status_code == 200
+    body = listing.get_data(as_text=True)
+    assert 'data-toggle-panel="add-employee"' in body
+    assert 'aria-controls="add-employee" aria-expanded="false"' in body
+    assert 'data-toggle-panel="employee-fine-panel"' in body
+    assert 'id="add-employee"' in body and 'id="employee-fine-panel"' in body
+    assert 'action="/employees/fines"' in body
+
+    employee_template = (
+        Path(app.root_path) / "templates" / "master_data" / "employees.html"
+    ).read_text(encoding="utf-8")
+    app_js = (Path(app.root_path) / "static" / "js" / "app.js").read_text(encoding="utf-8")
+    assert "document.querySelector('[data-toggle-panel=" not in employee_template
+    assert app_js.count('const toggle=event.target.closest("[data-toggle-panel]")') == 1
+    assert 'toggle.setAttribute("aria-expanded",String(isOpen))' in app_js
+    assert 'panel.setAttribute("aria-hidden",String(!isOpen))' in app_js
+
+    created = client.post("/employees", data={
+        "full_name": "موظف اختبار أزرار",
+        "phone": "777123457",
+        "job_title": "موظف",
+        "monthly_salary": "300",
+        "weekly_hours": "48",
+        "hire_date": date.today().isoformat(),
+        "login_password": "test-employee-pass",
+        "login_role": "collector",
+    }, follow_redirects=False)
+    assert created.status_code == 302
+
+    with app.app_context():
+        employee = Employee.query.filter_by(full_name="موظف اختبار أزرار").one()
+        employee_id = employee.id
+
+    body = client.get("/employees").get_data(as_text=True)
+    assert f'href="/employees/{employee_id}"' in body
+    assert f'href="/employees/{employee_id}/edit"' in body
+    assert f'href="/reports/employees/{employee_id}"' in body
+    assert f'action="/employees/{employee_id}/delete"' in body
+
+    assert client.get(f"/employees/{employee_id}").status_code == 200
+    assert client.get(f"/employees/{employee_id}/edit").status_code == 200
+    assert client.get(f"/reports/employees/{employee_id}").status_code == 200
+
+    fine_response = client.post("/employees/fines", data={
+        "employee_id": str(employee_id),
+        "amount": "25",
+        "fine_date": date.today().isoformat(),
+        "reason": "مخالفة اختبار الأزرار",
+        "return_q": "",
+    }, follow_redirects=True)
+    assert fine_response.status_code == 200
+    assert "تم تسجيل غرامة الموظف" in fine_response.get_data(as_text=True)
+    with app.app_context():
+        fine = EmployeeFine.query.filter_by(employee_id=employee_id).one()
+        assert fine.amount == Decimal("25.00")
+        assert fine.journal_entry is not None
+        assert fine.journal_entry.totals() == (Decimal("25.00"), Decimal("25.00"))
+
+    schedule_response = client.post(f"/employees/{employee_id}/schedule", data={
+        "weekday": "0",
+        "shift_name": "دوام اختبار",
+        "start_time": "08:00",
+        "end_time": "15:00",
+    }, follow_redirects=False)
+    assert schedule_response.status_code == 302
+    with app.app_context():
+        schedule = EmployeeSchedule.query.filter_by(employee_id=employee_id, shift_name="دوام اختبار").one()
+        schedule_id = schedule.id
+    delete_schedule = client.post(f"/employees/schedule/{schedule_id}/delete", follow_redirects=False)
+    assert delete_schedule.status_code == 302
+    with app.app_context():
+        assert db.session.get(EmployeeSchedule, schedule_id) is None
+
+    assert client.post(f"/employees/{employee_id}/toggle", follow_redirects=False).status_code == 302
+    with app.app_context():
+        employee = db.session.get(Employee, employee_id)
+        assert employee.active is False
+        assert employee.user.active is False
+    assert client.post(f"/employees/{employee_id}/toggle", follow_redirects=False).status_code == 302
+    with app.app_context():
+        employee = db.session.get(Employee, employee_id)
+        assert employee.active is True
+        assert employee.user.active is True
+
+    deleted = client.post(f"/employees/{employee_id}/delete", follow_redirects=True)
+    assert deleted.status_code == 200
+    with app.app_context():
+        employee = db.session.get(Employee, employee_id)
+        assert employee.active is False
+        assert employee.user.active is False

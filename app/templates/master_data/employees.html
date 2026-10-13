@@ -67,8 +67,8 @@
 <div class="page-head employee-head">
   <div><span class="eyebrow">الموارد البشرية</span><h1>الموظفون</h1></div>
   {% if can_manage %}<div class="employee-head-actions">
-    <button class="employee-head-action fine" data-toggle-panel="employee-fine-panel"><i class="bi bi-exclamation-triangle"></i><span>مخالفة</span></button>
-    <button class="employee-head-action add" data-toggle-panel="add-employee"><i class="bi bi-person-plus"></i><span>إضافة موظف</span></button>
+    <button type="button" class="employee-head-action fine" data-toggle-panel="employee-fine-panel" aria-controls="employee-fine-panel" aria-expanded="false"><i class="bi bi-exclamation-triangle"></i><span>مخالفة</span></button>
+    <button type="button" class="employee-head-action add" data-toggle-panel="add-employee" aria-controls="add-employee" aria-expanded="false"><i class="bi bi-person-plus"></i><span>إضافة موظف</span></button>
   </div>{% endif %}
 </div>
 
@@ -78,7 +78,7 @@
 </div>
 
 {% if can_manage %}
-<div id="add-employee" class="card-soft add-panel employee-add-panel">
+<div id="add-employee" class="card-soft add-panel employee-add-panel" aria-hidden="true">
 <form method="post" enctype="multipart/form-data" class="row g-2">
 <div class="col-12"><div class="form-section-title">بيانات الموظف <span>الكود والملف المالي ينشآن تلقائيًا</span></div></div>
 <div class="col-12 col-md-6"><label class="form-label">الاسم</label><input name="full_name" class="form-control" required></div>
@@ -99,7 +99,7 @@
 </form>
 </div>
 
-<div id="employee-fine-panel" class="card-soft add-panel employee-add-panel">
+<div id="employee-fine-panel" class="card-soft add-panel employee-add-panel" aria-hidden="true">
 <div class="section-title"><div><h3>مخالفة</h3><small class="text-muted">تُرحّل تلقائيًا إلى حساب الموظف.</small></div></div>
 <form method="post" action="{{url_for('master_data.add_employee_fine')}}" class="row g-2" id="employee-fine-form">
 <input type="hidden" name="employee_id" id="fine_employee_id"><input type="hidden" name="return_q" value="{{q}}">
@@ -107,7 +107,7 @@
 <div class="col-6 col-md-2"><label class="form-label">المبلغ</label><input name="amount" class="form-control" inputmode="decimal" required></div>
 <div class="col-6 col-md-3"><label class="form-label">التاريخ</label><input type="date" name="fine_date" class="form-control" value="{{today.isoformat()}}" required></div>
 <div class="col-12"><label class="form-label">البيان</label><input name="reason" class="form-control" required></div>
-<div class="col-12"><button class="btn btn-primary" id="fine-submit" disabled><i class="bi bi-check2"></i> حفظ المخالفة</button></div>
+<div class="col-12"><button type="submit" class="btn btn-primary" id="fine-submit" disabled><i class="bi bi-check2"></i> حفظ المخالفة</button></div>
 </form>
 </div>
 {% endif %}
@@ -146,8 +146,6 @@
  search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();document.querySelectorAll('.fine-employee-option').forEach(b=>{const hay=((b.dataset.name||'')+' '+(b.dataset.phone||'')).toLowerCase();b.hidden=!!q&&!hay.includes(q)});if(!q){hidden.value='';selected.hidden=true;submit.disabled=true;}});
  results?.addEventListener('click',e=>{const b=e.target.closest('.fine-employee-option');if(b)choose(b);});
 })();
-document.querySelector('[data-toggle-panel="add-employee"]')?.addEventListener('click',()=>document.getElementById('add-employee')?.classList.toggle('is-open'));
-document.querySelector('[data-toggle-panel="employee-fine-panel"]')?.addEventListener('click',()=>document.getElementById('employee-fine-panel')?.classList.toggle('is-open'));
 </script>
 {% endif %}
 {% endblock %}

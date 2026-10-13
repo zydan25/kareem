@@ -6,8 +6,9 @@ from sqlalchemy import func
 from flask_login import current_user
 
 from ..extensions import db
-from ..models import Agent, Employee, GateTransaction, Vehicle
-from ..permissions import permission_required
+from ..models import Agent, Employee, GateTransaction, Setting, Vehicle
+from ..permissions import can, permission_required
+from ..services.water_project_theme import configured_water_project_shortcuts
 
 bp=Blueprint("dashboard",__name__)
 LOCAL_TZ=ZoneInfo("Asia/Aden")
@@ -49,8 +50,21 @@ def index():
         chart_entries.append(float(sum((x.amount for x in day_rows if x.direction=="entry"),0)))
         chart_exits.append(float(sum((x.amount for x in day_rows if x.direction=="exit"),0)))
 
+    def read_theme_setting(key, default):
+        row = Setting.query.filter_by(key=key).first()
+        return row.value if row and row.value else default
+
+    water_project_shortcuts = []
+    if current_user.role in {"admin", "manager"}:
+        water_project_shortcuts = configured_water_project_shortcuts(
+            read_theme_setting,
+            permission_check=can,
+            url_builder=url_for,
+        )
+
     return render_template("dashboard/index.html",today=today,total=total,count=count,worked=worked,
         agents=db.session.query(Agent).filter_by(active=True).count(),
         vehicles=db.session.query(Vehicle).filter_by(active=True).count(),
         employees=db.session.query(Employee).filter_by(active=True).count(),
-        chart_labels=chart_labels,chart_totals=chart_totals,chart_entries=chart_entries,chart_exits=chart_exits)
+        chart_labels=chart_labels,chart_totals=chart_totals,chart_entries=chart_entries,chart_exits=chart_exits,
+        water_project_shortcuts=water_project_shortcuts)
