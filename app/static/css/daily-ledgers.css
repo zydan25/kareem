@@ -128,3 +128,30 @@
 .login-theme-minimal .login-card .form-control{border:0;border-bottom:2px solid #d6dbe5;border-radius:0;background:#f8f9fb;padding-inline:8px}
 .login-theme-minimal .login-card .form-control:focus{background:#fff;box-shadow:none;border-bottom-color:#202d45}
 .login-theme-minimal .login-card .btn[type=submit]{background:#202d45;color:#fff;border-radius:3px;box-shadow:none;letter-spacing:.08em}
+
+
+/* Compact only the filter/search panel; leave the add/edit daily-journal form untouched. */
+.party-journal-filters{padding:11px 14px!important;margin-bottom:14px!important;border-radius:15px!important}
+.party-journal-filters .section-title{margin-bottom:8px!important;padding-bottom:0!important;gap:8px}
+.party-journal-filters .section-title h3{font-size:15px!important;margin:0!important}
+.party-journal-filters .section-title .text-muted{font-size:10px!important}
+.party-filter-grid{grid-template-columns:minmax(155px,1.5fr) repeat(3,minmax(90px,.8fr)) minmax(155px,1.5fr) auto auto!important;gap:8px!important}
+.party-filter-grid>div{min-width:0}
+.party-filter-grid .form-label{font-size:11px!important;margin-bottom:4px!important;line-height:1.35}
+.party-filter-grid .form-control,.party-filter-grid .form-select{min-height:36px!important;height:36px;padding:5px 9px!important;font-size:12px!important;border-radius:9px!important}
+.party-filter-grid .ss-select-trigger{min-height:36px!important;height:36px;padding:5px 9px!important;font-size:12px!important;border-radius:9px!important}
+.party-filter-search{grid-column:auto!important}
+.party-filter-grid>.btn,.party-filter-grid>a.btn{min-height:36px!important;height:36px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 10px!important;font-size:11px!important;white-space:nowrap;border-radius:9px!important}
+@media(max-width:1100px){
+ .party-filter-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important}
+ .party-filter-grid>div:first-child{grid-column:span 2}
+ .party-filter-search{grid-column:span 3!important}
+ .party-filter-grid>.btn,.party-filter-grid>a.btn{width:100%!important}
+}
+@media(max-width:640px){
+ .party-journal-filters{padding:11px!important}
+ .party-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .party-filter-grid>div:first-child,.party-filter-search{grid-column:1/-1!important}
+ .party-filter-grid>div:nth-child(2),.party-filter-grid>div:nth-child(3),.party-filter-grid>div:nth-child(4){grid-column:span 1}
+ .party-filter-grid>.btn,.party-filter-grid>a.btn{width:100%!important}
+}
