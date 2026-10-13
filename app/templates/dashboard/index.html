@@ -1,6 +1,31 @@
 {% extends 'base.html' %}
 {% block title %}الرئيسية - {{app_name}}{% endblock %}
 {% block content %}
+{% if current_user.role in ['admin','manager'] and admin_theme == 'water_project' %}
+<section class="water-project-dashboard" aria-label="لوحة التحكم">
+  <div class="water-project-dashboard-panel">
+    <div class="water-project-panel-heading"><h1>إجراءات سريعة</h1></div>
+    {% if can("vouchers.post") or can("collector.post") or can("reports.view") %}
+    <nav class="water-project-quick-actions" aria-label="اختصارات سريعة">
+      {% if can("vouchers.post") %}<a href="{{url_for('operations.vouchers')}}"><i class="bi bi-receipt"></i><span>سند جديد</span></a>{% endif %}
+      {% if can("collector.post") %}<a href="{{url_for('collector.index')}}"><i class="bi bi-upc-scan"></i><span>التحصيل</span></a>{% endif %}
+      {% if can("reports.view") %}<a href="{{url_for('reports.index')}}"><i class="bi bi-bar-chart-line"></i><span>التقارير</span></a>{% endif %}
+    </nav>
+    {% endif %}
+    <div class="water-project-action-grid">
+      {% if can("collector.view") %}<a href="{{url_for('collector.index')}}" class="water-project-action-tile"><i class="bi bi-clipboard-check"></i><span>حركات البوابة</span></a>{% endif %}
+      {% if can("vouchers.view") %}<a href="{{url_for('operations.vouchers')}}" class="water-project-action-tile"><i class="bi bi-cash-coin"></i><span>سجل السندات</span></a>{% endif %}
+      {% if can("employees.view") %}<a href="{{url_for('master_data.employees')}}" class="water-project-action-tile"><i class="bi bi-person-workspace"></i><span>الموظفون</span></a>{% endif %}
+      {% if can("clients.view") %}<a href="{{url_for('master_data.clients')}}" class="water-project-action-tile"><i class="bi bi-people-fill"></i><span>العملاء</span></a>{% endif %}
+      {% if can("agents.view") %}<a href="{{url_for('master_data.agents')}}" class="water-project-action-tile"><i class="bi bi-person-badge"></i><span>الوكلاء</span></a>{% endif %}
+      {% if can("accounting.view") %}<a href="{{url_for('accounting.accounts')}}" class="water-project-action-tile"><i class="bi bi-diagram-3"></i><span>الحسابات</span></a>{% endif %}
+      {% if can("payroll.view") %}<a href="{{url_for('operations.payroll')}}" class="water-project-action-tile"><i class="bi bi-wallet2"></i><span>الرواتب</span></a>{% endif %}
+      {% if can("expenses.view") %}<a href="{{url_for('operations.expenses')}}" class="water-project-action-tile"><i class="bi bi-cash-stack"></i><span>المصروفات</span></a>{% endif %}
+      {% if can("vehicles.view") %}<a href="{{url_for('master_data.vehicles')}}" class="water-project-action-tile"><i class="bi bi-truck-front"></i><span>المركبات</span></a>{% endif %}
+    </div>
+  </div>
+</section>
+{% else %}
 <div class="page-head dashboard-head">
   <div><span class="eyebrow">لوحة التحكم</span><h1>أهلًا {{ current_user.full_name }}</h1><p>ملخص تشغيلي ومالي مباشر لليوم مع وصول سريع للعمليات الأساسية.</p></div>
 </div>
@@ -20,7 +45,7 @@
     {% if can("vehicles.view") %}<a href="{{url_for('master_data.vehicles')}}"><i class="bi bi-truck-front"></i><span>المركبات</span><small>الأنواع واللوحات</small></a>{% endif %}
   </div>
 </div>
-
+{% endif %}
 <div class="stat-grid">
   <div class="stat-card primary"><span>إيرادات اليوم</span><strong>{{ '{:,.2f}'.format(total or 0) }}</strong><small>{{ currency }}</small></div>
   <div class="stat-card"><span>حركات البوابة</span><strong>{{ count }}</strong><small>دخول وخروج اليوم</small></div>

@@ -943,3 +943,20 @@ def test_admin_theme_is_optional_and_only_loaded_after_selection(app, client):
     assert 'class="theme-water-pos"' in modern_body
     assert "css/admin-theme.css" in modern_body
     assert modern_body.index("css/app.css") < modern_body.index("css/admin-theme.css")
+
+    with app.app_context():
+        row = Setting.query.filter_by(key="admin_theme").one()
+        row.value = "water_project"
+        db.session.commit()
+
+    water_project = client.get("/dashboard")
+    assert water_project.status_code == 200
+    water_project_body = water_project.get_data(as_text=True)
+    assert 'class="theme-water-project"' in water_project_body
+    assert "css/admin-theme-water-project.css" in water_project_body
+    assert "water-project-dashboard-panel" in water_project_body
+    assert "water-project-quick-actions" in water_project_body
+    assert "water-project-action-grid" in water_project_body
+    settings_page = client.get("/settings/", follow_redirects=True)
+    assert settings_page.status_code == 200
+    assert "تصميم مطابق لواجهة مشروع المياه" in settings_page.get_data(as_text=True)

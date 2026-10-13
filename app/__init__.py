@@ -71,7 +71,7 @@ def create_app(config_class=Config):
         if not isinstance(brand_color,str) or not __import__("re").fullmatch(r"#[0-9a-fA-F]{6}",brand_color):
             brand_color="#0b6e4f"
         admin_theme=_read_setting("admin_theme","classic")
-        if admin_theme not in {"classic","water"}: admin_theme="classic"
+        if admin_theme not in {"classic","water","water_project"}: admin_theme="classic"
         font_size=_read_setting("font_size","100")
         if font_size not in {"100","110","120","130"}: font_size="100"
         collector_font_size=_read_setting("collector_font_size","120")

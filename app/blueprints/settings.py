@@ -91,7 +91,7 @@ def index():
             _save_setting("brand_color",brand_color,"string","اللون الرئيسي")
             _save_setting("ui_theme",request.form.get("setting_ui_theme","light"),"string","المظهر")
             admin_theme=request.form.get("setting_admin_theme","classic").strip()
-            if admin_theme not in {"classic","water"}: admin_theme="classic"
+            if admin_theme not in {"classic","water","water_project"}: admin_theme="classic"
             _save_setting("admin_theme",admin_theme,"string","تصميم لوحة الإدارة")
             font_size=request.form.get("setting_font_size","100")
             if font_size not in {"100","110","120","130"}: font_size="100"

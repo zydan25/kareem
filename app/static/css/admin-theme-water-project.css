@@ -1,0 +1,197 @@
+/*
+ * Third admin theme based on the supplied Water POS mobile dashboard.
+ * Separate from the existing "water" theme and scoped to admin/manager users.
+ */
+body.theme-water-project {
+  --primary:#1d55d8; --primary-dark:#1746b7; --primary-light:#3477f6;
+  --primary-soft:#edf4ff; --primary-faint:#f1f5fb; --primary-border:#d5e2f6;
+  --primary-border-strong:#8fb4f4; --accent:#edf4ff; --ink:#111827;
+  --muted:#687385; --bg:#f4f7fc; --card:#fff; --border:#dfe5ee;
+  --shadow:0 5px 14px rgba(19,35,61,.055);
+  background:var(--bg); color:var(--ink);
+}
+body.theme-water-project .topbar {
+  min-height:78px; height:auto; background:#fff; border-bottom:1px solid #dce3ed;
+  box-shadow:none; padding:12px 22px;
+}
+body.theme-water-project .brand,
+body.theme-water-project .top-account-link {color:#101828}
+body.theme-water-project .brand-mark {
+  width:44px; height:44px; border-radius:15px;
+  background:linear-gradient(145deg,#2268ed,#1552d5); box-shadow:none; font-size:21px;
+}
+body.theme-water-project .brand strong {font-size:16px;font-weight:900}
+body.theme-water-project .brand small {color:#738096;font-size:10px}
+body.theme-water-project .water-project-home-button {
+  width:48px;height:48px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid #dce3ed;border-radius:15px;background:#fff;color:#334155;
+  text-decoration:none;font-size:24px;
+}
+body.theme-water-project .water-project-home-button:hover {background:#f4f7fc;color:#1d55d8}
+body.theme-water-project .top-account-link {
+  display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:12px;font-weight:800;
+}
+body.theme-water-project .icon-button,
+body.theme-water-project .menu-toggle,
+body.theme-water-project .menu-close {color:#344054}
+body.theme-water-project .app-drawer {background:#fff;border-left-color:#dfe5ee;box-shadow:0 10px 35px rgba(15,23,42,.08)}
+body.theme-water-project .drawer-head {border-bottom-color:#e5eaf2}
+body.theme-water-project .drawer-avatar {background:#edf4ff;color:#1d55d8}
+body.theme-water-project .sidebar-nav a,
+body.theme-water-project .sidebar-nav summary {border-radius:13px;color:#344054;border-color:transparent}
+body.theme-water-project .sidebar-nav summary {background:#f8faff;border-color:#edf1f7}
+body.theme-water-project .sidebar-nav a:hover,
+body.theme-water-project .sidebar-nav summary:hover,
+body.theme-water-project .sidebar-nav a.nav-home,
+body.theme-water-project .sidebar-nav a.active {color:#1d55d8;background:#edf4ff;border-color:#d9e6ff}
+body.theme-water-project .sidebar-nav a.nav-important {color:#fff;background:#1d55d8;border-color:#1d55d8}
+body.theme-water-project .content {color:#111827}
+body.theme-water-project .page-head h1,
+body.theme-water-project .eyebrow {color:#111827}
+body.theme-water-project .page-head p,
+body.theme-water-project .text-muted {color:#687385!important}
+body.theme-water-project .card-soft,
+body.theme-water-project .stat-card:not(.primary),
+body.theme-water-project .chart-card,
+body.theme-water-project .report-card,
+body.theme-water-project .dashboard-shortcuts-card,
+body.theme-water-project .manager-note,
+body.theme-water-project .card {
+  border:1px solid #dfe5ee;border-radius:24px;background:#fff;box-shadow:0 4px 14px rgba(19,35,61,.04);
+}
+body.theme-water-project .stat-card {padding:18px;border-radius:20px}
+body.theme-water-project .stat-card.primary {
+  color:#fff;border:0;background:linear-gradient(145deg,#1d55d8,#3477f6);
+  box-shadow:0 8px 22px rgba(29,85,216,.16);
+}
+body.theme-water-project .stat-card.primary span,
+body.theme-water-project .stat-card.primary small {color:rgba(255,255,255,.86)}
+body.theme-water-project .section-title h3,
+body.theme-water-project .manager-note>i,
+body.theme-water-project .quick-grid i {color:#1d55d8}
+body.theme-water-project .btn {border-radius:12px;font-weight:800}
+body.theme-water-project .btn-primary {
+  --bs-btn-bg:#1d55d8;--bs-btn-border-color:#1d55d8;
+  --bs-btn-hover-bg:#1746b7;--bs-btn-hover-border-color:#1746b7;
+  --bs-btn-active-bg:#143b99;--bs-btn-active-border-color:#143b99;
+}
+body.theme-water-project .btn-outline-primary {
+  --bs-btn-color:#1d55d8;--bs-btn-border-color:#bed2f7;
+  --bs-btn-hover-bg:#1d55d8;--bs-btn-hover-border-color:#1d55d8;--bs-btn-hover-color:#fff;
+}
+body.theme-water-project .form-control,
+body.theme-water-project .form-select {border-color:#d7e0ed;border-radius:12px;color:#172033;background-color:#fff}
+body.theme-water-project .form-control:focus,
+body.theme-water-project .form-select:focus {border-color:#91b3f1;box-shadow:0 0 0 .2rem rgba(29,85,216,.12)}
+body.theme-water-project .table {--bs-table-color:#344054;--bs-table-border-color:#e5eaf2}
+body.theme-water-project .table thead th {background:#f0f5ff;color:#344054;border-bottom-color:#dce7fb;font-weight:850;white-space:nowrap}
+body.theme-water-project .table tbody tr:hover>* {--bs-table-bg:#f7faff}
+body.theme-water-project .table-wrap {border-radius:15px;overflow-x:auto}
+body.theme-water-project .report-card {color:#202b3e}
+body.theme-water-project .report-card>i {color:#1d55d8;background:#edf4ff;border-radius:13px}
+body.theme-water-project .badge-soft {color:#1d4ed8;background:#edf4ff;border:1px solid #d9e6ff}
+body.theme-water-project .alert {border-radius:14px}
+body.theme-water-project .mobile-nav {background:rgba(255,255,255,.98);border-top-color:#dfe5ee;box-shadow:0 -5px 20px rgba(15,23,42,.055)}
+body.theme-water-project .mobile-nav a,
+body.theme-water-project .mobile-nav button {color:#657187}
+body.theme-water-project .mobile-nav a:focus-visible,
+body.theme-water-project .mobile-nav button:focus-visible,
+body.theme-water-project :focus-visible {outline-color:#3477f6}
+
+/* Screenshot-matched dashboard shell, quick action pills, and tall icon tiles. */
+body.theme-water-project .water-project-dashboard {max-width:1180px;margin:0 auto 22px}
+body.theme-water-project .water-project-dashboard-panel {
+  padding:28px;background:#f4f7fc;border:1px solid #e0e6ef;border-radius:32px;
+}
+body.theme-water-project .water-project-panel-heading {display:flex;align-items:center;justify-content:flex-start;margin:0 0 22px;padding:0}
+body.theme-water-project .water-project-panel-heading h1 {
+  margin:0;color:#111827;font-size:29px;line-height:1.4;font-weight:900;letter-spacing:-.35px;
+}
+body.theme-water-project .water-project-quick-actions {
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 10px 30px;padding:14px;
+  border-radius:28px;background:#fff;box-shadow:0 4px 9px rgba(15,23,42,.07);
+}
+body.theme-water-project .water-project-quick-actions a {
+  flex:1 1 135px;min-width:0;min-height:70px;display:inline-flex;align-items:center;justify-content:center;
+  gap:9px;padding:12px 16px;border:1px solid #dce4ef;border-radius:26px;color:#172033;
+  background:linear-gradient(180deg,#fff,#f8faff);text-decoration:none;white-space:nowrap;font-size:15px;font-weight:800;
+  transition:border-color .16s ease,background .16s ease,transform .16s ease;
+}
+body.theme-water-project .water-project-quick-actions a i {flex:0 0 auto;font-size:22px}
+body.theme-water-project .water-project-quick-actions a:hover {color:#1d55d8;border-color:#bed2f7;background:#f5f8ff;transform:translateY(-1px)}
+body.theme-water-project .water-project-action-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+body.theme-water-project .water-project-action-tile {
+  min-height:192px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;border:2px solid #e1e6ee;border-radius:28px;color:#101828;background:transparent;
+  text-align:center;text-decoration:none;transition:border-color .16s ease,background .16s ease,transform .16s ease;
+}
+body.theme-water-project .water-project-action-tile i {color:#111b2f;font-size:43px;line-height:1}
+body.theme-water-project .water-project-action-tile span {color:#172033;font-size:20px;line-height:1.45;font-weight:800}
+body.theme-water-project .water-project-action-tile:hover {color:#1d55d8;background:rgba(255,255,255,.6);border-color:#bed2f7;transform:translateY(-1px)}
+body.theme-water-project .water-project-action-tile:hover i,
+body.theme-water-project .water-project-action-tile:hover span {color:#1d55d8}
+body.theme-water-project .site-footer {color:#687385;border-top-color:#e0e6ef}
+
+@media(max-width:1100px) {
+  body.theme-water-project .topbar {
+    min-height:0;height:auto;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+    gap:10px;padding:12px 16px;position:sticky;top:0;z-index:60;
+  }
+  body.theme-water-project .topbar-start {display:contents}
+  body.theme-water-project .brand {order:1;align-self:flex-start;max-width:calc(100% - 150px);min-height:50px}
+  body.theme-water-project .brand-copy {min-width:0}
+  body.theme-water-project .brand strong {max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(13px,3.2vw,20px)}
+  body.theme-water-project .brand small {display:none}
+  body.theme-water-project .menu-toggle {
+    order:2;align-self:flex-start;width:104px;height:64px;display:inline-flex!important;align-items:center;justify-content:center;
+    border:1px solid #dce3ed;border-radius:16px;background:#fff;color:#344054;font-size:38px;
+  }
+  body.theme-water-project .top-actions {order:3;position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:6px}
+  body.theme-water-project .water-project-home-button,
+  body.theme-water-project .top-account-link,
+  body.theme-water-project .top-actions .icon-button {
+    width:40px;height:40px;flex:0 0 40px;display:inline-flex;align-items:center;justify-content:center;
+    padding:0;border:1px solid #dce3ed;border-radius:13px;background:#fff;color:#344054;font-size:20px;
+  }
+  body.theme-water-project .top-account-link span {display:none}
+  body.theme-water-project .top-actions form {margin:0}
+  body.theme-water-project .water-project-dashboard {padding:0 3px}
+  body.theme-water-project .water-project-dashboard-panel {padding:26px;border-radius:31px}
+  body.theme-water-project .water-project-panel-heading h1 {font-size:28px}
+}
+@media(max-width:600px) {
+  body.theme-water-project .content {padding:18px clamp(12px,4.5vw,30px) 92px}
+  body.theme-water-project .water-project-dashboard {padding:0}
+  body.theme-water-project .water-project-dashboard-panel {padding:26px 22px 28px}
+  body.theme-water-project .water-project-panel-heading {margin-bottom:20px}
+  body.theme-water-project .water-project-panel-heading h1 {font-size:27px}
+  body.theme-water-project .water-project-quick-actions {margin:0 0 28px;padding:11px;gap:8px;border-radius:25px}
+  body.theme-water-project .water-project-quick-actions a {flex-basis:110px;min-height:66px;padding:10px 8px;gap:7px;font-size:13px;border-radius:23px}
+  body.theme-water-project .water-project-quick-actions a i {font-size:19px}
+  body.theme-water-project .water-project-action-grid {gap:14px}
+  body.theme-water-project .water-project-action-tile {min-height:190px;padding:18px 7px;gap:21px;border-radius:27px}
+  body.theme-water-project .water-project-action-tile i {font-size:clamp(33px,8vw,43px)}
+  body.theme-water-project .water-project-action-tile span {font-size:clamp(14px,3.5vw,20px);overflow-wrap:anywhere}
+  body.theme-water-project .stat-grid {gap:9px}
+  body.theme-water-project .stat-card {padding:13px;border-radius:17px}
+  body.theme-water-project .stat-card strong {font-size:20px;overflow-wrap:anywhere}
+}
+@media(max-width:380px) {
+  body.theme-water-project .content {padding-inline:10px}
+  body.theme-water-project .water-project-dashboard-panel {padding:20px 14px 22px;border-radius:24px}
+  body.theme-water-project .water-project-quick-actions {padding:8px}
+  body.theme-water-project .water-project-quick-actions a {flex-basis:100px;font-size:12px}
+  body.theme-water-project .water-project-action-grid {gap:9px}
+  body.theme-water-project .water-project-action-tile {min-height:160px;border-radius:21px}
+  body.theme-water-project .water-project-action-tile span {font-size:14px}
+}
+@media print {
+  body.theme-water-project {background:#fff!important;color:#000!important}
+  body.theme-water-project .topbar,
+  body.theme-water-project .app-drawer,
+  body.theme-water-project .mobile-nav,
+  body.theme-water-project .site-footer {display:none!important}
+  body.theme-water-project .content {width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+  body.theme-water-project .card-soft,
+  body.theme-water-project .stat-card {box-shadow:none!important}
+}
