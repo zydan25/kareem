@@ -1,0 +1,30 @@
+/* Shared searchable dropdown component, loaded after all optional application themes. */
+.ss-native-select{position:absolute!important;width:1px!important;height:1px!important;min-height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;opacity:0!important;pointer-events:none!important}
+.ss-select-wrap{position:relative;display:block;width:100%;min-width:0;direction:rtl;color:#111}
+.ss-select-trigger{width:100%;min-width:0;min-height:44px;display:flex!important;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px!important;border:1px solid #d6dfe5!important;border-radius:12px!important;background:#fff!important;background-image:none!important;color:#111!important;box-shadow:none!important;font-family:inherit!important;font-size:inherit;line-height:1.4;text-align:right;white-space:normal}
+.ss-select-trigger:hover{border-color:#aebfca!important;background:#fff!important;color:#111!important}
+.ss-select-trigger:focus-visible{outline:3px solid rgba(45,111,190,.17)!important;outline-offset:1px;border-color:#5b94d2!important}
+.ss-select-trigger[aria-expanded="true"]{border-color:#7aa7d7!important;box-shadow:0 0 0 3px rgba(54,123,192,.10)!important}
+.ss-select-trigger.is-invalid{border-color:#d64c4c!important;box-shadow:0 0 0 3px rgba(214,76,76,.10)!important}
+.ss-select-trigger:disabled{background:#f3f5f6!important;color:#929b9f!important;opacity:.8;cursor:not-allowed}
+.ss-select-value{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-select-placeholder{color:#7a858b!important;font-weight:600}
+.ss-select-chevron{flex:0 0 auto;color:#677782;font-size:13px;transition:transform .16s ease}
+.ss-select-trigger[aria-expanded="true"] .ss-select-chevron{transform:rotate(180deg)}
+.ss-dropdown{position:fixed;z-index:3000;display:flex;flex-direction:column;min-width:170px;border:1px solid #d8e0e5;border-radius:14px;overflow:hidden;background:#fff!important;color:#111!important;box-shadow:0 16px 42px rgba(13,30,43,.19);direction:rtl;isolation:isolate}
+.ss-dropdown[hidden]{display:none!important}
+.ss-search-row{position:relative;flex:0 0 auto;padding:9px;background:#fff;border-bottom:1px solid #edf0f2}
+.ss-search-row>i{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:14px;color:#71808a;pointer-events:none}
+.ss-search-input{display:block;width:100%;min-height:42px;padding:9px 35px 9px 10px;border:1px solid #d8e1e7;border-radius:10px;background:#fff!important;color:#111!important;font:inherit;font-size:13px;outline:none;box-shadow:none!important}
+.ss-search-input::placeholder{color:#929ca2}.ss-search-input:focus{border-color:#76a4d3;box-shadow:0 0 0 3px rgba(59,130,196,.12)!important}
+.ss-results{min-height:0;overflow:auto;overscroll-behavior:contain;background:#fff;color:#111;scrollbar-width:thin;max-height:280px}
+.ss-option{width:100%;min-width:0;min-height:44px;padding:10px 12px;border:0;border-bottom:1px solid #f0f2f4;background:#fff;color:#111;display:flex;align-items:center;gap:10px;text-align:right;font:inherit;font-size:13px;cursor:pointer}
+.ss-option:last-child{border-bottom:0}.ss-option:hover,.ss-option:focus-visible{outline:none;background:#f2f7fb;color:#111}
+.ss-option[aria-selected="true"]{background:#edf5ff;color:#143b63;font-weight:850}
+.ss-option:disabled{color:#a3abb0;background:#fafafa;cursor:not-allowed}
+.ss-option-label{min-width:0;flex:1 1 auto;overflow-wrap:anywhere}
+.ss-option-check{flex:0 0 auto;width:20px;height:20px;border-radius:7px;display:grid;place-items:center;color:#1e68b2;background:#deedff;font-size:12px}
+.ss-empty{padding:17px 12px;color:#737e84;text-align:center;background:#fff;font-size:12px}
+@media(max-width:600px){.ss-select-trigger{min-height:46px;padding:10px 11px!important;border-radius:11px!important}.ss-dropdown{border-radius:13px}.ss-search-row{padding:8px}.ss-search-input{min-height:44px;font-size:14px}.ss-option{min-height:46px;padding:11px 12px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){.ss-select-chevron{transition:none}}
+@media print{.ss-native-select,.ss-select-trigger,.ss-dropdown{display:none!important}}

@@ -23,19 +23,19 @@
     </div>
     <div class="col-6 col-md-2">
       <label class="form-label" for="audit-action">العملية</label>
-      <select class="form-select" id="audit-action" name="action"><option value="">كل العمليات</option>
+      <select class="form-select" id="audit-action" name="action" data-searchable-select data-ss-placeholder="كل العمليات"><option value="">كل العمليات</option>
         {% for value in action_values %}<option value="{{ value }}" {% if action == value %}selected{% endif %}>{{ action_labels.get(value, value) }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-6 col-md-2">
       <label class="form-label" for="audit-entity">نوع السجل</label>
-      <select class="form-select" id="audit-entity" name="entity_type"><option value="">كل الأنواع</option>
+      <select class="form-select" id="audit-entity" name="entity_type" data-searchable-select data-ss-placeholder="كل الأنواع"><option value="">كل الأنواع</option>
         {% for value in entity_values %}<option value="{{ value }}" {% if entity_type == value %}selected{% endif %}>{{ entity_labels.get(value, value) }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-12 col-md-4">
       <label class="form-label" for="audit-user">المستخدم</label>
-      <select class="form-select" id="audit-user" name="user_id"><option value="">كل المستخدمين</option>
+      <select class="form-select" id="audit-user" name="user_id" data-searchable-select data-ss-placeholder="كل المستخدمين"><option value="">كل المستخدمين</option>
         {% for u in users %}<option value="{{ u.id }}" {% if user_id_value == (u.id|string) %}selected{% endif %}>{{ u.full_name }} — {{ u.username }}</option>{% endfor %}
       </select>
     </div>
@@ -49,7 +49,7 @@
     </div>
     <div class="col-6 col-md-2">
       <label class="form-label" for="audit-page-size">عدد النتائج</label>
-      <select class="form-select" id="audit-page-size" name="per_page">
+      <select class="form-select" id="audit-page-size" name="per_page" data-searchable-select>
         {% for n in [25, 50, 100] %}<option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }} في الصفحة</option>{% endfor %}
       </select>
     </div>

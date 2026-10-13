@@ -25,7 +25,7 @@
 <form method="post" class="row g-3" id="account-form">
   <div class="col-12">
     <label class="form-label">الحساب الأب</label>
-    <select name="parent_id" id="account-parent" class="form-select" required>
+    <select name="parent_id" id="account-parent" class="form-select" data-searchable-select data-ss-placeholder="اختر الحساب الأب" required>
       {% for p in parents %}<option value="{{p.id}}" data-type="{{p.account_type}}" {% if selected_parent and p.id==selected_parent.id %}selected{% endif %}>📁 {{p.name}} · {{p.code}}</option>{% endfor %}
     </select>
   </div>
