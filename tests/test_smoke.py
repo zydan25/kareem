@@ -45,6 +45,86 @@ def test_admin_guide_accessible(client):
     assert "دليل الإدارة" in guide.get_data(as_text=True)
     assert "التحصيل" in guide.get_data(as_text=True)
 
+def test_user_management_rejects_invalid_roles_and_self_role_changes(app, client):
+    with app.app_context():
+        target=User(username="role_target",full_name="مستخدم اختبار",role="collector",active=True)
+        target.set_password("test-password")
+        db.session.add(target)
+        db.session.commit()
+        target_id=target.id
+        admin_id=User.query.filter_by(username="admin").one().id
+
+    login(client)
+    invalid_role=client.post(f"/admin/users/{target_id}/edit",data={
+        "username":"role_target",
+        "full_name":"مستخدم اختبار",
+        "phone":"",
+        "role":"superadmin",
+        "employee_id":"",
+        "password":"",
+    },follow_redirects=True)
+    assert invalid_role.status_code==200
+    assert "الدور المحدد غير صالح" in invalid_role.get_data(as_text=True)
+
+    self_demotion=client.post(f"/admin/users/{admin_id}/edit",data={
+        "username":"admin",
+        "full_name":"مدير النظام",
+        "phone":"",
+        "role":"collector",
+        "employee_id":"",
+        "password":"",
+    },follow_redirects=True)
+    assert self_demotion.status_code==200
+    assert "لا يمكنك تغيير دور حسابك الحالي" in self_demotion.get_data(as_text=True)
+
+    with app.app_context():
+        assert db.session.get(User,target_id).role=="collector"
+        assert db.session.get(User,admin_id).role=="admin"
+
+
+def test_manager_cannot_grant_privileged_roles_or_manage_admin_accounts(app):
+    with app.app_context():
+        manager=User(username="manager_guard_test",full_name="مدير اختبار",role="manager",active=True)
+        manager.set_password("manager-password")
+        target=User(username="collector_guard_test",full_name="متحصل اختبار",role="collector",active=True)
+        target.set_password("collector-password")
+        protected_admin=User(username="admin_guard_test",full_name="مدير نظام محمي",role="admin",active=True)
+        protected_admin.set_password("admin-password")
+        db.session.add_all([manager,target,protected_admin])
+        db.session.commit()
+        target_id=target.id
+        protected_admin_id=protected_admin.id
+
+    manager_client=app.test_client()
+    response=manager_client.post("/login",data={
+        "identifier":"manager_guard_test","password":"manager-password"
+    },follow_redirects=False)
+    assert response.status_code==302
+
+    escalation=manager_client.post(f"/admin/users/{target_id}/edit",data={
+        "username":"collector_guard_test",
+        "full_name":"متحصل اختبار",
+        "phone":"",
+        "role":"admin",
+        "employee_id":"",
+        "password":"",
+    },follow_redirects=True)
+    assert escalation.status_code==200
+    assert "لا يمكنك منح صلاحية مدير أو مدير النظام" in escalation.get_data(as_text=True)
+
+    protected_edit=manager_client.get(f"/admin/users/{protected_admin_id}/edit")
+    assert protected_edit.status_code==403
+    protected_permissions=manager_client.get(f"/admin/users/{protected_admin_id}/permissions")
+    assert protected_permissions.status_code==403
+
+    manager_client.post(f"/admin/users/{protected_admin_id}/toggle",follow_redirects=True)
+    with app.app_context():
+        assert db.session.get(User,target_id).role=="collector"
+        protected=db.session.get(User,protected_admin_id)
+        assert protected.role=="admin"
+        assert protected.active is True
+
+
 def test_settlements_page_and_admin_guide(client):
     login(client)
     settlement=client.get("/operations/settlements")
