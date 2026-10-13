@@ -693,3 +693,74 @@ def test_voucher_general_receipt_payment_and_reverse_flow(app, client):
         # After reversing the receipt, only the separate 25-unit transfer remains.
         assert account_balance(cash_id) == cash_before - Decimal("25.00")
         assert account_balance(revenue_id) == revenue_before + Decimal("25.00")
+
+
+
+def test_audit_log_records_context_and_ignores_untrusted_forwarded_ip(app):
+    from flask_login import login_user
+    from app.models import AuditLog
+    from app.services.audit import audit
+
+    with app.app_context():
+        admin = User.query.filter_by(username="admin").one()
+        with app.test_request_context(
+            "/audit-test/path?token=must-not-be-stored",
+            method="POST",
+            headers={
+                "X-Forwarded-For": "198.51.100.222",
+                "User-Agent": "KareemAuditRegression/1.0",
+            },
+            environ_base={"REMOTE_ADDR": "192.0.2.17"},
+        ):
+            login_user(admin)
+            audit("test_context", "audit_test", 987, "context metadata")
+            db.session.commit()
+
+        row = AuditLog.query.filter_by(action="test_context", entity_id=987).one()
+        assert row.actor_username == "admin"
+        assert row.actor_name == "مدير النظام"
+        assert row.request_method == "POST"
+        assert row.request_path == "/audit-test/path"
+        assert "token" not in row.request_path
+        assert row.user_agent == "KareemAuditRegression/1.0"
+        assert row.ip_address == "192.0.2.17"
+
+
+def test_audit_log_filters_search_and_pagination(app, client):
+    from app.models import AuditLog
+
+    with app.app_context():
+        admin = User.query.filter_by(username="admin").one()
+        entries = []
+        for index in range(53):
+            entries.append(AuditLog(
+                user_id=admin.id,
+                actor_username=admin.username,
+                actor_name=admin.full_name,
+                action="create" if index < 52 else "update",
+                entity_type="client",
+                entity_id=index + 1,
+                details="needle — عميل اختبار" if index == 17 else f"سجل اختبار {index + 1}",
+                ip_address="192.0.2.10",
+                request_method="POST",
+                request_path="/master-data/clients",
+                user_agent="AuditPaginationTest/1.0",
+            ))
+        db.session.add_all(entries)
+        db.session.commit()
+
+    login(client)
+    first_page = client.get("/admin/audit?action=create&entity_type=client&per_page=25")
+    assert first_page.status_code == 200
+    first_body = first_page.get_data(as_text=True)
+    assert first_body.count('class="audit-row"') == 25
+    assert "52" in first_body
+    assert "page=2" in first_body
+    assert "إنشاء سجل" in first_body
+
+    filtered = client.get("/admin/audit?q=needle&action=create&entity_type=client")
+    assert filtered.status_code == 200
+    filtered_body = filtered.get_data(as_text=True)
+    assert filtered_body.count('class="audit-row"') == 1
+    assert "needle" in filtered_body
+    assert "192.0.2.10" in filtered_body

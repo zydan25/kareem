@@ -1,1 +1,115 @@
-{% extends 'base.html' %}{% block content %}<div class="page-head print-hide"><div><span class="eyebrow">الرقابة</span><h1>سجل التدقيق</h1><p>كل عملية حساسة مسجلة بالمستخدم والوقت ونوع الكيان والعنوان الشبكي.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div><div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>الوقت</th><th>المستخدم</th><th>العملية</th><th>الكيان</th><th>المعرف</th><th>التفاصيل</th><th>IP</th></tr></thead><tbody>{% for a in rows %}<tr><td>{{a.created_at.strftime('%Y-%m-%d %H:%M:%S')}}</td><td>{{a.user.full_name if a.user else 'النظام'}}</td><td>{{a.action}}</td><td>{{a.entity_type}}</td><td>{{a.entity_id or '—'}}</td><td>{{a.details or '—'}}</td><td>{{a.ip_address or '—'}}</td></tr>{% else %}<tr><td colspan="7" class="text-center py-5 text-muted">لا توجد عمليات مسجلة.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}سجل التدقيق | {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-head print-hide">
+  <div>
+    <span class="eyebrow">الرقابة والأمان</span>
+    <h1>سجل التدقيق</h1>
+    <p>راجع العمليات الحساسة مع هوية المنفّذ ووقت العملية ومصدر الطلب.</p>
+  </div>
+  <button class="btn btn-outline-primary" type="button" onclick="window.print()"><i class="bi bi-printer"></i> طباعة النتائج</button>
+</div>
+
+<form method="get" class="card-soft print-hide mb-3">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div><strong><i class="bi bi-funnel"></i> تصفية السجل</strong><div class="text-muted small mt-1">يمكن الجمع بين عدة فلاتر للوصول إلى العملية المطلوبة.</div></div>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit_logs') }}"><i class="bi bi-arrow-counterclockwise"></i> مسح الفلاتر</a>
+  </div>
+  {% if filter_error %}<div class="alert alert-warning py-2">{{ filter_error }}</div>{% endif %}
+  <div class="row g-3 align-items-end">
+    <div class="col-12 col-md-4">
+      <label class="form-label" for="audit-q">بحث عام</label>
+      <input class="form-control" id="audit-q" type="search" name="q" value="{{ search }}" placeholder="اسم المستخدم، التفاصيل، العنوان، رقم السجل...">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="audit-action">العملية</label>
+      <select class="form-select" id="audit-action" name="action"><option value="">كل العمليات</option>
+        {% for value in action_values %}<option value="{{ value }}" {% if action == value %}selected{% endif %}>{{ action_labels.get(value, value) }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="audit-entity">نوع السجل</label>
+      <select class="form-select" id="audit-entity" name="entity_type"><option value="">كل الأنواع</option>
+        {% for value in entity_values %}<option value="{{ value }}" {% if entity_type == value %}selected{% endif %}>{{ entity_labels.get(value, value) }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label" for="audit-user">المستخدم</label>
+      <select class="form-select" id="audit-user" name="user_id"><option value="">كل المستخدمين</option>
+        {% for u in users %}<option value="{{ u.id }}" {% if user_id_value == (u.id|string) %}selected{% endif %}>{{ u.full_name }} — {{ u.username }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="audit-start">من تاريخ</label>
+      <input class="form-control" id="audit-start" type="date" name="start_date" value="{{ start_value }}">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="audit-end">إلى تاريخ</label>
+      <input class="form-control" id="audit-end" type="date" name="end_date" value="{{ end_value }}">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="audit-page-size">عدد النتائج</label>
+      <select class="form-select" id="audit-page-size" name="per_page">
+        {% for n in [25, 50, 100] %}<option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }} في الصفحة</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-3 d-grid">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> تطبيق الفلاتر</button>
+    </div>
+  </div>
+</form>
+
+<div class="report-summary">
+  <div><span>عدد العمليات المطابقة</span> <strong>{{ total_count }}</strong></div>
+  <div><span>النتائج المعروضة</span> <strong>{{ first_result }}–{{ last_result }}</strong></div>
+  <div><span>الصفحة</span> <strong>{{ page }} / {{ pages }}</strong></div>
+</div>
+
+<div class="card-soft table-wrap">
+  <table class="table align-middle">
+    <thead>
+      <tr><th>التاريخ والوقت</th><th>المنفّذ</th><th>العملية</th><th>نوع السجل</th><th>المعرّف</th><th>التفاصيل</th><th>عنوان الاتصال</th><th>الطلب</th></tr>
+    </thead>
+    <tbody>
+    {% for a in rows %}
+      <tr class="audit-row">
+        <td class="text-nowrap">{{ a.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        <td>
+          <strong>{{ a.actor_name or (a.user.full_name if a.user else 'النظام') }}</strong>
+          {% set actor_username = a.actor_username or (a.user.username if a.user else '') %}
+          {% if actor_username %}<small class="d-block text-muted" dir="ltr">@{{ actor_username }}</small>{% endif %}
+        </td>
+        <td><span class="badge-soft">{{ action_labels.get(a.action, a.action) }}</span></td>
+        <td>{{ entity_labels.get(a.entity_type, a.entity_type) }}</td>
+        <td class="text-nowrap">{{ a.entity_id if a.entity_id is not none else '—' }}</td>
+        <td style="min-width:220px;max-width:420px;white-space:pre-wrap;overflow-wrap:anywhere">{{ a.details or '—' }}</td>
+        <td class="text-nowrap" dir="ltr">{{ a.ip_address or '—' }}</td>
+        <td style="min-width:180px;max-width:260px;overflow-wrap:anywhere">
+          {% if a.request_method %}<span class="badge bg-light text-dark border">{{ a.request_method }}</span>{% endif %}
+          {% if a.request_path %}<small class="d-block mt-1" dir="ltr">{{ a.request_path }}</small>{% endif %}
+          {% if a.user_agent %}<small class="d-block text-muted mt-1" title="{{ a.user_agent }}">{{ a.user_agent|truncate(65, true, '…') }}</small>{% endif %}
+          {% if not a.request_method and not a.request_path and not a.user_agent %}—{% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-search fs-4 d-block mb-2"></i>لا توجد عمليات تطابق الفلاتر المحددة.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if total_count > 0 %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 print-hide">
+  <small class="text-muted">عرض {{ first_result }}–{{ last_result }} من أصل {{ total_count }} عملية.</small>
+  {% if pages > 1 %}
+  <nav aria-label="صفحات سجل التدقيق"><ul class="pagination pagination-sm mb-0">
+    <li class="page-item {% if page <= 1 %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.audit_logs', **filter_args, page=page-1) if page > 1 else '#' }}" aria-label="السابق">السابق</a></li>
+    {% for p in page_numbers %}
+      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="{{ url_for('admin.audit_logs', **filter_args, page=p) }}">{{ p }}</a></li>
+    {% endfor %}
+    <li class="page-item {% if page >= pages %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.audit_logs', **filter_args, page=page+1) if page < pages else '#' }}" aria-label="التالي">التالي</a></li>
+  </ul></nav>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -389,14 +389,25 @@ class UserPermission(db.Model):
 class AuditLog(db.Model):
     __tablename__="audit_logs"
     id=db.Column(db.Integer,primary_key=True)
-    user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="SET NULL"))
+    user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="SET NULL"),index=True)
     user=db.relationship("User",foreign_keys=[user_id])
+    # Snapshot actor identity so the audit history remains attributable even if
+    # the related user is renamed or later removed.
+    actor_username=db.Column(db.String(80),index=True)
+    actor_name=db.Column(db.String(160))
     action=db.Column(db.String(80),nullable=False)
     entity_type=db.Column(db.String(80),nullable=False)
     entity_id=db.Column(db.Integer)
     details=db.Column(db.Text)
     ip_address=db.Column(db.String(64))
+    request_method=db.Column(db.String(12))
+    request_path=db.Column(db.String(255))
+    user_agent=db.Column(db.String(255))
     created_at=db.Column(db.DateTime(timezone=True),nullable=False,default=utcnow,index=True)
+    __table_args__=(
+        Index("ix_audit_logs_action_created","action","created_at"),
+        Index("ix_audit_logs_entity_created","entity_type","created_at"),
+    )
 
 class Setting(TimestampMixin,db.Model):
     __tablename__="settings"
