@@ -273,7 +273,8 @@ def test_agent_lease_creation_accrual_and_collection(app, client):
         cash_id=db.session.query(Account).filter_by(system_key="main_cash").one().id
         assert rent.amount==Decimal("1425.00")
         assert rent.status=="unpaid"
-        accrual_lines={line.account_id:line for line in rent.journal_entry.lines}
+        accrual_entry=JournalEntry.query.get(rent.journal_entry_id)
+        accrual_lines={line.account_id:line for line in accrual_entry.lines}
         assert accrual_lines[agent_account_id].debit==Decimal("1425.00")
         assert accrual_lines[db.session.query(Account).filter_by(system_key="rent_revenue").one().id].credit==Decimal("1425.00")
 
