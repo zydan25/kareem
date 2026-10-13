@@ -6,12 +6,12 @@
 .opening-balance-box{border:1px solid rgba(11,110,79,.14);background:linear-gradient(180deg,#f7fbf9,#fff);border-radius:14px;padding:12px}
 .opening-balance-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
 .opening-balance-head i{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(11,110,79,.10);color:var(--primary)}
-.opening-balance-head strong{font-size:12px}
-.opening-balance-head small{display:block;font-size:9px;color:#8a9893}
-.form-label{font-size:11px;font-weight:850;color:#52635e;margin-bottom:5px}
-.form-control,.form-select{border-radius:11px;min-height:42px;font-size:12px}
+.opening-balance-head strong{font-size: var(--type-small,12px)}
+.opening-balance-head small{display:block;font-size: var(--type-help,10px);color:#8a9893}
+.form-label{font-size: var(--type-label,11px);font-weight:850;color:#52635e;margin-bottom:5px}
+.form-control,.form-select{border-radius:11px;min-height:42px;font-size: var(--type-small,12px)}
 .form-actions{display:flex;gap:6px;flex-wrap:wrap}
-.form-actions .btn{border-radius:11px;font-size:12px;font-weight:850}
+.form-actions .btn{border-radius:11px;font-size: var(--type-small,12px);font-weight:850}
 @media(max-width:700px){
  .form-actions .btn{flex:1}
  .opening-balance-box{padding:10px}
