@@ -15,14 +15,15 @@
   {% if can_manage %}
   <div id="add-agent" class="card-soft add-panel party-add-panel">
     <div class="party-form-head"><div><h2>إضافة وكيل</h2><small>إنشاء حساب الوكيل وربطه المالي يتم تلقائيًا.</small></div><button type="button" class="btn btn-light btn-sm" data-toggle-panel="add-agent" aria-label="إغلاق"><i class="bi bi-x-lg"></i></button></div>
-    <form method="post" enctype="multipart/form-data" class="row g-3">
+    <form method="post" enctype="multipart/form-data" class="row g-3 party-form-grid">
+      <div class="col-12"><div class="form-section-title">بيانات الوكيل <span>الهوية والصورة والملاحظات اختيارية</span></div></div>
       <div class="col-12 col-md-5"><label class="form-label">اسم الوكيل</label><input name="name" class="form-control" required></div>
-      <div class="col-12 col-md-3"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
-      <div class="col-6 col-md-2"><label class="form-label">نوع الهوية</label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
-      <div class="col-6 col-md-2"><label class="form-label">رقم الهوية</label><input name="identity_number" class="form-control"></div>
+      <div class="col-12 col-md-4"><label class="form-label">الهاتف</label><input name="phone" class="form-control" inputmode="tel"></div>
+      <div class="col-6 col-md-3"><label class="form-label">نوع الهوية</label><select name="identity_type" class="form-select"><option value="">بدون</option><option>بطاقة شخصية</option><option>هوية</option><option>جواز سفر</option></select></div>
+      <div class="col-6 col-md-3"><label class="form-label">رقم الهوية</label><input name="identity_number" class="form-control"></div>
       <div class="col-12"><label class="form-label">صورة الهوية</label><input name="identity_image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control"></div>
-      <div class="col-12"><textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات الوكيل"></textarea></div>
-      <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ الوكيل</button><button class="btn btn-light" type="button" data-toggle-panel="add-agent">إلغاء</button></div>
+      <div class="col-12"><label class="form-label">ملاحظات</label><textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات الوكيل"></textarea></div>
+      <div class="col-12 party-form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> حفظ الوكيل</button><button class="btn btn-light" type="button" data-toggle-panel="add-agent">إلغاء</button></div>
     </form>
   </div>
   {% endif %}
