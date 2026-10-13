@@ -18,7 +18,7 @@ body.theme-water-project .brand,
 body.theme-water-project .top-account-link {color:#101828}
 body.theme-water-project .brand-mark {
   width:26px;height:26px;flex:0 0 26px;border-radius:9px;
-  background:linear-gradient(145deg,#2268ed,#1552d5);box-shadow:none;font-size:14px;
+  background:linear-gradient(145deg,#2268ed,#1552d5);box-shadow:none;font-size:var(--type-icon-14,14px);
 }
 body.theme-water-project .brand strong {font-size:var(--type-brand-title,16px);font-weight:900}
 body.theme-water-project .brand small {color:#738096;font-size:var(--type-help,10px)}
@@ -108,11 +108,11 @@ body.theme-water-project .water-project-quick-actions {
 body.theme-water-project .water-project-quick-actions a {
   flex:1 1 0;min-width:0;min-height:38px;display:inline-flex;align-items:center;justify-content:center;
   gap:5px;padding:7px 8px;border:1px solid #dce4ef;border-radius:17px;color:#172033;
-  background:linear-gradient(180deg,#fff,#f8faff);text-decoration:none;white-space:nowrap;font-size:.82rem;font-weight:750;
+  background:linear-gradient(180deg,#fff,#f8faff);text-decoration:none;white-space:nowrap;font-size:var(--type-button-roomy,13px);font-weight:750;
   transition:border-color .16s ease,background .16s ease,transform .16s ease;
 }
 body.theme-water-project .water-project-quick-actions a span {min-width:0;overflow:hidden;text-overflow:ellipsis}
-body.theme-water-project .water-project-quick-actions a i {flex:0 0 auto;font-size:1rem}
+body.theme-water-project .water-project-quick-actions a i {flex:0 0 auto;font-size:var(--type-icon-16,16px)}
 body.theme-water-project .water-project-quick-actions a:hover {color:#1d55d8;border-color:#bed2f7;background:#f5f8ff;transform:translateY(-1px)}
 body.theme-water-project .water-project-action-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 body.theme-water-project .water-project-action-tile {
@@ -169,7 +169,7 @@ body.theme-water-project .site-footer {color:#687385;border-top-color:#e0e6ef}
   body.theme-water-project .water-project-quick-actions a i {font-size:var(--type-icon-14,14px)}
   body.theme-water-project .water-project-action-grid {gap:8px}
   body.theme-water-project .water-project-action-tile {min-height:96px;padding:11px 6px;gap:10px;border-radius:15px}
-  body.theme-water-project .water-project-action-tile i {font-size:24px}
+  body.theme-water-project .water-project-action-tile i {font-size:var(--type-icon-24,24px)}
   body.theme-water-project .water-project-action-tile span {font-size:var(--type-body-compact,13px);overflow-wrap:anywhere}
   body.theme-water-project .stat-grid {gap:9px}
   body.theme-water-project .stat-card {padding:13px;border-radius:17px}
@@ -219,7 +219,7 @@ body.theme-water-project .water-theme-customizer .settings-actions .btn {min-hei
 @media(max-width:600px) {
   body.theme-water-project .water-theme-customizer {padding:0 1px}
   body.theme-water-project .water-theme-customizer .page-head {align-items:stretch}
-  body.theme-water-project .water-theme-customizer .page-head h1 {font-size:20px}
+  body.theme-water-project .water-theme-customizer .page-head h1 {font-size:var(--type-page-title,20px)}
   body.theme-water-project .water-theme-customizer .water-theme-editor-card {padding:12px;border-radius:16px}
   body.theme-water-project .water-theme-customizer .water-theme-slot {padding:10px}
   body.theme-water-project .water-theme-customizer .water-theme-preview {gap:4px;padding:6px}
