@@ -12,81 +12,81 @@
 .lease-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
 .lease-stat{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;min-width:0;padding:14px 15px;border:1px solid var(--border,#e3eae7);border-radius:16px;background:linear-gradient(135deg,#fff,#fbfdfc);box-shadow:0 6px 20px rgba(15,35,30,.035)}
 .lease-stat:after{content:"";position:absolute;width:74px;height:74px;border-radius:50%;left:-20px;bottom:-38px;background:var(--stat-tint,#eaf7ef);opacity:.75}
-.lease-stat-icon{position:relative;z-index:1;display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:var(--stat-tint,#eaf7ef);color:var(--stat-color,#198754);font-size:19px}
+.lease-stat-icon{position:relative;z-index:1;display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:var(--stat-tint,#eaf7ef);color:var(--stat-color,#198754);font-size: var(--type-stat-value,20px)}
 .lease-stat-copy{position:relative;z-index:1;min-width:0}
-.lease-stat-copy small{display:block;color:var(--muted,#718080);font-size:10px;font-weight:750}
-.lease-stat-copy strong{display:block;margin-top:3px;color:var(--text,#263735);font-size:19px;line-height:1.2;font-weight:950;white-space:nowrap}
+.lease-stat-copy small{display:block;color:var(--muted,#718080);font-size: var(--type-help,10px);font-weight:750}
+.lease-stat-copy strong{display:block;margin-top:3px;color:var(--text,#263735);font-size: var(--type-stat-value,20px);line-height:1.2;font-weight:950;white-space:nowrap}
 .lease-form-panel{padding:0;border:1px solid #cfe2d7;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 18px 45px rgba(15,35,30,.08);margin-bottom:18px}
 .lease-form-panel.add-panel{display:none}
 .lease-form-panel.add-panel.is-open{display:block}
 .lease-form-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 17px;background:linear-gradient(115deg,#edf8f1,#f8fbf9);border-bottom:1px solid #e1eee6}
 .lease-form-heading{display:flex;align-items:center;gap:11px;min-width:0}
-.lease-form-heading .icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#d9f0e1;color:#177d49;font-size:20px}
-.lease-form-heading h2{margin:0;font-size:16px;font-weight:950;color:#243d32}
-.lease-form-heading p{margin:3px 0 0;color:#72867a;font-size:10px}
+.lease-form-heading .icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#d9f0e1;color:#177d49;font-size: var(--type-stat-value,20px)}
+.lease-form-heading h2{margin:0;font-size: var(--type-section-title,16px);font-weight:950;color:#243d32}
+.lease-form-heading p{margin:3px 0 0;color:#72867a;font-size: var(--type-help,10px)}
 .lease-form-body{padding:17px}
-.lease-form-body .form-label{font-size:11px;font-weight:850;color:#526460;margin-bottom:5px}
-.lease-form-body .form-control,.lease-form-body .form-select{min-height:42px;border-radius:11px;border-color:#dce6e1;font-size:12px}
+.lease-form-body .form-label{font-size: var(--type-label,11px);font-weight:850;color:#526460;margin-bottom:5px}
+.lease-form-body .form-control,.lease-form-body .form-select{min-height:42px;border-radius:11px;border-color:#dce6e1;font-size: var(--type-small,12px)}
 .lease-form-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:13px;margin-top:12px;border-top:1px solid #edf1ef}
-.lease-form-footer small{font-size:10px;color:var(--muted,#778582)}
+.lease-form-footer small{font-size: var(--type-help,10px);color:var(--muted,#778582)}
 .lease-form-footer .btn{min-height:42px;border-radius:12px;font-weight:900;padding-inline:18px}
 .lease-list-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 1px 10px}
 .lease-list-title{display:flex;align-items:center;gap:9px;min-width:0}
-.lease-list-title .title-icon{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:12px;background:#edf5f0;color:var(--primary,#0b6e4f);font-size:18px}
-.lease-list-title h2{margin:0;font-size:17px;font-weight:950}
-.lease-list-title p{margin:3px 0 0;color:var(--muted,#788785);font-size:10px}
-.lease-list-count{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;padding:0 8px;border-radius:99px;background:#edf3ef;color:#426254;font-size:10px;font-weight:900}
+.lease-list-title .title-icon{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:12px;background:#edf5f0;color:var(--primary,#0b6e4f);font-size: var(--type-subheading,18px)}
+.lease-list-title h2{margin:0;font-size: var(--type-subheading,18px);font-weight:950}
+.lease-list-title p{margin:3px 0 0;color:var(--muted,#788785);font-size: var(--type-help,10px)}
+.lease-list-count{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;padding:0 8px;border-radius:99px;background:#edf3ef;color:#426254;font-size: var(--type-help,10px);font-weight:900}
 .lease-tools{display:grid;grid-template-columns:minmax(190px,1fr) 175px;gap:7px;width:min(490px,100%)}
 .lease-search{position:relative;min-width:0}
 .lease-search i{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#879793;pointer-events:none}
-.lease-search input{padding-right:35px;min-height:40px;border-radius:12px;font-size:11px}
-.lease-tools select{min-height:40px;border-radius:12px;font-size:11px;font-weight:800;border-color:#dce6e1}
+.lease-search input{padding-right:35px;min-height:40px;border-radius:12px;font-size: var(--type-label,11px)}
+.lease-tools select{min-height:40px;border-radius:12px;font-size: var(--type-label,11px);font-weight:800;border-color:#dce6e1}
 .lease-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .lease-card{position:relative;min-width:0;padding:14px;border:1px solid var(--border,#e0e8e4);border-radius:18px;background:#fff;box-shadow:0 7px 23px rgba(15,35,30,.045);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
 .lease-card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(15,35,30,.085);border-color:#c9ddd1}
 .lease-card[hidden]{display:none!important}
 .lease-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .lease-card-identity{display:flex;gap:10px;align-items:center;min-width:0}
-.lease-card-icon{display:grid;place-items:center;width:45px;height:45px;flex:0 0 45px;border-radius:14px;background:linear-gradient(145deg,#e5f5eb,#f1f9f4);border:1px solid #d5eadc;color:#16834a;font-size:21px}
+.lease-card-icon{display:grid;place-items:center;width:45px;height:45px;flex:0 0 45px;border-radius:14px;background:linear-gradient(145deg,#e5f5eb,#f1f9f4);border:1px solid #d5eadc;color:#16834a;font-size: var(--type-page-title-large,22px)}
 .lease-card-identity-copy{min-width:0}
-.lease-card-number{display:block;color:#8a9993;font-size:9px;font-weight:850;letter-spacing:.25px;margin-bottom:3px}
-.lease-card-identity h3{margin:0;color:#253934;font-size:14px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lease-card-identity p{margin:4px 0 0;color:#72817b;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lease-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:6px 9px;border-radius:99px;font-size:9px;font-weight:900}
+.lease-card-number{display:block;color:#8a9993;font-size: var(--type-help,10px);font-weight:850;letter-spacing:.25px;margin-bottom:3px}
+.lease-card-identity h3{margin:0;color:#253934;font-size: var(--type-body,14px);font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lease-card-identity p{margin:4px 0 0;color:#72817b;font-size: var(--type-help,10px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lease-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:6px 9px;border-radius:99px;font-size: var(--type-help,10px);font-weight:900}
 .lease-status:before{content:"";width:6px;height:6px;border-radius:99px;background:currentColor}
 .lease-status.active{background:#e8f7ed;color:#18824a}
 .lease-status.inactive{background:#f1f3f2;color:#7b8783}
 .lease-amount-panel{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;margin:13px 0 11px;border:1px solid #deeee4;border-radius:14px;background:linear-gradient(110deg,#f0faf4,#fbfdfb)}
-.lease-amount-label{display:flex;align-items:center;gap:7px;color:#47745b;font-size:10px;font-weight:800}
-.lease-amount-label i{font-size:15px}
-.lease-amount-value{color:#167646;font-size:19px;line-height:1.15;font-weight:1000;white-space:nowrap}
-.lease-amount-value small{font-size:9px;font-weight:800;color:#6d8a78}
+.lease-amount-label{display:flex;align-items:center;gap:7px;color:#47745b;font-size: var(--type-help,10px);font-weight:800}
+.lease-amount-label i{font-size: var(--type-card-title,15px)}
+.lease-amount-value{color:#167646;font-size: var(--type-stat-value,20px);line-height:1.15;font-weight:1000;white-space:nowrap}
+.lease-amount-value small{font-size: var(--type-help,10px);font-weight:800;color:#6d8a78}
 .lease-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .lease-info{min-width:0;padding:9px 9px 8px;border-radius:11px;background:#f7f9f8;border:1px solid #eef2ef}
-.lease-info small{display:flex;align-items:center;gap:5px;color:#86938e;font-size:9px;margin-bottom:5px}
-.lease-info small i{font-size:11px}
-.lease-info strong{display:block;color:#465851;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lease-info small{display:flex;align-items:center;gap:5px;color:#86938e;font-size: var(--type-help,10px);margin-bottom:5px}
+.lease-info small i{font-size: var(--type-label,11px)}
+.lease-info strong{display:block;color:#465851;font-size: var(--type-help,10px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lease-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:11px;border-top:1px solid #edf1ef}
-.lease-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 10px;border-radius:10px;text-decoration:none;font-size:10px;font-weight:900;border:1px solid #dfe8e3;color:#52645b;background:#fff;transition:.15s}
+.lease-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 10px;border-radius:10px;text-decoration:none;font-size: var(--type-help,10px);font-weight:900;border:1px solid #dfe8e3;color:#52645b;background:#fff;transition:.15s}
 .lease-action:hover{background:#f4f8f5;color:#254b36;border-color:#cfdfd5}
 .lease-action.primary{background:var(--primary,#0b6e4f);border-color:var(--primary,#0b6e4f);color:#fff;margin-inline-start:auto}
 .lease-action.primary:hover{filter:brightness(.94);color:#fff}
 .lease-empty{grid-column:1/-1;background:linear-gradient(145deg,#fff,#fbfdfc);border:1px dashed #cfdbd4;border-radius:18px;padding:36px 18px;text-align:center}
-.lease-empty .empty-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:#edf7f0;color:#198754;font-size:27px;margin:0 auto 12px}
-.lease-empty strong{display:block;color:#2e443a;font-size:14px;font-weight:950}
-.lease-empty p{color:#7a8982;font-size:11px;margin:5px 0 14px}
+.lease-empty .empty-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:#edf7f0;color:#198754;font-size: var(--type-display-large,28px);margin:0 auto 12px}
+.lease-empty strong{display:block;color:#2e443a;font-size: var(--type-body,14px);font-weight:950}
+.lease-empty p{color:#7a8982;font-size: var(--type-label,11px);margin:5px 0 14px}
 @media(max-width:850px){.lease-cards{grid-template-columns:1fr}.lease-head-actions{align-items:stretch}}
 @media(max-width:600px){
   .lease-page-head{display:block}
   .lease-head-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
-  .lease-head-actions .btn{justify-content:center;font-size:11px;padding-inline:8px}
+  .lease-head-actions .btn{justify-content:center;font-size: var(--type-label,11px);padding-inline:8px}
   .lease-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
   .lease-stat{display:block;padding:10px 8px;border-radius:13px;text-align:center}
-  .lease-stat-icon{width:33px;height:33px;margin:0 auto 7px;border-radius:10px;font-size:16px}
-  .lease-stat-copy small{font-size:9px;white-space:nowrap}
-  .lease-stat-copy strong{font-size:13px}
+  .lease-stat-icon{width:33px;height:33px;margin:0 auto 7px;border-radius:10px;font-size: var(--type-section-title,16px)}
+  .lease-stat-copy small{font-size: var(--type-help,10px);white-space:nowrap}
+  .lease-stat-copy strong{font-size: var(--type-body-compact,13px)}
   .lease-form-head{padding:12px}
-  .lease-form-heading h2{font-size:14px}
+  .lease-form-heading h2{font-size: var(--type-body,14px)}
   .lease-form-body{padding:12px}
   .lease-form-footer{align-items:stretch;flex-direction:column}
   .lease-form-footer>div{display:flex;gap:7px}
@@ -94,14 +94,14 @@
   .lease-list-tools{align-items:stretch;flex-direction:column;gap:10px}
   .lease-tools{grid-template-columns:1fr 135px;width:100%}
   .lease-card{padding:12px;border-radius:16px}
-  .lease-card-identity h3{font-size:13px}
+  .lease-card-identity h3{font-size: var(--type-body-compact,13px)}
   .lease-card-icon{width:40px;height:40px;flex-basis:40px}
-  .lease-status{padding:5px 7px;font-size:8px}
-  .lease-amount-value{font-size:17px}
+  .lease-status{padding:5px 7px;font-size: var(--type-help,10px)}
+  .lease-amount-value{font-size: var(--type-subheading,18px)}
   .lease-info-grid{gap:5px}
   .lease-info{padding:8px 6px}
-  .lease-info small{font-size:8px}
-  .lease-info strong{font-size:9px}
+  .lease-info small{font-size: var(--type-help,10px)}
+  .lease-info strong{font-size: var(--type-help,10px)}
   .lease-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .lease-action{min-width:0;padding:7px 5px}
   .lease-action.primary{margin-inline-start:0;grid-column:1/-1;grid-row:1}
@@ -110,74 +110,74 @@
 /* Phone-first rental theme; styles are scoped to these contract cards only. */
 .lease-page.rental-ui-mobile{max-width:780px;margin:0 auto}
 .lease-page.rental-ui-mobile .page-head{gap:12px;margin-bottom:13px}
-.lease-page.rental-ui-mobile .page-head h1{font-size:clamp(20px,5vw,25px);letter-spacing:-.35px}
-.lease-page.rental-ui-mobile .page-head p{font-size:12px;line-height:1.7}
+.lease-page.rental-ui-mobile .page-head h1{font-size: var(--type-page-title-large,22px);letter-spacing:-.35px}
+.lease-page.rental-ui-mobile .page-head p{font-size: var(--type-small,12px);line-height:1.7}
 .lease-page.rental-ui-mobile .lease-head-actions{gap:7px}
-.lease-page.rental-ui-mobile .lease-head-actions .btn{min-height:44px;border-radius:13px;font-size:12px;box-shadow:none}
+.lease-page.rental-ui-mobile .lease-head-actions .btn{min-height:44px;border-radius:13px;font-size: var(--type-small,12px);box-shadow:none}
 .lease-page.rental-ui-mobile .lease-stats{gap:7px;margin-bottom:13px}
 .lease-page.rental-ui-mobile .lease-stat{padding:9px 8px;border-radius:14px;gap:7px;box-shadow:none}
-.lease-page.rental-ui-mobile .lease-stat-icon{width:34px;height:34px;flex-basis:34px;border-radius:11px;font-size:16px}
-.lease-page.rental-ui-mobile .lease-stat-copy small{font-size:9px}
-.lease-page.rental-ui-mobile .lease-stat-copy strong{font-size:14px;letter-spacing:-.2px}
-.lease-page.rental-ui-mobile .lease-stat-copy strong small{font-size:9px}
+.lease-page.rental-ui-mobile .lease-stat-icon{width:34px;height:34px;flex-basis:34px;border-radius:11px;font-size: var(--type-section-title,16px)}
+.lease-page.rental-ui-mobile .lease-stat-copy small{font-size: var(--type-help,10px)}
+.lease-page.rental-ui-mobile .lease-stat-copy strong{font-size: var(--type-body,14px);letter-spacing:-.2px}
+.lease-page.rental-ui-mobile .lease-stat-copy strong small{font-size: var(--type-help,10px)}
 .lease-page.rental-ui-mobile .lease-list-tools{margin:14px 0 9px}
 .lease-page.rental-ui-mobile .lease-list-title .title-icon{width:36px;height:36px;flex-basis:36px}
-.lease-page.rental-ui-mobile .lease-list-title h2{font-size:16px}
+.lease-page.rental-ui-mobile .lease-list-title h2{font-size: var(--type-section-title,16px)}
 .lease-page.rental-ui-mobile .lease-tools{gap:7px}
-.lease-page.rental-ui-mobile .lease-search input,.lease-page.rental-ui-mobile .lease-tools select{min-height:44px;font-size:12px}
+.lease-page.rental-ui-mobile .lease-search input,.lease-page.rental-ui-mobile .lease-tools select{min-height:44px;font-size: var(--type-small,12px)}
 .lease-page.rental-ui-mobile .lease-cards{grid-template-columns:minmax(0,1fr);gap:10px}
 .lease-page.rental-ui-mobile .lease-card{padding:12px;border-radius:18px;box-shadow:0 3px 13px rgba(20,50,38,.04)}
 .lease-page.rental-ui-mobile .lease-card:hover{transform:none}
-.lease-page.rental-ui-mobile .lease-card-icon{width:40px;height:40px;flex-basis:40px;border-radius:13px;font-size:19px}
-.lease-page.rental-ui-mobile .lease-card-identity h3{font-size:14px}
-.lease-page.rental-ui-mobile .lease-card-identity p{font-size:11px}
+.lease-page.rental-ui-mobile .lease-card-icon{width:40px;height:40px;flex-basis:40px;border-radius:13px;font-size: var(--type-stat-value,20px)}
+.lease-page.rental-ui-mobile .lease-card-identity h3{font-size: var(--type-body,14px)}
+.lease-page.rental-ui-mobile .lease-card-identity p{font-size: var(--type-label,11px)}
 .lease-page.rental-ui-mobile .lease-amount-panel{margin:10px 0;padding:10px 11px;border-radius:13px}
-.lease-page.rental-ui-mobile .lease-amount-value{font-size:17px}
+.lease-page.rental-ui-mobile .lease-amount-value{font-size: var(--type-subheading,18px)}
 .lease-month-status{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;padding:10px 11px;border:1px solid #e2e9e5;border-radius:13px;background:#fafcfb;min-width:0}
 .lease-month-status .month-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
-.lease-month-status .month-copy small{font-size:9px;color:#75847d;font-weight:800}
-.lease-month-status .month-copy strong{font-size:11px;color:#2c4036}
-.lease-month-status .month-amount{font-size:13px;font-weight:950;white-space:nowrap;color:#2b4737}
-.lease-month-status .month-amount small{font-size:9px;font-weight:750;color:#718279}
-.lease-month-badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 8px;min-height:28px;white-space:nowrap;border-radius:99px;font-size:9px;font-weight:900}
+.lease-month-status .month-copy small{font-size: var(--type-help,10px);color:#75847d;font-weight:800}
+.lease-month-status .month-copy strong{font-size: var(--type-label,11px);color:#2c4036}
+.lease-month-status .month-amount{font-size: var(--type-body-compact,13px);font-weight:950;white-space:nowrap;color:#2b4737}
+.lease-month-status .month-amount small{font-size: var(--type-help,10px);font-weight:750;color:#718279}
+.lease-month-badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 8px;min-height:28px;white-space:nowrap;border-radius:99px;font-size: var(--type-help,10px);font-weight:900}
 .lease-month-badge.paid{color:#137b43;background:#e4f7eb}
 .lease-month-badge.unpaid{color:#a94c28;background:#fff0e7}
 .lease-month-badge.pending{color:#1d55b8;background:#edf4ff}
 .lease-month-badge.off{color:#75817c;background:#eef1ef}
-.lease-month-status .month-link{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:5px 8px;border-radius:10px;background:#fff;border:1px solid #dce7e0;color:#316044;text-decoration:none;font-size:9px;font-weight:900;white-space:nowrap}
+.lease-month-status .month-link{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:5px 8px;border-radius:10px;background:#fff;border:1px solid #dce7e0;color:#316044;text-decoration:none;font-size: var(--type-help,10px);font-weight:900;white-space:nowrap}
 .lease-page.rental-ui-mobile .lease-info-grid{gap:6px}
 .lease-page.rental-ui-mobile .lease-info{padding:8px 7px;border-radius:10px}
-.lease-page.rental-ui-mobile .lease-info small{font-size:9px}
-.lease-page.rental-ui-mobile .lease-info strong{font-size:10px}
+.lease-page.rental-ui-mobile .lease-info small{font-size: var(--type-help,10px)}
+.lease-page.rental-ui-mobile .lease-info strong{font-size: var(--type-help,10px)}
 .lease-page.rental-ui-mobile .lease-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:10px;padding-top:10px}
-.lease-page.rental-ui-mobile .lease-action{min-width:0;min-height:42px;padding:7px 8px;border-radius:11px;font-size:10px;line-height:1.35;text-align:center}
+.lease-page.rental-ui-mobile .lease-action{min-width:0;min-height:42px;padding:7px 8px;border-radius:11px;font-size: var(--type-help,10px);line-height:1.35;text-align:center}
 .lease-page.rental-ui-mobile .lease-action.primary{grid-column:1/-1;grid-row:auto;margin:0}
 .lease-admin-menu{grid-column:1/-1;position:relative}
-.lease-admin-menu>summary{display:flex;align-items:center;justify-content:center;gap:7px;list-style:none;min-height:42px;padding:8px;border:1px solid #dce7e0;border-radius:11px;background:#f7faf8;color:#52645b;font-size:11px;font-weight:900;cursor:pointer}
+.lease-admin-menu>summary{display:flex;align-items:center;justify-content:center;gap:7px;list-style:none;min-height:42px;padding:8px;border:1px solid #dce7e0;border-radius:11px;background:#f7faf8;color:#52645b;font-size: var(--type-label,11px);font-weight:900;cursor:pointer}
 .lease-admin-menu>summary::-webkit-details-marker{display:none}
 .lease-admin-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;margin-top:6px;border:1px solid #e6ece8;border-radius:12px;background:#fbfdfc}
-.lease-admin-actions .lease-action,.lease-admin-actions button{width:100%;min-height:42px;border-radius:10px;font-size:10px}
+.lease-admin-actions .lease-action,.lease-admin-actions button{width:100%;min-height:42px;border-radius:10px;font-size: var(--type-help,10px)}
 .lease-admin-actions form{margin:0}
 .lease-admin-actions .danger{border-color:#f0d2cc;color:#a93d2b;background:#fff8f6}
 .lease-page.rental-ui-mobile .lease-empty{padding:28px 14px;border-radius:17px}
 .lease-page.rental-ui-mobile .lease-form-panel{border-radius:16px;box-shadow:0 7px 24px rgba(20,50,38,.06)}
 .lease-page.rental-ui-mobile .lease-form-head{padding:12px}
 .lease-page.rental-ui-mobile .lease-form-body{padding:12px}
-.lease-page.rental-ui-mobile .lease-form-body .form-control,.lease-page.rental-ui-mobile .lease-form-body .form-select{min-height:44px;font-size:13px}
+.lease-page.rental-ui-mobile .lease-form-body .form-control,.lease-page.rental-ui-mobile .lease-form-body .form-select{min-height:44px;font-size: var(--type-body-compact,13px)}
 .lease-page.rental-ui-mobile .lease-form-footer .btn{min-height:44px}
 @media(max-width:600px){
  .lease-page.rental-ui-mobile .page-head{display:block}
  .lease-page.rental-ui-mobile .lease-head-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}
- .lease-page.rental-ui-mobile .lease-head-actions .btn{min-height:42px;padding-inline:6px;font-size:11px;justify-content:center}
+ .lease-page.rental-ui-mobile .lease-head-actions .btn{min-height:42px;padding-inline:6px;font-size: var(--type-label,11px);justify-content:center}
  .lease-page.rental-ui-mobile .lease-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
  .lease-page.rental-ui-mobile .lease-stat{padding:8px 5px;text-align:center}
- .lease-page.rental-ui-mobile .lease-stat-icon{margin:0 auto 5px;width:30px;height:30px;flex-basis:30px;font-size:14px}
- .lease-page.rental-ui-mobile .lease-stat-copy small{font-size:8px;white-space:normal;line-height:1.25}
- .lease-page.rental-ui-mobile .lease-stat-copy strong{font-size:13px;white-space:normal;overflow-wrap:anywhere}
+ .lease-page.rental-ui-mobile .lease-stat-icon{margin:0 auto 5px;width:30px;height:30px;flex-basis:30px;font-size: var(--type-body,14px)}
+ .lease-page.rental-ui-mobile .lease-stat-copy small{font-size: var(--type-help,10px);white-space:normal;line-height:1.25}
+ .lease-page.rental-ui-mobile .lease-stat-copy strong{font-size: var(--type-body-compact,13px);white-space:normal;overflow-wrap:anywhere}
  .lease-page.rental-ui-mobile .lease-list-tools{align-items:stretch;flex-direction:column}
  .lease-page.rental-ui-mobile .lease-tools{grid-template-columns:minmax(0,1fr) 125px;width:100%}
  .lease-page.rental-ui-mobile .lease-card-top{gap:7px}
- .lease-page.rental-ui-mobile .lease-status{font-size:8px}
+ .lease-page.rental-ui-mobile .lease-status{font-size: var(--type-help,10px)}
  .lease-month-status{flex-wrap:wrap}
  .lease-month-status .month-copy{flex:1 1 95px}
  .lease-month-status .month-link{flex:1 1 auto}
@@ -187,7 +187,7 @@
  .lease-page.rental-ui-mobile .lease-tools{grid-template-columns:minmax(0,1fr)}
  .lease-page.rental-ui-mobile .lease-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .lease-page.rental-ui-mobile .lease-card-actions{gap:5px}
- .lease-month-status .month-amount{font-size:12px}
+ .lease-month-status .month-amount{font-size: var(--type-small,12px)}
 }
 </style>
 <div class="lease-page {% if rental_ui_theme == 'mobile' %}rental-ui-mobile{% endif %}">
