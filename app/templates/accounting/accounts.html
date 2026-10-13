@@ -3,22 +3,22 @@
 {% block content %}
 <style>
 .account-page-head{align-items:center;margin-bottom:12px}
-.account-page-head h1{margin:.18rem 0 .2rem;font-size:clamp(1.35rem,2.5vw,1.85rem)}
+.account-page-head h1{margin:.18rem 0 .2rem;font-size: var(--type-page-title-large,22px)}
 .account-page-head p{display:none}
 .account-head-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.account-head-actions .btn{min-width:0;border-radius:11px;padding:7px 10px;font-size:12px;font-weight:850;display:inline-flex;align-items:center;gap:5px}
-.account-head-actions .btn i{font-size:13px}
+.account-head-actions .btn{min-width:0;border-radius:11px;padding:7px 10px;font-size: var(--type-small,12px);font-weight:850;display:inline-flex;align-items:center;gap:5px}
+.account-head-actions .btn i{font-size: var(--type-body-compact,13px)}
 .account-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:10px}
 .account-stat{border:1px solid rgba(30,55,50,.10);background:var(--surface,#fff);border-radius:12px;padding:8px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:49px}
 .account-stat .stat-copy{display:flex;flex-direction:column;min-width:0}
-.account-stat span{font-size:10px;color:#71807b;font-weight:800;white-space:nowrap}
-.account-stat strong{font-size:17px;line-height:1.1;color:#1e332d}
-.account-stat small{font-size:9px;color:#96a09d;white-space:nowrap}
-.account-stat i{font-size:17px;opacity:.78}
+.account-stat span{font-size: var(--type-help,10px);color:#71807b;font-weight:800;white-space:nowrap}
+.account-stat strong{font-size: var(--type-subheading,18px);line-height:1.1;color:#1e332d}
+.account-stat small{font-size: var(--type-help,10px);color:#96a09d;white-space:nowrap}
+.account-stat i{font-size: var(--type-subheading,18px);opacity:.78}
 .account-tree-card{padding:10px}
 .account-tree-toolbar{display:flex;align-items:center;gap:7px;margin-bottom:8px}
 .account-tree-toolbar .search-input{flex:1}
-.account-tree-toolbar .form-control{border-radius:11px;min-height:40px;font-size:12px}
+.account-tree-toolbar .form-control{border-radius:11px;min-height:40px;font-size: var(--type-small,12px)}
 .account-tree{padding:2px}
 .account-node-wrap{margin-right:calc(var(--tree-depth,0) * 12px);transition:.16s ease}
 .account-children{position:relative;padding-right:9px;margin-right:10px}
@@ -26,40 +26,40 @@
 .account-children.is-collapsed{display:none}
 .account-node{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:7px;border:1px solid rgba(37,65,58,.10);border-radius:12px;background:#fff;padding:7px 8px;margin-bottom:6px;min-height:50px;box-shadow:0 2px 8px rgba(24,45,39,.035)}
 .account-node.group{background:linear-gradient(180deg,#f7fbf9,#fff);border-color:rgba(20,110,79,.18);min-height:56px}
-.account-node.group .account-name-main{font-size:14px;font-weight:950}
-.account-node.group .account-type-icon{width:31px;height:31px;font-size:15px}
-.account-node.group .account-balance{font-size:9px}
+.account-node.group .account-name-main{font-size: var(--type-body,14px);font-weight:950}
+.account-node.group .account-type-icon{width:31px;height:31px;font-size: var(--type-card-title,15px)}
+.account-node.group .account-balance{font-size: var(--type-help,10px)}
 .account-node-name{display:flex;align-items:center;gap:7px;min-width:0;padding-right:2px}
 .tree-toggle,.tree-spacer{width:24px;height:24px;flex:0 0 24px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:0;background:transparent;color:#60746d}
 .tree-toggle:hover{background:rgba(11,110,79,.08);color:var(--primary)}
-.tree-toggle i{font-size:11px}
-.account-type-icon{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:rgba(11,110,79,.09);color:var(--primary);flex:0 0 28px;font-size:13px}
+.tree-toggle i{font-size: var(--type-label,11px)}
+.account-type-icon{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:rgba(11,110,79,.09);color:var(--primary);flex:0 0 28px;font-size: var(--type-body-compact,13px)}
 .account-name-copy{min-width:0;display:flex;flex-direction:column;overflow:hidden}
-.account-name-main{font-size:12.5px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#23352f}
-.account-name-copy small{font-size:9.5px;color:#899792;margin-top:1px;white-space:nowrap}
+.account-name-main{font-size: var(--type-small,12px);font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#23352f}
+.account-name-copy small{font-size: var(--type-label,11px);color:#899792;margin-top:1px;white-space:nowrap}
 .account-balance{display:flex;flex-direction:column;align-items:flex-end;min-width:72px}
-.account-balance strong{font-size:11px;color:#234239}
-.account-balance small{font-size:8.5px;color:#98a19e}
-.account-node.group .account-balance span{font-size:9px;font-weight:850;color:#7b8985}
+.account-balance strong{font-size: var(--type-label,11px);color:#234239}
+.account-balance small{font-size: var(--type-help,10px);color:#98a19e}
+.account-node.group .account-balance span{font-size: var(--type-help,10px);font-weight:850;color:#7b8985}
 .account-node-actions{display:flex;align-items:center;gap:4px}
-.account-node-actions .btn{height:30px;width:30px;padding:0;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;border-width:1px;font-size:11px}
+.account-node-actions .btn{height:30px;width:30px;padding:0;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;border-width:1px;font-size: var(--type-label,11px)}
 .account-node-actions .btn-text{display:inline}
 .account-node-actions .danger{color:#c53b45;border-color:rgba(197,59,69,.24);background:#fff}
 .account-node-actions .danger:hover{background:#fff3f4}
-.account-node-actions .btn i{font-size:12px}
+.account-node-actions .btn i{font-size: var(--type-small,12px)}
 .account-empty{padding:25px;text-align:center;color:#8a9793}
 @media(max-width:760px){
   .account-page-head{gap:8px}
-  .account-page-head h1{font-size:1.28rem}
+  .account-page-head h1{font-size: var(--type-page-title,20px)}
   .account-head-actions{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-  .account-head-actions .btn{justify-content:center;padding:7px 3px;font-size:9.5px}
-  .account-head-actions .btn i{font-size:12px}
+  .account-head-actions .btn{justify-content:center;padding:7px 3px;font-size: var(--type-label,11px)}
+  .account-head-actions .btn i{font-size: var(--type-small,12px)}
   .account-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
   .account-stat{padding:7px 6px;min-height:44px;border-radius:10px}
-  .account-stat span{font-size:8px}
-  .account-stat strong{font-size:14px}
+  .account-stat span{font-size: var(--type-help,10px)}
+  .account-stat strong{font-size: var(--type-body,14px)}
   .account-stat small{display:none}
-  .account-stat i{font-size:13px}
+  .account-stat i{font-size: var(--type-body-compact,13px)}
   .account-tree-card{padding:7px}
   .account-tree-toolbar .form-control{min-height:38px}
   .account-node-wrap{margin-right:calc(2px + var(--tree-depth,0) * 8px)}
@@ -68,13 +68,13 @@
   .account-node.group{min-height:50px}
   .account-node-name{gap:5px}
   .tree-toggle,.tree-spacer{width:21px;height:21px;flex-basis:21px}
-  .account-type-icon{width:25px;height:25px;flex-basis:25px;border-radius:7px;font-size:11px}
-  .account-name-main{font-size:11.5px}
-  .account-node.group .account-name-main{font-size:12.5px}
-  .account-name-copy small{font-size:8.5px}
+  .account-type-icon{width:25px;height:25px;flex-basis:25px;border-radius:7px;font-size: var(--type-label,11px)}
+  .account-name-main{font-size: var(--type-button-compact,11.5px)}
+  .account-node.group .account-name-main{font-size: var(--type-small,12px)}
+  .account-name-copy small{font-size: var(--type-help,10px)}
   .account-balance{min-width:62px}
-  .account-balance strong{font-size:9.5px}
-  .account-balance small{font-size:7.5px}
+  .account-balance strong{font-size: var(--type-label,11px)}
+  .account-balance small{font-size: var(--type-help,10px)}
   .account-node-actions{grid-column:1/-1;justify-content:flex-start}
   .account-node-actions .btn{width:28px;height:26px;border-radius:8px}
 }
