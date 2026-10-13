@@ -343,39 +343,90 @@ def close_shift(shift_id):
 def leases():
     agents=Agent.query.filter_by(active=True).order_by(Agent.name).all()
     rows=AgentLease.query.order_by(AgentLease.active.desc(),AgentLease.id.desc()).all()
+    form_open=False
+    form_data={}
     if request.method=="POST":
+        form_open=True
+        form_data=request.form
         try:
-            if not can("leases.manage"): raise ValueError("ليست لديك صلاحية إدارة الإيجارات")
-            agent=db.session.get(Agent,int(request.form["agent_id"]))
-            lease=AgentLease(agent_id=agent.id,name=request.form.get("name") or "إيجار",
-                monthly_amount=D(request.form["monthly_amount"]),
-                starts_on=date.fromisoformat(request.form["starts_on"]),
-                ends_on=date.fromisoformat(request.form["ends_on"]) if request.form.get("ends_on") else None,
-                due_day=int(request.form.get("due_day") or 1))
-            db.session.add(lease); db.session.flush(); ensure_agent_account(agent)
-            audit("create_lease","agent_lease",lease.id,lease.name); db.session.commit(); flash("تم إنشاء عقد الإيجار","success")
+            if not can("leases.manage"):
+                raise ValueError("ليست لديك صلاحية إدارة الإيجارات")
+
+            agent_id=request.form.get("agent_id",type=int)
+            agent=db.session.get(Agent,agent_id) if agent_id else None
+            if not agent or not agent.active:
+                raise ValueError("اختر وكيلًا نشطًا قبل حفظ العقد")
+
+            name=(request.form.get("name") or "إيجار").strip() or "إيجار"
+            if len(name)>120:
+                raise ValueError("اسم العقد يجب ألا يتجاوز 120 حرفًا")
+            monthly_amount=D(request.form.get("monthly_amount"))
+            if monthly_amount<=0:
+                raise ValueError("المبلغ الشهري يجب أن يكون أكبر من صفر")
+
+            try:
+                starts_on=date.fromisoformat((request.form.get("starts_on") or "").strip())
+            except ValueError:
+                raise ValueError("حدد تاريخ بداية صحيحًا للعقد")
+            end_value=(request.form.get("ends_on") or "").strip()
+            try:
+                ends_on=date.fromisoformat(end_value) if end_value else None
+            except ValueError:
+                raise ValueError("تاريخ نهاية العقد غير صحيح")
+            if ends_on and ends_on<starts_on:
+                raise ValueError("تاريخ نهاية العقد لا يمكن أن يسبق تاريخ بدايته")
+
+            try:
+                due_day=int(request.form.get("due_day") or 1)
+            except (TypeError,ValueError):
+                raise ValueError("يوم الاستحقاق يجب أن يكون رقمًا من 1 إلى 31")
+            if not 1<=due_day<=31:
+                raise ValueError("يوم الاستحقاق يجب أن يكون بين 1 و31")
+
+            lease=AgentLease(agent_id=agent.id,name=name,monthly_amount=monthly_amount,
+                starts_on=starts_on,ends_on=ends_on,due_day=due_day)
+            db.session.add(lease)
+            db.session.flush()
+            ensure_agent_account(agent)
+            audit("create_lease","agent_lease",lease.id,f"{lease.name}|{agent.name}|{monthly_amount}")
+            db.session.commit()
+            flash(f"تم إنشاء عقد الإيجار للوكيل {agent.name} بنجاح","success")
+            return redirect(url_for("operations.leases"))
         except Exception as exc:
-            db.session.rollback(); flash(str(exc),"danger")
-    return render_template("operations/leases.html",agents=agents,leases=rows)
+            db.session.rollback()
+            flash(str(exc),"danger")
+    return render_template("operations/leases.html",agents=agents,leases=rows,
+        form_open=form_open,form_data=form_data,today=date.today())
 
 @bp.post("/leases/<int:lease_id>/charge")
 @permission_required("leases.manage")
 def charge_lease(lease_id):
     try:
         lease=db.session.get(AgentLease,lease_id)
-        rent,entry=charge_rent(lease=lease,rent_month=date.fromisoformat(request.form["rent_month"]),user_id=current_user.id,
+        month_value=(request.form.get("rent_month") or "").strip()
+        if len(month_value)==7:
+            rent_month=date.fromisoformat(month_value+"-01")
+        else:
+            rent_month=date.fromisoformat(month_value).replace(day=1)
+        rent,entry=charge_rent(lease=lease,rent_month=rent_month,user_id=current_user.id,
             base_amount=request.form.get("base_amount") or None,discount=request.form.get("discount","0"),addition=request.form.get("addition","0"))
-        audit("charge_rent","agent_rent",rent.id,entry.number); db.session.commit(); flash("تم إثبات استحقاق الإيجار","success")
+        audit("charge_rent","agent_rent",rent.id,entry.number)
+        db.session.commit()
+        flash(f"تم إثبات استحقاق الإيجار عن {rent.rent_month:%Y-%m} بنجاح","success")
     except Exception as exc:
-        db.session.rollback(); flash(str(exc),"danger")
-    return redirect(url_for("operations.leases"))
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("operations.rents"))
 
 @bp.get("/rents")
 @permission_required("leases.view")
 def rents():
     rows=AgentRent.query.order_by(AgentRent.rent_month.desc(),AgentRent.id.desc()).limit(300).all()
     leases=AgentLease.query.filter_by(active=True).order_by(AgentLease.id.desc()).all()
-    return render_template("operations/rents.html",rows=rows,leases=leases,cash=get_system_account("main_cash"))
+    selected_lease_id=request.args.get("lease_id",type=int)
+    current_month=date.today().strftime("%Y-%m")
+    return render_template("operations/rents.html",rows=rows,leases=leases,
+        cash=get_system_account("main_cash"),selected_lease_id=selected_lease_id,current_month=current_month)
 
 @bp.post("/rents/<int:rent_id>/pay")
 @permission_required("leases.pay")
