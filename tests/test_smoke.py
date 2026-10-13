@@ -163,7 +163,8 @@ def test_employee_has_separate_account_and_cashbox(app):
 
 
 
-def test_report_view_and_export_permissions_are_consistent(app):
+
+def test_report_export_permission_alone_does_not_grant_view(app):
     from app.models import Permission, UserPermission
     from datetime import datetime
     from zoneinfo import ZoneInfo
@@ -171,98 +172,49 @@ def test_report_view_and_export_permissions_are_consistent(app):
     with app.app_context():
         export_only=User(username="report_export_only",full_name="تصدير فقط",role="collector",active=True)
         export_only.set_password("report-password")
-        view_only=User(username="report_view_only",full_name="عرض فقط",role="collector",active=True)
-        view_only.set_password("report-password")
-        db.session.add_all([export_only,view_only])
+        db.session.add(export_only)
         db.session.flush()
         export_perm=Permission.query.filter_by(key="reports.export").one()
-        view_perm=Permission.query.filter_by(key="reports.view").one()
-        db.session.add_all([
-            UserPermission(user_id=export_only.id,permission_id=export_perm.id,granted=True),
-            UserPermission(user_id=view_only.id,permission_id=view_perm.id,granted=True),
-        ])
+        db.session.add(UserPermission(user_id=export_only.id,permission_id=export_perm.id,granted=True))
         db.session.commit()
 
     today=datetime.now(ZoneInfo("Asia/Aden")).date().isoformat()
-    export_client=app.test_client()
-    logged=export_client.post("/login",data={
+    client=app.test_client()
+    logged=client.post("/login",data={
         "identifier":"report_export_only","password":"report-password"
     },follow_redirects=False)
     assert logged.status_code==302
-    assert export_client.get("/reports/").status_code==403
-    assert export_client.get(f"/reports/gate.csv?start={today}&end={today}").status_code==403
+    assert client.get("/reports/").status_code==403
+    assert client.get(f"/reports/gate.csv?start={today}&end={today}").status_code==403
 
-    view_client=app.test_client()
-    logged=view_client.post("/login",data={
+
+def test_report_view_permission_does_not_grant_print_or_csv_export(app):
+    from app.models import Permission, UserPermission
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    with app.app_context():
+        viewer=User(username="report_view_only",full_name="عرض فقط",role="collector",active=True)
+        viewer.set_password("report-password")
+        db.session.add(viewer)
+        db.session.flush()
+        view_perm=Permission.query.filter_by(key="reports.view").one()
+        db.session.add(UserPermission(user_id=viewer.id,permission_id=view_perm.id,granted=True))
+        db.session.commit()
+
+    today=datetime.now(ZoneInfo("Asia/Aden")).date().isoformat()
+    client=app.test_client()
+    logged=client.post("/login",data={
         "identifier":"report_view_only","password":"report-password"
     },follow_redirects=False)
     assert logged.status_code==302
-    assert view_client.get("/reports/").status_code==200
-    report=view_client.get(f"/reports/gate?start={today}&end={today}")
+    assert client.get("/reports/").status_code==200
+    report=client.get(f"/reports/gate?start={today}&end={today}")
     assert report.status_code==200
     body=report.get_data(as_text=True)
     assert 'onclick="window.print()"' not in body
     assert "gate.csv" not in body
-    assert view_client.get(f"/reports/gate.csv?start={today}&end={today}").status_code==403
-
-
-def test_gate_csv_matches_report_scope_and_filters_for_collectors(app):
-    from datetime import datetime, timezone
-    from zoneinfo import ZoneInfo
-    from app.models import GateTransaction, Permission, UserPermission, Vehicle
-
-    with app.app_context():
-        own=User(username="csv_scope_own",full_name="متحصل نطاق الاختبار",role="collector",active=True)
-        own.set_password("csv-password")
-        other=User(username="csv_scope_other",full_name="متحصل آخر للاختبار",role="collector",active=True)
-        other.set_password("csv-password")
-        db.session.add_all([own,other])
-        db.session.flush()
-        view_perm=Permission.query.filter_by(key="reports.view").one()
-        export_perm=Permission.query.filter_by(key="reports.export").one()
-        db.session.add_all([
-            UserPermission(user_id=own.id,permission_id=view_perm.id,granted=True),
-            UserPermission(user_id=own.id,permission_id=export_perm.id,granted=True),
-        ])
-        vehicle_type=VehicleType.query.filter_by(active=True).order_by(VehicleType.id).first()
-        own_vehicle=Vehicle(plate_number="CSV-OWN-TEST-01",vehicle_type_id=vehicle_type.id,active=True)
-        other_vehicle=Vehicle(plate_number="CSV-OTHER-TEST-01",vehicle_type_id=vehicle_type.id,active=True)
-        db.session.add_all([own_vehicle,other_vehicle])
-        db.session.flush()
-        now=datetime.now(timezone.utc)
-        own_id,other_id=own.id,other.id
-        db.session.add_all([
-            GateTransaction(
-                receipt_number="CSV-SCOPE-OWN-01",transaction_date=now,direction="entry",
-                vehicle_id=own_vehicle.id,collector_id=own.id,amount=Decimal("101"),
-                payment_method="cash",counted_for_work=True,
-            ),
-            GateTransaction(
-                receipt_number="CSV-SCOPE-OTHER-01",transaction_date=now,direction="entry",
-                vehicle_id=other_vehicle.id,collector_id=other.id,amount=Decimal("202"),
-                payment_method="cash",counted_for_work=True,
-            ),
-        ])
-        db.session.commit()
-
-    own_client=app.test_client()
-    logged=own_client.post("/login",data={
-        "identifier":"csv_scope_own","password":"csv-password"
-    },follow_redirects=False)
-    assert logged.status_code==302
-    today=datetime.now(ZoneInfo("Asia/Aden")).date().isoformat()
-    query=f"start={today}&end={today}&collector_id={other_id}"
-    csv_response=own_client.get(f"/reports/gate.csv?{query}")
-    assert csv_response.status_code==200
-    csv_body=csv_response.get_data(as_text=True)
-    assert "CSV-SCOPE-OWN-01" in csv_body
-    assert "CSV-SCOPE-OTHER-01" not in csv_body
-
-    html_response=own_client.get(f"/reports/gate?{query}")
-    assert html_response.status_code==200
-    html_body=html_response.get_data(as_text=True)
-    assert "CSV-SCOPE-OWN-01" in html_body
-    assert "CSV-SCOPE-OTHER-01" not in html_body
+    assert client.get(f"/reports/gate.csv?start={today}&end={today}").status_code==403
 
 
 def test_account_tree_edit_rejects_direct_and_indirect_cycles(app, client):

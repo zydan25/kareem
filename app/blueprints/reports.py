@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from io import StringIO
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, Response, render_template, request
+from flask import Blueprint, Response, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import and_, func, or_
 
@@ -85,7 +85,15 @@ def gate():
     entry_total=sum((D(x.amount) for x in rows if x.direction=="entry"),D(0))
     exit_total=sum((D(x.amount) for x in rows if x.direction=="exit"),D(0))
     exit_count=sum((1 for x in rows if x.direction=="exit"),0)
+    csv_url=url_for(
+        "reports.gate_csv",start=start,end=end,
+        collector_id=request.args.get("collector_id"),
+        agent_id=request.args.get("agent_id"),
+        client_id=request.args.get("client_id"),
+        shift_id=request.args.get("shift_id"),
+    )
     return render_template("reports/gate.html",rows=rows,start=start,end=end,total=total,entry_total=entry_total,exit_total=exit_total,exit_count=exit_count,
+        csv_url=csv_url,
         collectors=User.query.filter_by(active=True).order_by(User.full_name).all(),
         agents=Agent.query.filter_by(active=True).order_by(Agent.name).all(),
         shifts=Shift.query.order_by(Shift.opened_at.desc()).limit(150).all())
