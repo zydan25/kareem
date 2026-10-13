@@ -27,10 +27,10 @@
         <div class="journal-amount-field">
           <label class="form-label" for="journal-amount">المبلغ</label>
           <div class="input-group journal-amount-group">
-            <input name="amount" id="journal-amount" class="form-control" inputmode="decimal" autocomplete="off" required placeholder="0.00" aria-describedby="journal-amount-hint">
+            <input name="amount" id="journal-amount" type="text" class="form-control amount-words-input" data-words-target="journal-amount-words" data-currency="{{currency}}" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="20" required placeholder="0.00" aria-describedby="journal-amount-hint journal-amount-words">
             <span class="input-group-text">{{currency}}</span>
           </div>
-          <small id="journal-amount-hint">أدخل المبلغ بالأرقام، مثال: 12500.00</small>
+          <small id="journal-amount-hint">أدخل المبلغ بالأرقام فقط، مثال: 12500.00</small><div id="journal-amount-words" class="amount-words" aria-live="polite"></div>
         </div>
         <div class="journal-date-field">
           <label class="form-label" for="journal-entry-date">التاريخ</label>
