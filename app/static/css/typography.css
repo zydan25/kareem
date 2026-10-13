@@ -14,6 +14,7 @@
   --type-body-compact: calc(13px * var(--ui-font-scale, 1));
   --type-small: calc(12px * var(--ui-font-scale, 1));
   --type-button: calc(12px * var(--ui-font-scale, 1));
+  --type-button-roomy: calc(13px * var(--ui-font-scale, 1));
   --type-button-small: calc(11px * var(--ui-font-scale, 1));
   --type-button-compact: calc(11.5px * var(--ui-font-scale, 1));
   --type-label: calc(11px * var(--ui-font-scale, 1));
