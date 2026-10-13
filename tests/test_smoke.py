@@ -764,3 +764,152 @@ def test_audit_log_filters_search_and_pagination(app, client):
     assert filtered_body.count('class="audit-row"') == 1
     assert "needle" in filtered_body
     assert "192.0.2.10" in filtered_body
+
+
+
+def test_trial_balance_displays_correct_debit_and_credit_totals(app, client):
+    from datetime import date
+    login(client)
+    with app.app_context():
+        user = User.query.filter_by(username="admin").one()
+        cash = Account.query.filter_by(system_key="main_cash").one()
+        revenue = Account.query.filter_by(system_key="entry_revenue").one()
+        create_posted_entry(description="اختبار ميزان المراجعة", entry_date=date(2026, 1, 15),
+            created_by_id=user.id, lines=[
+                {"account": cash, "debit": Decimal("125"), "credit": Decimal("0")},
+                {"account": revenue, "debit": Decimal("0"), "credit": Decimal("125")},
+            ], prefix="TB")
+        db.session.commit()
+    response = client.get("/reports/trial-balance?start=2026-01-01&end=2026-01-31")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "افتتاحي مدين" in body and "ختامي دائن" in body
+    assert "125.00" in body
+    assert "ميزان الأرصدة الختامية متزن" in body
+
+
+def test_client_financial_statement_uses_client_ledger(app, client):
+    from datetime import date
+    from app.models import Client
+    from app.services.accounts import ensure_client_account
+    login(client)
+    with app.app_context():
+        user = User.query.filter_by(username="admin").one()
+        client_row = Client(code="C-STMT-01", name="عميل كشف مالي", active=True)
+        db.session.add(client_row)
+        db.session.flush()
+        client_account = ensure_client_account(client_row)
+        revenue = Account.query.filter_by(system_key="entry_revenue").one()
+        create_posted_entry(description="قيد على حساب العميل", entry_date=date(2026, 2, 3),
+            created_by_id=user.id, lines=[
+                {"account": client_account, "debit": Decimal("75"), "credit": Decimal("0")},
+                {"account": revenue, "debit": Decimal("0"), "credit": Decimal("75")},
+            ], prefix="CS")
+        client_id = client_row.id
+        db.session.commit()
+    response = client.get(f"/reports/clients/{client_id}/statement?start=2026-02-01&end=2026-02-28")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "كشف الحساب المالي" in body
+    assert "عميل كشف مالي" in body
+    assert "75.00" in body
+    assert "قيد على حساب العميل" in body
+
+
+def test_employee_statement_separates_three_financial_accounts(app, client):
+    from datetime import date
+    from app.services.accounts import ensure_employee_account, ensure_employee_cashbox, ensure_employee_payroll_account
+    login(client)
+    with app.app_context():
+        user = User.query.filter_by(username="admin").one()
+        employee = Employee(code="E-STMT-01", full_name="موظف كشف مالي", job_title="موظف", active=True)
+        db.session.add(employee)
+        db.session.flush()
+        general = ensure_employee_account(employee)
+        cashbox = ensure_employee_cashbox(employee)
+        payroll = ensure_employee_payroll_account(employee)
+        cash = Account.query.filter_by(system_key="main_cash").one()
+        expense = Account.query.filter_by(system_key="salary_expense").one()
+        create_posted_entry(description="حركة الحساب العام للموظف", entry_date=date(2026, 3, 2), created_by_id=user.id,
+            lines=[{"account": general, "debit": Decimal("40"), "credit": Decimal("0")},
+                   {"account": cash, "debit": Decimal("0"), "credit": Decimal("40")}], prefix="EG")
+        create_posted_entry(description="حركة صندوق الموظف", entry_date=date(2026, 3, 3), created_by_id=user.id,
+            lines=[{"account": cashbox, "debit": Decimal("60"), "credit": Decimal("0")},
+                   {"account": cash, "debit": Decimal("0"), "credit": Decimal("60")}], prefix="EC")
+        create_posted_entry(description="حركة مستحق الراتب", entry_date=date(2026, 3, 4), created_by_id=user.id,
+            lines=[{"account": expense, "debit": Decimal("90"), "credit": Decimal("0")},
+                   {"account": payroll, "debit": Decimal("0"), "credit": Decimal("90")}], prefix="EP")
+        employee_id = employee.id
+        db.session.commit()
+    response = client.get(f"/reports/employees/{employee_id}/statement?start=2026-03-01&end=2026-03-31")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "الحساب العام للموظف" in body
+    assert "صندوق الموظف" in body
+    assert "مستحقات الرواتب" in body
+    assert "حركة الحساب العام للموظف" in body
+    assert "حركة صندوق الموظف" in body
+    assert "حركة مستحق الراتب" in body
+
+
+def test_balance_sheet_includes_unclosed_result_in_equity(app, client):
+    from datetime import date
+    login(client)
+    with app.app_context():
+        user = User.query.filter_by(username="admin").one()
+        cash = Account.query.filter_by(system_key="main_cash").one()
+        revenue = Account.query.filter_by(system_key="entry_revenue").one()
+        create_posted_entry(description="اختبار معادلة الميزانية", entry_date=date(2026, 4, 2),
+            created_by_id=user.id, lines=[
+                {"account": cash, "debit": Decimal("250"), "credit": Decimal("0")},
+                {"account": revenue, "debit": Decimal("0"), "credit": Decimal("250")},
+            ], prefix="BS")
+        db.session.commit()
+    response = client.get("/reports/balance-sheet?end=2026-04-30")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "إجمالي الأصول" in body
+    assert "صافي نتيجة النشاط غير المقفلة" in body
+    assert "250.00" in body
+    assert "الأصول تساوي الخصوم وحقوق الملكية" in body
+
+
+def test_fiscal_year_close_posts_balanced_entry_and_locks_closed_year(app, client):
+    from datetime import date
+    from app.models import FiscalYear
+    from app.services.accounting import account_balance
+    login(client)
+    year_start, year_end = date(2026, 1, 1), date(2026, 12, 31)
+    with app.app_context():
+        user = User.query.filter_by(username="admin").one()
+        year = FiscalYear(name="السنة المالية 2026", start_date=year_start, end_date=year_end,
+            status="open", created_by_id=user.id)
+        db.session.add(year)
+        db.session.flush()
+        year_id = year.id
+        cash = Account.query.filter_by(system_key="main_cash").one()
+        revenue = Account.query.filter_by(system_key="entry_revenue").one()
+        create_posted_entry(description="ربح اختبار قبل الإقفال", entry_date=date(2026, 5, 5),
+            created_by_id=user.id, lines=[
+                {"account": cash, "debit": Decimal("300"), "credit": Decimal("0")},
+                {"account": revenue, "debit": Decimal("0"), "credit": Decimal("300")},
+            ], prefix="FY")
+        db.session.commit()
+    response = client.post(f"/accounting/fiscal-years/{year_id}/close", follow_redirects=True)
+    assert response.status_code == 200
+    assert "تم إقفال السنة المالية" in response.get_data(as_text=True)
+    with app.app_context():
+        year = db.session.get(FiscalYear, year_id)
+        assert year.status == "closed"
+        assert year.closing_journal_entry is not None
+        debit, credit = year.closing_journal_entry.totals()
+        assert debit == credit
+        revenue = Account.query.filter_by(system_key="entry_revenue").one()
+        assert account_balance(revenue.id, start=year_start, end=year_end) == Decimal("0.00")
+        with pytest.raises(ValueError, match="مغلقة"):
+            create_posted_entry(description="محاولة قيد في سنة مقفلة", entry_date=date(2026, 6, 1),
+                created_by_id=year.closed_by_id, lines=[
+                    {"account": Account.query.filter_by(system_key="main_cash").one(), "debit": Decimal("10"), "credit": Decimal("0")},
+                    {"account": revenue, "debit": Decimal("0"), "credit": Decimal("10")},
+                ], prefix="LOCK")
+        db.session.rollback()

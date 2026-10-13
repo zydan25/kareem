@@ -129,25 +129,76 @@ def collectors():
         .order_by(User.full_name).all())
     return render_template("reports/collectors.html",rows=rows,start=start,end=end)
 
-def _account_period_rows(start,end, account_type=None):
-    q=(db.session.query(Account.id,Account.code,Account.name,Account.account_type,
-        func.coalesce(func.sum(JournalLine.debit),0).label("debit"),
-        func.coalesce(func.sum(JournalLine.credit),0).label("credit"))
-       .outerjoin(JournalLine,JournalLine.account_id==Account.id)
-       .outerjoin(JournalEntry,JournalEntry.id==JournalLine.entry_id)
-       .filter(Account.is_group.is_(False))
-       .filter(or_(JournalEntry.id.is_(None),and_(JournalEntry.status=="posted",
-                                                   JournalEntry.entry_date>=start,
-                                                   JournalEntry.entry_date<=end))))
-    if account_type: q=q.filter(Account.account_type==account_type)
-    q=q.group_by(Account.id,Account.code,Account.name,Account.account_type).order_by(Account.code)
-    result=[]
-    for r in q.all():
-        opening=account_balance(r.id,end=start-timedelta(days=1))
-        debit=D(r.debit); credit=D(r.credit); closing=opening+debit-credit
-        result.append({"id":r.id,"code":r.code,"name":r.name,"account_type":r.account_type,
-                       "opening":opening,"debit":debit,"credit":credit,"closing":closing})
+def _normal_side(account):
+    return "credit" if account.account_type in {"liability", "equity", "revenue"} else "debit"
+
+
+def _ledger_statement_data(account, start, end):
+    lines = (
+        db.session.query(JournalLine)
+        .join(JournalEntry, JournalEntry.id == JournalLine.entry_id)
+        .filter(
+            JournalLine.account_id == account.id,
+            JournalEntry.status == "posted",
+            JournalEntry.entry_date >= start,
+            JournalEntry.entry_date <= end,
+        )
+        .order_by(JournalEntry.entry_date, JournalEntry.id, JournalLine.id)
+        .all()
+    )
+    credit_normal = _normal_side(account) == "credit"
+    opening_signed = account_balance(account.id, end=start - timedelta(days=1))
+    opening = -opening_signed if credit_normal else opening_signed
+    running = opening
+    balance_lines = []
+    for line in lines:
+        running += D(line.credit) - D(line.debit) if credit_normal else D(line.debit) - D(line.credit)
+        balance_lines.append((line, running))
+    return {
+        "lines": balance_lines,
+        "opening": opening,
+        "debit_total": sum((D(line.debit) for line in lines), D(0)),
+        "credit_total": sum((D(line.credit) for line in lines), D(0)),
+        "closing": running,
+    }
+
+
+def _account_period_rows(start, end, account_type=None):
+    """Leaf-account movements and balances from posted journals only."""
+    movement_rows = (
+        db.session.query(
+            JournalLine.account_id,
+            func.coalesce(func.sum(JournalLine.debit), 0).label("debit"),
+            func.coalesce(func.sum(JournalLine.credit), 0).label("credit"),
+        )
+        .join(JournalEntry, JournalEntry.id == JournalLine.entry_id)
+        .filter(
+            JournalEntry.status == "posted",
+            JournalEntry.entry_date >= start,
+            JournalEntry.entry_date <= end,
+        )
+        .group_by(JournalLine.account_id)
+        .all()
+    )
+    movements = {row.account_id: (D(row.debit), D(row.credit)) for row in movement_rows}
+    q = Account.query.filter(Account.is_group.is_(False))
+    if account_type:
+        q = q.filter(Account.account_type == account_type)
+    result = []
+    for account in q.order_by(Account.code).all():
+        debit, credit = movements.get(account.id, (D(0), D(0)))
+        opening = account_balance(account.id, end=start - timedelta(days=1))
+        closing = opening + debit - credit
+        credit_normal = _normal_side(account) == "credit"
+        result.append({
+            "id": account.id, "code": account.code, "name": account.name,
+            "account_type": account.account_type, "opening": opening,
+            "normal_opening": -opening if credit_normal else opening,
+            "debit": debit, "credit": credit, "closing": closing,
+            "normal_closing": -closing if credit_normal else closing,
+        })
     return result
+
 
 @bp.get("/accounts")
 @permission_required("reports.view")
@@ -159,35 +210,39 @@ def accounts_report():
 @bp.get("/general-ledger")
 @permission_required("reports.view")
 def general_ledger():
-    start,end=parse_dates()
-    account_id=request.args.get("account_id",type=int)
-    accounts=Account.query.filter_by(is_group=False,active=True).order_by(Account.code).all()
-    rows=[]; opening=D(0); closing=D(0); account=None
+    start, end = parse_dates()
+    account_id = request.args.get("account_id", type=int)
+    accounts = Account.query.filter_by(is_group=False, active=True).order_by(Account.code).all()
+    rows, opening, closing, account = [], D(0), D(0), None
     if account_id:
-        account=db.session.get(Account,account_id)
-        lines=(db.session.query(JournalLine).join(JournalEntry)
-            .filter(JournalLine.account_id==account_id,JournalEntry.status=="posted",
-                    JournalEntry.entry_date>=start,JournalEntry.entry_date<=end)
-            .order_by(JournalEntry.entry_date,JournalLine.id).all())
-        opening=account_balance(account_id,end=start-timedelta(days=1))
-        running=opening
-        for line in lines:
-            running += D(line.debit)-D(line.credit)
-            rows.append((line,running))
-        closing=running
-    return render_template("reports/general_ledger.html",accounts=accounts,account_options=account_tree_options(),rows=rows,account=account,account_id=account_id,start=start,end=end,opening=opening,closing=closing)
+        selected = db.session.get(Account, account_id)
+        if selected and not selected.is_group:
+            account = selected
+            data = _ledger_statement_data(account, start, end)
+            rows, opening, closing = data["lines"], data["opening"], data["closing"]
+        else:
+            account_id = None
+    return render_template(
+        "reports/general_ledger.html", accounts=accounts, account_options=account_tree_options(),
+        rows=rows, account=account, account_id=account_id, start=start, end=end,
+        opening=opening, closing=closing,
+    )
+
 
 @bp.get("/income-expenses")
 @permission_required("reports.view")
 def income_expenses():
-    start,end=parse_dates()
-    revenues=_account_period_rows(start,end,"revenue")
-    expenses=_account_period_rows(start,end,"expense")
-    revenue_total=sum((r["credit"]-r["debit"] for r in revenues),D(0))
-    expense_total=sum((r["debit"]-r["credit"] for r in expenses),D(0))
-    net=revenue_total-expense_total
-    return render_template("reports/income_expenses.html",revenues=revenues,expenses=expenses,
-                           revenue_total=revenue_total,expense_total=expense_total,net=net,start=start,end=end)
+    start, end = parse_dates()
+    revenues = _account_period_rows(start, end, "revenue")
+    expenses = _account_period_rows(start, end, "expense")
+    revenue_total = sum((row["credit"] - row["debit"] for row in revenues), D(0))
+    expense_total = sum((row["debit"] - row["credit"] for row in expenses), D(0))
+    return render_template(
+        "reports/income_expenses.html", revenues=revenues, expenses=expenses,
+        revenue_total=revenue_total, expense_total=expense_total,
+        net=revenue_total - expense_total, start=start, end=end,
+    )
+
 
 @bp.get("/shifts/<int:shift_id>")
 @permission_required("reports.view")
@@ -203,26 +258,64 @@ def shift_report(shift_id):
 @bp.get("/account/<int:account_id>")
 @permission_required("reports.view")
 def account_statement(account_id):
-    account=db.session.get(Account,account_id)
-    if not account: return ("الحساب غير موجود",404)
-    if current_user.role=="collector":
+    account = db.session.get(Account, account_id)
+    if not account:
+        return ("الحساب غير موجود", 404)
+    if account.is_group:
+        return ("اختر حسابًا فرعيًا قابلًا للقيد", 400)
+    if current_user.role == "collector":
         from ..services.accounts import ensure_user_collector_account
-        own_account=ensure_user_collector_account(current_user)
-        if not own_account or account.id!=own_account.id:
-            return ("Forbidden",403)
-    start,end=parse_dates()
-    lines=(db.session.query(JournalLine).join(JournalEntry)
-        .filter(JournalLine.account_id==account_id,JournalEntry.status=="posted",JournalEntry.entry_date>=start,JournalEntry.entry_date<=end)
-        .order_by(JournalEntry.entry_date,JournalLine.id).all())
-    opening=account_balance(account_id,end=start-timedelta(days=1))
-    running=opening; balance_lines=[]
-    for line in lines:
-        running += D(line.debit)-D(line.credit)
-        balance_lines.append((line,running))
-    return render_template("reports/account_statement.html",account=account,lines=balance_lines,start=start,end=end,opening=opening,
-                           debit_total=sum((D(x.debit) for x in lines),D(0)),
-                           credit_total=sum((D(x.credit) for x in lines),D(0)),closing=running)
+        own_account = ensure_user_collector_account(current_user)
+        if not own_account or account.id != own_account.id:
+            return ("Forbidden", 403)
+    start, end = parse_dates()
+    data = _ledger_statement_data(account, start, end)
+    return render_template(
+        "reports/account_statement.html", account=account, lines=data["lines"],
+        start=start, end=end, opening=data["opening"], debit_total=data["debit_total"],
+        credit_total=data["credit_total"], closing=data["closing"],
+    )
 
+
+@bp.get("/clients/<int:client_id>/statement")
+@permission_required("reports.view")
+def client_statement(client_id):
+    client = db.session.get(Client, client_id)
+    if not client:
+        return ("العميل غير موجود", 404)
+    if not client.account_id or not client.account:
+        return ("لا يوجد حساب محاسبي مرتبط بهذا العميل؛ اربط حسابه قبل عرض الكشف", 409)
+    start, end = parse_dates()
+    data = _ledger_statement_data(client.account, start, end)
+    return render_template(
+        "reports/client_statement.html", client=client, account=client.account,
+        start=start, end=end, lines=data["lines"], opening=data["opening"],
+        debit_total=data["debit_total"], credit_total=data["credit_total"], closing=data["closing"],
+    )
+
+
+@bp.get("/employees/<int:employee_id>/statement")
+@permission_required("reports.view")
+def employee_statement(employee_id):
+    employee = db.session.get(Employee, employee_id)
+    if not employee:
+        return ("الموظف غير موجود", 404)
+    start, end = parse_dates()
+    statements = []
+    for title, account, key in [
+        ("الحساب العام للموظف", employee.account, "employee"),
+        ("صندوق الموظف", employee.cashbox_account, "cashbox"),
+        ("مستحقات الرواتب", employee.payroll_account, "payroll"),
+    ]:
+        if account:
+            statements.append({
+                "title": title, "key": key, "account": account,
+                **_ledger_statement_data(account, start, end),
+            })
+    return render_template(
+        "reports/employee_statement.html", employee=employee,
+        statements=statements, start=start, end=end,
+    )
 
 
 @bp.get("/custody")
@@ -436,11 +529,68 @@ def expenses_report():
     total=sum((D(x.amount) for x in rows),D(0))
     return render_template("reports/expenses.html",rows=rows,start=start,end=end,total=total)
 
+@bp.get("/balance-sheet")
+@permission_required("reports.view")
+def balance_sheet():
+    today = datetime.now(LOCAL_TZ).date()
+    try:
+        end = date.fromisoformat(request.args.get("end", "")) if request.args.get("end") else today
+    except ValueError:
+        end = today
+    accounts = Account.query.filter(
+        Account.is_group.is_(False),
+        Account.account_type.in_(["asset", "liability", "equity"]),
+    ).order_by(Account.account_type, Account.code).all()
+    assets, liabilities, equity = [], [], []
+    for account in accounts:
+        signed = account_balance(account.id, end=end)
+        natural = -signed if account.account_type in {"liability", "equity"} else signed
+        if not natural:
+            continue
+        item = {"account": account, "balance": natural}
+        if account.account_type == "asset":
+            assets.append(item)
+        elif account.account_type == "liability":
+            liabilities.append(item)
+        else:
+            equity.append(item)
+    pnl_accounts = Account.query.filter(
+        Account.is_group.is_(False),
+        Account.account_type.in_(["revenue", "expense"]),
+    ).all()
+    unclosed_result = -sum((account_balance(a.id, end=end) for a in pnl_accounts), D(0))
+    assets_total = sum((x["balance"] for x in assets), D(0))
+    liabilities_total = sum((x["balance"] for x in liabilities), D(0))
+    equity_accounts_total = sum((x["balance"] for x in equity), D(0))
+    equity_total = equity_accounts_total + unclosed_result
+    difference = assets_total - liabilities_total - equity_total
+    return render_template(
+        "reports/balance_sheet.html", end=end, assets=assets, liabilities=liabilities,
+        equity=equity, unclosed_result=unclosed_result, assets_total=assets_total,
+        liabilities_total=liabilities_total, equity_accounts_total=equity_accounts_total,
+        equity_total=equity_total, difference=difference,
+    )
+
+
 @bp.get("/trial-balance")
 @permission_required("reports.view")
 def trial_balance():
-    start,end=parse_dates()
-    rows=_account_period_rows(start,end)
-    debit_total=sum((r["debit"] for r in rows),D(0))
-    credit_total=sum((r["credit"] for r in rows),D(0))
-    return render_template("reports/trial_balance.html",rows=rows,start=start,end=end,debit_total=debit_total,credit_total=credit_total)
+    start, end = parse_dates()
+    rows = _account_period_rows(start, end)
+    for row in rows:
+        row["opening_debit"] = max(row["opening"], D(0))
+        row["opening_credit"] = max(-row["opening"], D(0))
+        row["closing_debit"] = max(row["closing"], D(0))
+        row["closing_credit"] = max(-row["closing"], D(0))
+    totals = {
+        "opening_debit": sum((r["opening_debit"] for r in rows), D(0)),
+        "opening_credit": sum((r["opening_credit"] for r in rows), D(0)),
+        "debit": sum((r["debit"] for r in rows), D(0)),
+        "credit": sum((r["credit"] for r in rows), D(0)),
+        "closing_debit": sum((r["closing_debit"] for r in rows), D(0)),
+        "closing_credit": sum((r["closing_credit"] for r in rows), D(0)),
+    }
+    return render_template(
+        "reports/trial_balance.html", rows=rows, start=start, end=end, totals=totals,
+        debit_total=totals["debit"], credit_total=totals["credit"],
+    )
