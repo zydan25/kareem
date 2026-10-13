@@ -101,6 +101,9 @@ def index():
             admin_theme=request.form.get("setting_admin_theme","classic").strip()
             if admin_theme not in {"classic","water","water_project"}: admin_theme="classic"
             _save_setting("admin_theme",admin_theme,"string","تصميم لوحة الإدارة")
+            rental_ui_theme=(request.form.get("setting_rental_ui_theme","mobile") or "mobile").strip()
+            if rental_ui_theme not in {"classic","mobile"}: rental_ui_theme="mobile"
+            _save_setting("rental_ui_theme",rental_ui_theme,"string","ثيم العقود والاستحقاقات")
             font_size=request.form.get("setting_font_size","100")
             if font_size not in {"100","110","120","130"}: font_size="100"
             _save_setting("font_size",font_size,"string","حجم الخط العام")

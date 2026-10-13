@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from ..extensions import db
@@ -345,6 +345,21 @@ def leases():
     rows=AgentLease.query.order_by(AgentLease.active.desc(),AgentLease.id.desc()).all()
     form_open=False
     form_data={}
+    today=date.today()
+    current_month=today.replace(day=1)
+    next_month_start=(today.replace(day=28)+timedelta(days=4)).replace(day=1)
+    current_rents={r.lease_id:r for r in AgentRent.query.filter_by(rent_month=current_month).all()}
+    current_due_eligible={
+        lease.id: lease.active
+        and lease.starts_on.replace(day=1)<=current_month
+        and (not lease.ends_on or lease.ends_on.replace(day=1)>=current_month)
+        for lease in rows
+    }
+    unpaid_stats_by_lease={}
+    for rent in AgentRent.query.filter_by(status="unpaid").all():
+        stats=unpaid_stats_by_lease.setdefault(rent.lease_id,{"count":0,"amount":D("0")})
+        stats["count"]+=1
+        stats["amount"]+=D(rent.amount)
     if request.method=="POST":
         form_open=True
         form_data=request.form
@@ -396,13 +411,157 @@ def leases():
             db.session.rollback()
             flash(str(exc),"danger")
     return render_template("operations/leases.html",agents=agents,leases=rows,
-        form_open=form_open,form_data=form_data,today=date.today())
+        form_open=form_open,form_data=form_data,today=today,current_month=current_month,
+        next_month_start=next_month_start,current_rents=current_rents,
+        current_due_eligible=current_due_eligible,unpaid_stats_by_lease=unpaid_stats_by_lease)
+
+@bp.post("/leases/<int:lease_id>/edit")
+@permission_required("leases.manage")
+def edit_lease(lease_id):
+    lease=db.session.get(AgentLease,lease_id)
+    if not lease:
+        return ("العقد غير موجود",404)
+    try:
+        name=(request.form.get("name") or "إيجار").strip() or "إيجار"
+        if len(name)>120:
+            raise ValueError("اسم العقد يجب ألا يتجاوز 120 حرفًا")
+        monthly_amount=D(request.form.get("monthly_amount"))
+        if monthly_amount<=0:
+            raise ValueError("المبلغ الشهري يجب أن يكون أكبر من صفر")
+        try:
+            starts_on=date.fromisoformat((request.form.get("starts_on") or "").strip())
+        except ValueError:
+            raise ValueError("حدد تاريخ بداية صحيحًا للعقد")
+        end_value=(request.form.get("ends_on") or "").strip()
+        try:
+            ends_on=date.fromisoformat(end_value) if end_value else None
+        except ValueError:
+            raise ValueError("تاريخ نهاية العقد غير صحيح")
+        if ends_on and ends_on<starts_on:
+            raise ValueError("تاريخ نهاية العقد لا يمكن أن يسبق تاريخ بدايته")
+        try:
+            due_day=int(request.form.get("due_day") or 1)
+        except (TypeError,ValueError):
+            raise ValueError("يوم الاستحقاق يجب أن يكون رقمًا من 1 إلى 31")
+        if not 1<=due_day<=31:
+            raise ValueError("يوم الاستحقاق يجب أن يكون بين 1 و31")
+
+        recorded_months=[r.rent_month for r in AgentRent.query.filter_by(lease_id=lease.id).all()]
+        if recorded_months and starts_on.replace(day=1)>min(recorded_months):
+            raise ValueError("لا يمكن نقل بداية العقد إلى ما بعد شهر استحقاق مسجل؛ الاستحقاقات والقيود السابقة محفوظة كما سُجلت.")
+        if recorded_months and ends_on and ends_on.replace(day=1)<max(recorded_months):
+            raise ValueError("لا يمكن إنهاء العقد قبل آخر شهر استحقاق مسجل؛ عدّل العقد دون استبعاد الاستحقاقات السابقة.")
+
+        old_values=f"{lease.name}|{lease.monthly_amount}|{lease.starts_on}|{lease.ends_on}|{lease.due_day}"
+        lease.name=name
+        lease.monthly_amount=monthly_amount
+        lease.starts_on=starts_on
+        lease.ends_on=ends_on
+        lease.due_day=due_day
+        if ends_on and ends_on.replace(day=1)<date.today().replace(day=1):
+            lease.active=False
+        audit("update_lease","agent_lease",lease.id,
+              f"{old_values} -> {lease.name}|{lease.monthly_amount}|{lease.starts_on}|{lease.ends_on}|{lease.due_day}; الاستحقاقات والقيود السابقة دون تغيير")
+        db.session.commit()
+        flash("تم تعديل بيانات العقد. لم تتغير الاستحقاقات السابقة أو قيودها المحاسبية.","success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("operations.leases"))
+
+@bp.post("/leases/<int:lease_id>/toggle")
+@permission_required("leases.manage")
+def toggle_lease(lease_id):
+    lease=db.session.get(AgentLease,lease_id)
+    if not lease:
+        return ("العقد غير موجود",404)
+    try:
+        if lease.active:
+            lease.active=False
+            message="تم إيقاف العقد مع إبقاء جميع الاستحقاقات السابقة والقيود المالية كما هي."
+        else:
+            if lease.ends_on and lease.ends_on.replace(day=1)<date.today().replace(day=1):
+                raise ValueError("انتهت مدة العقد؛ استخدم إجراء تجديد العقد بدل إعادة تفعيله.")
+            lease.active=True
+            message="تم تفعيل العقد. لم تتغير الاستحقاقات السابقة أو قيودها."
+        audit("toggle_lease","agent_lease",lease.id,"active="+str(lease.active))
+        db.session.commit()
+        flash(message,"success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("operations.leases"))
+
+@bp.post("/leases/<int:lease_id>/renew")
+@permission_required("leases.manage")
+def renew_lease(lease_id):
+    lease=db.session.get(AgentLease,lease_id)
+    if not lease:
+        return ("العقد غير موجود",404)
+    try:
+        try:
+            starts_on=date.fromisoformat((request.form.get("starts_on") or "").strip())
+        except ValueError:
+            raise ValueError("حدد تاريخ بداية صحيحًا للتجديد")
+        current_month=date.today().replace(day=1)
+        new_month=starts_on.replace(day=1)
+        if starts_on.day!=1 or new_month<=current_month:
+            raise ValueError("يبدأ العقد المجدد في اليوم الأول من شهر قادم لتجنب التداخل أو احتساب شهر مرتين.")
+        if lease.ends_on and lease.ends_on>=starts_on:
+            raise ValueError("تاريخ بداية التجديد يجب أن يكون بعد نهاية العقد الحالي. عدّل تاريخ النهاية أولًا إذا لزم.")
+        if AgentRent.query.filter(AgentRent.agent_id==lease.agent_id,AgentRent.rent_month>=new_month).first():
+            raise ValueError("يوجد استحقاق مسجل لهذا الوكيل في شهر التجديد أو بعده؛ لن ننشئ عقدًا قد يكرر استحقاق الشهر.")
+        try:
+            monthly_amount=D(request.form.get("monthly_amount"))
+        except Exception:
+            raise ValueError("أدخل قيمة إيجار صحيحة")
+        if monthly_amount<=0:
+            raise ValueError("المبلغ الشهري للتجديد يجب أن يكون أكبر من صفر")
+        end_value=(request.form.get("ends_on") or "").strip()
+        try:
+            ends_on=date.fromisoformat(end_value) if end_value else None
+        except ValueError:
+            raise ValueError("تاريخ نهاية العقد المجدد غير صحيح")
+        if ends_on and ends_on<starts_on:
+            raise ValueError("تاريخ نهاية العقد المجدد لا يمكن أن يسبق بدايته")
+        name=(request.form.get("name") or f"{lease.name} (تجديد)").strip()
+        if not name:
+            name=f"{lease.name} (تجديد)"
+        if len(name)>120:
+            raise ValueError("اسم العقد المجدد يجب ألا يتجاوز 120 حرفًا")
+        try:
+            due_day=int(request.form.get("due_day") or lease.due_day)
+        except (TypeError,ValueError):
+            raise ValueError("يوم الاستحقاق يجب أن يكون من 1 إلى 31")
+        if not 1<=due_day<=31:
+            raise ValueError("يوم الاستحقاق يجب أن يكون من 1 إلى 31")
+
+        previous_end=lease.ends_on
+        if lease.ends_on is None:
+            lease.ends_on=starts_on-timedelta(days=1)
+        lease.active=False
+        renewed=AgentLease(agent_id=lease.agent_id,name=name,monthly_amount=monthly_amount,
+            starts_on=starts_on,ends_on=ends_on,due_day=due_day,active=True)
+        db.session.add(renewed)
+        db.session.flush()
+        audit("renew_lease","agent_lease",lease.id,
+              f"new_lease_id={renewed.id}; previous_end={previous_end}; effective={starts_on}; previous dues/journals preserved")
+        audit("create_lease_renewal","agent_lease",renewed.id,
+              f"previous_lease_id={lease.id}; {renewed.name}|{renewed.monthly_amount}|{renewed.starts_on}")
+        db.session.commit()
+        flash("تم تجديد العقد بإنشاء عقد جديد مرتبط بالوكيل. بقيت جميع استحقاقات وقيود العقد السابق دون تغيير.","success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc),"danger")
+    return redirect(url_for("operations.leases"))
 
 @bp.post("/leases/<int:lease_id>/charge")
 @permission_required("leases.manage")
 def charge_lease(lease_id):
     try:
         lease=db.session.get(AgentLease,lease_id)
+        if not lease:
+            raise ValueError("العقد غير موجود")
         month_value=(request.form.get("rent_month") or "").strip()
         if len(month_value)==7:
             rent_month=date.fromisoformat(month_value+"-01")
@@ -416,17 +575,32 @@ def charge_lease(lease_id):
     except Exception as exc:
         db.session.rollback()
         flash(str(exc),"danger")
-    return redirect(url_for("operations.rents"))
+    return redirect(url_for("operations.rents",lease_id=lease_id,status="unpaid"))
 
 @bp.get("/rents")
 @permission_required("leases.view")
 def rents():
-    rows=AgentRent.query.order_by(AgentRent.rent_month.desc(),AgentRent.id.desc()).limit(300).all()
-    leases=AgentLease.query.filter_by(active=True).order_by(AgentLease.id.desc()).all()
     selected_lease_id=request.args.get("lease_id",type=int)
+    selected_status=(request.args.get("status") or "all").strip()
+    if selected_status not in {"all","unpaid","paid"}:
+        selected_status="all"
+    rent_query=AgentRent.query
+    if selected_lease_id:
+        rent_query=rent_query.filter_by(lease_id=selected_lease_id)
+    if selected_status in {"unpaid","paid"}:
+        rent_query=rent_query.filter_by(status=selected_status)
+    rows=rent_query.order_by(AgentRent.rent_month.desc(),AgentRent.id.desc()).all()
+    all_rents=AgentRent.query.all()
+    unpaid_rows=[r for r in all_rents if r.status!="paid"]
+    paid_count=sum(1 for r in all_rents if r.status=="paid")
+    unpaid_amount=sum((D(r.amount) for r in unpaid_rows),D("0"))
+    leases=AgentLease.query.filter_by(active=True).order_by(AgentLease.id.desc()).all()
+    lease_filters=AgentLease.query.order_by(AgentLease.id.desc()).all()
     current_month=date.today().strftime("%Y-%m")
-    return render_template("operations/rents.html",rows=rows,leases=leases,
-        cash=get_system_account("main_cash"),selected_lease_id=selected_lease_id,current_month=current_month)
+    return render_template("operations/rents.html",rows=rows,leases=leases,lease_filters=lease_filters,
+        cash=get_system_account("main_cash"),selected_lease_id=selected_lease_id,
+        selected_status=selected_status,current_month=current_month,form_open=request.args.get("new")=="1",
+        unpaid_count=len(unpaid_rows),paid_count=paid_count,unpaid_amount=unpaid_amount)
 
 @bp.post("/rents/<int:rent_id>/pay")
 @permission_required("leases.pay")

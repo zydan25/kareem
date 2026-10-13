@@ -1,33 +1,229 @@
 {% extends 'base.html' %}
-{% block title %}إيجارات الوكلاء - {{app_name}}{% endblock %}
+{% block title %}الاستحقاقات والتحصيل - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">الوكلاء والإيجارات</span><h1>الاستحقاقات والتحصيل</h1><p>اختر عقدًا نشطًا، حدد الشهر، وسيظهر المبلغ الأساسي تلقائيًا مع إمكانية الخصم أو الإضافة.</p></div><div class="d-flex gap-2"><a class="btn btn-light" href="{{url_for('operations.leases')}}">العقود</a><a class="btn btn-outline-primary" href="{{url_for('reports.agent_report',agent_id=leases[0].agent_id) if leases else '#'}}">تقرير وكيل</a></div></div>
+<div class="rents-page {% if rental_ui_theme == 'mobile' %}rents-mobile-theme{% else %}rents-classic-theme{% endif %}">
+<style>
+.rents-page{max-width:780px;margin:0 auto;color:var(--text,#24352d)}
+.rents-page .rents-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.rents-page .rents-heading h1{margin:2px 0 4px;font-size:clamp(20px,5vw,25px);font-weight:950;letter-spacing:-.3px}
+.rents-page .rents-heading p{font-size:12px;line-height:1.65;color:var(--muted,#75827c);margin:0}
+.rents-page .rents-eyebrow{color:var(--primary,#168354);font-size:10px;font-weight:900}
+.rents-page .rents-head-actions{display:flex;gap:7px;flex-wrap:wrap}
+.rents-page .rents-head-actions .btn{min-height:42px;border-radius:12px;font-size:11px;font-weight:850;display:inline-flex;align-items:center;gap:6px}
+.rents-page .rent-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
+.rents-page .rent-stat{min-width:0;display:flex;align-items:center;gap:9px;padding:10px;border:1px solid #e1e9e4;border-radius:14px;background:#fff}
+.rents-page .rent-stat-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:#eaf6ef;color:#17804a;font-size:16px}
+.rents-page .rent-stat small{display:block;font-size:9px;line-height:1.3;color:#7b8982;font-weight:800}
+.rents-page .rent-stat strong{display:block;margin-top:3px;font-size:14px;line-height:1.25;color:#293e33;font-weight:950;overflow-wrap:anywhere}
+.rents-page .rent-form-panel{display:none;margin-bottom:12px}
+.rents-page .rent-form-panel.is-open{display:block}
+.rents-page .rent-form-panel,.rents-page .rent-list-panel{border:1px solid #e0e8e3;border-radius:17px;background:#fff;box-shadow:0 4px 15px rgba(20,45,34,.035);padding:14px}
+.rents-page .rent-form-head,.rents-page .rent-list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.rents-page .rent-form-head h2,.rents-page .rent-list-head h2{margin:0;font-size:15px;font-weight:950}
+.rents-page .rent-form-head p,.rents-page .rent-list-head p{margin:3px 0 0;color:#78877f;font-size:10px;line-height:1.5}
+.rents-page .rent-form-panel .form-label{font-size:11px;font-weight:850;color:#516159;margin-bottom:5px}
+.rents-page .rent-form-panel .form-control,.rents-page .rent-form-panel .form-select{min-height:44px;border-radius:11px;font-size:13px;border-color:#dce6e0}
+.rents-page .rent-form-panel .form-control:focus,.rents-page .rent-form-panel .form-select:focus{border-color:#93c3a7;box-shadow:0 0 0 .2rem rgba(22,131,84,.12)}
+.rents-page .rent-total-wrap{border:1px solid #dcefe3;background:#f0faf4;border-radius:12px;padding:9px 11px}
+.rents-page .rent-total-wrap small{display:block;color:#5b7e69;font-size:9px;font-weight:850}
+.rents-page .rent-total-wrap strong{display:block;color:#187748;font-size:17px;font-weight:950;margin-top:3px}
+.rents-page .rent-form-submit{min-height:46px;border-radius:12px;font-size:13px;font-weight:900}
+.rents-page .rent-filter-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:7px;margin-bottom:11px}
+.rents-page .rent-filter-form .form-control,.rents-page .rent-filter-form .form-select{min-height:42px;border-radius:11px;font-size:11px;border-color:#dce5df}
+.rents-page .rent-search{position:relative;margin-bottom:10px}
+.rents-page .rent-search i{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#87958d;pointer-events:none}
+.rents-page .rent-search input{padding-right:35px;min-height:42px;border-radius:11px;font-size:12px}
+.rents-page .rent-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
+.rents-page .rent-card{min-width:0;padding:12px;border:1px solid #e2e9e4;border-radius:15px;background:#fff}
+.rents-page .rent-card[hidden]{display:none!important}
+.rents-page .rent-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+.rents-page .rent-identity{display:flex;align-items:center;gap:9px;min-width:0}
+.rents-page .rent-icon{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:12px;background:#eaf6ef;color:#17804a;font-size:18px}
+.rents-page .rent-identity-copy{min-width:0}
+.rents-page .rent-contract{display:block;color:#7d8a82;font-size:9px;font-weight:850;margin-bottom:3px}
+.rents-page .rent-identity h3{margin:0;font-size:13px;line-height:1.4;font-weight:950;color:#293e33;overflow-wrap:anywhere}
+.rents-page .rent-identity p{margin:3px 0 0;color:#74837b;font-size:10px;overflow-wrap:anywhere}
+.rents-page .rent-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:6px 8px;border-radius:99px;font-size:9px;font-weight:900}
+.rents-page .rent-status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.rents-page .rent-status.paid{background:#e5f7eb;color:#18804b}
+.rents-page .rent-status.unpaid{background:#fff0e8;color:#b14e24}
+.rents-page .rent-amount-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:11px 0 9px;padding:10px 11px;border-radius:12px;background:#f5faf7;border:1px solid #e2efe6}
+.rents-page .rent-amount-bar span{font-size:10px;font-weight:850;color:#5e7969}
+.rents-page .rent-amount-bar strong{color:#177747;font-size:17px;font-weight:950;white-space:nowrap}
+.rents-page .rent-amount-bar small{font-size:9px;color:#75907e;font-weight:800}
+.rents-page .rent-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.rents-page .rent-detail{min-width:0;padding:8px 7px;border-radius:10px;background:#f7f9f8;border:1px solid #edf1ee}
+.rents-page .rent-detail small{display:block;color:#7e8d84;font-size:9px;margin-bottom:4px}
+.rents-page .rent-detail strong{display:block;color:#40554a;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rents-page .rent-card-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid #eef2ef}
+.rents-page .rent-card-actions .btn,.rents-page .rent-card-actions a{min-height:41px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border-radius:10px;font-size:10px;font-weight:900;text-decoration:none}
+.rents-page .rent-card-actions form{margin:0;flex:1 1 130px}
+.rents-page .rent-card-actions form .btn{width:100%}
+.rents-page .rent-card-actions a{border:1px solid #dfe8e2;background:#fff;color:#51665a}
+.rents-page .rent-card-actions .btn-primary{background:var(--primary,#168354);border-color:var(--primary,#168354);color:#fff}
+.rents-page .rent-empty{padding:29px 15px;text-align:center;border:1px dashed #cfded4;border-radius:15px;background:#fbfdfb}
+.rents-page .rent-empty i{display:grid;place-items:center;width:49px;height:49px;margin:0 auto 10px;border-radius:15px;background:#edf7f0;color:#198754;font-size:22px}
+.rents-page .rent-empty strong{display:block;font-size:13px;font-weight:950;color:#31473a}
+.rents-page .rent-empty p{font-size:11px;color:#7b8980;margin:5px 0 0}
+.rents-page .rent-theme-notice{display:flex;align-items:flex-start;gap:8px;margin-bottom:11px;padding:10px 11px;border-radius:12px;border:1px solid #dbece1;background:#f5fbf7;color:#516a5b;font-size:10px;line-height:1.6}
+.rents-mobile-theme .rents-heading{align-items:flex-start}
+.rents-mobile-theme .rent-stat{padding:8px 7px;box-shadow:none}
+.rents-mobile-theme .rent-stat-icon{width:30px;height:30px;flex-basis:30px;border-radius:10px;font-size:14px}
+.rents-mobile-theme .rent-stat strong{font-size:13px}
+.rents-mobile-theme .rent-form-panel,.rents-mobile-theme .rent-list-panel{border-radius:18px;box-shadow:0 3px 12px rgba(20,45,34,.035)}
+.rents-mobile-theme .rent-card{border-radius:17px;box-shadow:0 3px 12px rgba(20,45,34,.03)}
+.rents-mobile-theme .rent-card-actions .btn,.rents-mobile-theme .rent-card-actions a{min-height:44px}
+.rents-classic-theme .rent-card{border-radius:10px;box-shadow:none}
+@media(max-width:600px){
+ .rents-page .rents-heading{display:block}
+ .rents-page .rents-head-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}
+ .rents-page .rents-head-actions .btn{justify-content:center;padding-inline:7px;font-size:11px}
+ .rents-page .rent-stats{gap:6px}
+ .rents-page .rent-stat{display:block;text-align:center;padding:8px 5px}
+ .rents-page .rent-stat-icon{margin:0 auto 5px;width:29px;height:29px}
+ .rents-page .rent-stat small{font-size:8px}
+ .rents-page .rent-stat strong{font-size:12px;overflow-wrap:anywhere}
+ .rents-page .rent-form-panel,.rents-page .rent-list-panel{padding:11px}
+ .rents-page .rent-filter-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .rents-page .rent-filter-form .btn{grid-column:1/-1;min-height:42px}
+ .rents-page .rent-details{gap:5px}
+ .rents-page .rent-detail{padding:7px 5px}
+ .rents-page .rent-detail small{font-size:8px}
+ .rents-page .rent-detail strong{font-size:9px}
+ .rents-page .rent-card-top{gap:6px}
+ .rents-page .rent-status{font-size:8px;padding:5px 7px}
+ .rents-page .rent-amount-bar strong{font-size:16px}
+}
+@media(max-width:360px){
+ .rents-page .rent-filter-form{grid-template-columns:minmax(0,1fr)}
+ .rents-page .rent-details{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .rents-page .rent-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .rents-page .rent-card-actions form{grid-column:1/-1}
+ .rents-page .rent-card-actions a{padding-inline:5px}
+}
+</style>
 
-<div class="card-soft mb-4">
-<form method="post" id="rent-post-form" class="row g-3">
-<div class="col-12"><div class="form-section-title">إثبات إيجار شهر</div><small class="text-muted">القيمة = الأساسي - الخصم + الإضافة. لا يمكن أن يصبح الصافي صفرًا أو سالبًا.</small></div>
-<div class="col-12 col-lg-5"><label class="form-label">العقد</label><select id="rent-lease" class="form-select form-select-lg" {% if not leases %}disabled{% endif %}><option value="">اختر العقد</option>{% for l in leases %}<option value="{{l.id}}" data-agent="{{l.agent_id}}" data-amount="{{l.monthly_amount}}" {% if selected_lease_id == l.id %}selected{% endif %}>{{l.agent.name}} — {{l.name}} — {{'{:,.2f}'.format(l.monthly_amount)}} {{currency}}</option>{% endfor %}</select></div>
-<div class="col-6 col-lg-2"><label class="form-label">الشهر</label><input id="rent-month" type="month" class="form-control" value="{{current_month}}" {% if not leases %}disabled{% endif %}></div>
-<div class="col-6 col-lg-2"><label class="form-label">الأساسي</label><input id="rent-base" class="form-control" inputmode="decimal" {% if not leases %}disabled{% endif %}></div>
-<div class="col-6 col-lg-1"><label class="form-label">خصم</label><input id="rent-discount" class="form-control" value="0" inputmode="decimal" {% if not leases %}disabled{% endif %}></div>
-<div class="col-6 col-lg-1"><label class="form-label">إضافة</label><input id="rent-addition" class="form-control" value="0" inputmode="decimal" {% if not leases %}disabled{% endif %}></div>
-<div class="col-12 col-lg-1"><label class="form-label">الصافي</label><input id="rent-total" class="form-control fw-bold" readonly></div>
-<div class="col-12">{% if leases %}<button id="rent-submit" class="btn btn-primary btn-lg w-100" type="button">إثبات الإيجار</button>{% else %}<div class="empty-state compact">لا توجد عقود نشطة. أنشئ عقدًا من شاشة العقود أولًا.</div>{% endif %}</div>
-</form>
+<div class="rents-heading">
+  <div><span class="rents-eyebrow">إدارة العقود والاستحقاقات</span><h1>الاستحقاقات والتحصيل</h1><p>تابع الاستحقاقات السابقة، واعرف ما سُدّد وما بقي دون أن تتغير القيود المسجلة.</p></div>
+  <div class="rents-head-actions">
+    <a class="btn btn-light" href="{{url_for('operations.leases')}}"><i class="bi bi-file-earmark-text"></i> العقود</a>
+    {% if can("leases.manage") %}<button class="btn btn-primary" type="button" data-rent-form-toggle aria-controls="rent-form-panel" aria-expanded="{{'true' if form_open else 'false'}}"><i class="bi bi-plus-circle"></i> استحقاق جديد</button>{% endif %}
+  </div>
 </div>
 
-<div class="card-soft">
-<div class="section-title"><div><h3>سجل الاستحقاقات</h3><small class="text-muted">{{rows|length}} استحقاق</small></div></div>
-<div class="entity-list">
-{% for r in rows %}<div class="entity-row"><div class="entity-main"><div class="entity-icon"><i class="bi bi-cash-stack"></i></div><div><strong>{{r.agent.name}}</strong><div class="entity-meta"><span>{{r.rent_month.strftime('%Y-%m')}}</span><span>أساسي {{'{:,.2f}'.format(r.base_amount or r.amount)}}</span><span>خصم {{'{:,.2f}'.format(r.discount or 0)}}</span><span>إضافة {{'{:,.2f}'.format(r.addition or 0)}}</span></div></div></div><div class="entity-balance"><strong>{{'{:,.2f}'.format(r.amount)}} {{currency}}</strong><div><span class="status-dot {{'on' if r.status=='paid' else 'off'}}"></span>{{'مسدد' if r.status=='paid' else 'غير مسدد'}}</div></div><div class="more-menu"><details><summary><i class="bi bi-three-dots-vertical"></i></summary><div class="more-pop">{% if r.status!='paid' %}<form method="post" action="{{url_for('operations.pay_rent_route',rent_id=r.id)}}"><button><i class="bi bi-check2-circle"></i> تحصيل الآن</button></form>{% endif %}{% if r.journal_entry_id %}<a href="{{url_for('accounting.journal_detail',entry_id=r.journal_entry_id)}}">قيد الاستحقاق</a>{% endif %}</div></details></div></div>{% else %}<div class="empty-state"><i class="bi bi-cash"></i><strong>لا توجد استحقاقات</strong><span>أثبت أول شهر من عقود الوكلاء.</span></div>{% endfor %}
-</div>
+<section class="rent-stats" aria-label="ملخص الاستحقاقات">
+  <div class="rent-stat"><div class="rent-stat-icon"><i class="bi bi-hourglass-split"></i></div><div><small>غير مسدد</small><strong>{{unpaid_count}}</strong></div></div>
+  <div class="rent-stat"><div class="rent-stat-icon"><i class="bi bi-cash-stack"></i></div><div><small>إجمالي المبالغ المتبقية</small><strong>{{'{:,.2f}'.format(unpaid_amount)}} <small>{{currency}}</small></strong></div></div>
+  <div class="rent-stat"><div class="rent-stat-icon"><i class="bi bi-check2-circle"></i></div><div><small>استحقاقات مسددة</small><strong>{{paid_count}}</strong></div></div>
+</section>
+
+{% if can("leases.manage") %}
+<section class="rent-form-panel {% if form_open %}is-open{% endif %}" id="rent-form-panel">
+  <div class="rent-form-head"><div><h2>إثبات استحقاق الإيجار</h2><p>يُنشأ قيد الاستحقاق مرة واحدة لكل وكيل في الشهر؛ تعديل المبلغ يؤثر في القيد الجديد فقط.</p></div><button class="icon-button" type="button" data-rent-form-close aria-label="إغلاق"><i class="bi bi-x-lg"></i></button></div>
+  {% if leases %}
+  <div class="rent-theme-notice"><i class="bi bi-shield-check"></i><span>الإثبات لا يكرر استحقاقًا موجودًا. إيقاف العقد لا يحذف الاستحقاقات السابقة ولا يغيّر قيودها.</span></div>
+  <form id="rent-post-form" class="row g-2" method="post">
+    <div class="col-12"><label class="form-label" for="rent-lease">العقد</label><select id="rent-lease" class="form-select" required><option value="">اختر العقد النشط</option>{% for l in leases %}<option value="{{l.id}}" data-agent="{{l.agent_id}}" data-amount="{{l.monthly_amount}}" {% if selected_lease_id == l.id %}selected{% endif %}>{{l.agent.name}} — {{l.name}} — {{'{:,.2f}'.format(l.monthly_amount)}} {{currency}}</option>{% endfor %}</select></div>
+    <div class="col-6 col-md-4"><label class="form-label" for="rent-month">الشهر</label><input id="rent-month" type="month" class="form-control" value="{{current_month}}" required></div>
+    <div class="col-6 col-md-4"><label class="form-label" for="rent-base">المبلغ الأساسي</label><input id="rent-base" class="form-control" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0.00" required></div>
+    <div class="col-6 col-md-4"><label class="form-label" for="rent-discount">الخصم</label><input id="rent-discount" class="form-control" type="number" min="0" step="0.01" value="0" inputmode="decimal"></div>
+    <div class="col-6 col-md-4"><label class="form-label" for="rent-addition">الإضافة</label><input id="rent-addition" class="form-control" type="number" min="0" step="0.01" value="0" inputmode="decimal"></div>
+    <div class="col-12 col-md-4"><div class="rent-total-wrap"><small>صافي الاستحقاق</small><strong id="rent-total">{{currency}} 0.00</strong></div></div>
+    <div class="col-12 col-md-4 d-flex align-items-end"><button id="rent-submit" class="btn btn-primary rent-form-submit w-100" type="button"><i class="bi bi-check2-circle"></i> إثبات الإيجار</button></div>
+  </form>
+  {% else %}<div class="rent-empty"><i class="bi bi-file-earmark-plus"></i><strong>لا توجد عقود نشطة</strong><p>أنشئ أو جدّد عقدًا أولًا لبدء تسجيل الاستحقاقات الجديدة.</p></div>{% endif %}
+</section>
+{% endif %}
+
+<section class="rent-list-panel">
+  <div class="rent-list-head"><div><h2>سجل الاستحقاقات</h2><p>{% if selected_status=='unpaid' %}عرض الاستحقاقات غير المسددة{% elif selected_status=='paid' %}عرض الاستحقاقات المسددة{% else %}عرض جميع الاستحقاقات{% endif %} · {{rows|length}} سجل</p></div><span class="badge rounded-pill text-bg-light">{{rows|length}}</span></div>
+  <form class="rent-filter-form" method="get" action="{{url_for('operations.rents')}}">
+    <select class="form-select" name="lease_id" aria-label="تصفية حسب العقد"><option value="">كل العقود</option>{% for l in lease_filters %}<option value="{{l.id}}" {% if selected_lease_id==l.id %}selected{% endif %}>{{l.agent.name}} · {{l.name}}{% if not l.active %} (موقوف){% endif %}</option>{% endfor %}</select>
+    <select class="form-select" name="status" aria-label="تصفية حسب السداد"><option value="all" {% if selected_status=='all' %}selected{% endif %}>كل الحالات</option><option value="unpaid" {% if selected_status=='unpaid' %}selected{% endif %}>غير مسدد فقط</option><option value="paid" {% if selected_status=='paid' %}selected{% endif %}>مسدد فقط</option></select>
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel"></i> تطبيق التصفية</button>
+  </form>
+  <div class="rent-search"><i class="bi bi-search"></i><input id="rent-search" class="form-control" type="search" placeholder="ابحث باسم الوكيل أو العقد أو الشهر..." autocomplete="off"></div>
+  <div class="rent-cards" id="rent-cards">
+  {% for r in rows %}
+    <article class="rent-card" data-rent-card data-status="{{'paid' if r.status=='paid' else 'unpaid'}}" data-search="{{r.agent.name}} {{r.lease.name}} {{r.rent_month.strftime('%Y-%m')}} {{r.id}}">
+      <div class="rent-card-top">
+        <div class="rent-identity"><div class="rent-icon"><i class="bi bi-receipt-cutoff"></i></div><div class="rent-identity-copy"><span class="rent-contract">استحقاق #{{'%04d'|format(r.id)}} · {{r.lease.name}}</span><h3>{{r.agent.name}}</h3><p>{{r.rent_month.strftime('%Y-%m')}}{% if r.lease.due_day %} · يوم الاستحقاق {{r.lease.due_day}}{% endif %}</p></div></div>
+        <span class="rent-status {{'paid' if r.status=='paid' else 'unpaid'}}">{{'مسدد' if r.status=='paid' else 'غير مسدد'}}</span>
+      </div>
+      <div class="rent-amount-bar"><span><i class="bi bi-cash-coin"></i> صافي الاستحقاق</span><strong>{{'{:,.2f}'.format(r.amount)}} <small>{{currency}}</small></strong></div>
+      <div class="rent-details">
+        <div class="rent-detail"><small>الأساسي</small><strong>{{'{:,.2f}'.format(r.base_amount or r.amount)}}</strong></div>
+        <div class="rent-detail"><small>الخصم</small><strong>{{'{:,.2f}'.format(r.discount or 0)}}</strong></div>
+        <div class="rent-detail"><small>الإضافة</small><strong>{{'{:,.2f}'.format(r.addition or 0)}}</strong></div>
+      </div>
+      <div class="rent-card-actions">
+        {% if r.status!='paid' and can("leases.pay") %}<form method="post" action="{{url_for('operations.pay_rent_route',rent_id=r.id)}}" onsubmit="return confirm('تأكيد تحصيل مبلغ {{'{:,.2f}'.format(r.amount)}} {{currency}} عن {{r.rent_month.strftime('%Y-%m')}}؟')"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle"></i> تحصيل الآن</button></form>{% endif %}
+        {% if r.journal_entry_id %}<a href="{{url_for('accounting.journal_detail',entry_id=r.journal_entry_id)}}"><i class="bi bi-journal-text"></i> قيد الاستحقاق</a>{% endif %}
+        {% if r.payment_journal_id %}<a href="{{url_for('accounting.journal_detail',entry_id=r.payment_journal_id)}}"><i class="bi bi-journal-check"></i> قيد التحصيل</a>{% endif %}
+      </div>
+    </article>
+  {% else %}
+    <div class="rent-empty"><i class="bi bi-cash-stack"></i><strong>لا توجد استحقاقات مطابقة</strong><p>{% if selected_status=='unpaid' %}لا توجد مبالغ غير مسددة ضمن التصفية الحالية.{% else %}عند إثبات إيجار شهر من عقد نشط سيظهر السجل هنا.{% endif %}</p></div>
+  {% endfor %}
+  </div>
+  <div id="rent-search-empty" class="rent-empty mt-2" hidden><strong>لا توجد نتائج مطابقة</strong><p>غيّر عبارة البحث أو أزل التصفية.</p></div>
+</section>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-const rl=document.getElementById('rent-lease'),rb=document.getElementById('rent-base'),rd=document.getElementById('rent-discount'),ri=document.getElementById('rent-addition'),rt=document.getElementById('rent-total');
-function syncRent(){const o=rl?.selectedOptions[0];if(o){rb.value=o.dataset.amount||''}const b=parseFloat(rb?.value)||0,d=parseFloat(rd?.value)||0,a=parseFloat(ri?.value)||0;if(rt)rt.value=(b-d+a).toFixed(2);}
-rl?.addEventListener('change',syncRent);[rb,rd,ri].forEach(x=>x?.addEventListener('input',syncRent));syncRent();
-document.getElementById('rent-submit')?.addEventListener('click',()=>{const lease=rl.value,month=document.getElementById('rent-month').value;if(!lease||!month){alert('اختر العقد والشهر');return;}const f=document.createElement('form');f.method='post';f.action='/operations/leases/'+lease+'/charge';[['rent_month',month],['base_amount',rb.value],['discount',rd.value||0],['addition',ri.value||0]].forEach(([n,v])=>{const i=document.createElement('input');i.type='hidden';i.name=n;i.value=v;f.appendChild(i)});document.body.appendChild(f);f.submit();});
+(() => {
+  const formPanel=document.getElementById('rent-form-panel');
+  const toggle=document.querySelector('[data-rent-form-toggle]');
+  const close=document.querySelector('[data-rent-form-close]');
+  function setFormOpen(open){
+    if(!formPanel)return;
+    formPanel.classList.toggle('is-open',open);
+    toggle?.setAttribute('aria-expanded',open?'true':'false');
+    if(open){formPanel.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('rent-lease')?.focus({preventScroll:true}),160);}
+  }
+  toggle?.addEventListener('click',()=>setFormOpen(!formPanel?.classList.contains('is-open')));
+  close?.addEventListener('click',()=>setFormOpen(false));
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')setFormOpen(false);});
+
+  const lease=document.getElementById('rent-lease');
+  const base=document.getElementById('rent-base');
+  const discount=document.getElementById('rent-discount');
+  const addition=document.getElementById('rent-addition');
+  const total=document.getElementById('rent-total');
+  function syncRent(){
+    const option=lease?.selectedOptions[0];
+    if(option&&option.value&&base&&(!base.dataset.userEdited||base.value===''))base.value=option.dataset.amount||'';
+    const b=Number(base?.value||0),d=Number(discount?.value||0),a=Number(addition?.value||0);
+    const net=b-d+a;
+    if(total)total.textContent=net.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' {{currency}}';
+    const submit=document.getElementById('rent-submit');
+    if(submit)submit.disabled=!(lease?.value&&document.getElementById('rent-month')?.value&&b>0&&d>=0&&a>=0&&d<=b&&net>0);
+  }
+  base?.addEventListener('input',()=>{base.dataset.userEdited='1';syncRent();});
+  lease?.addEventListener('change',()=>{if(base)delete base.dataset.userEdited;if(base)base.value=lease.selectedOptions[0]?.dataset.amount||'';syncRent();});
+  [discount,addition,document.getElementById('rent-month')].forEach(field=>field?.addEventListener('input',syncRent));
+  syncRent();
+  document.getElementById('rent-submit')?.addEventListener('click',()=>{
+    const leaseId=lease?.value,month=document.getElementById('rent-month')?.value;
+    const b=Number(base?.value||0),d=Number(discount?.value||0),a=Number(addition?.value||0);
+    if(!leaseId||!month){alert('اختر العقد والشهر أولًا.');return;}
+    if(!(b>0&&d>=0&&a>=0&&d<=b&&b-d+a>0)){alert('تحقق من الأساسي والخصم والإضافة؛ يجب أن يكون الصافي أكبر من صفر.');return;}
+    const target=document.createElement('form');target.method='post';target.action='/operations/leases/'+encodeURIComponent(leaseId)+'/charge';
+    [['rent_month',month],['base_amount',base.value],['discount',discount.value||0],['addition',addition.value||0]].forEach(([key,value])=>{const input=document.createElement('input');input.type='hidden';input.name=key;input.value=value;target.appendChild(input);});
+    document.body.appendChild(target);target.submit();
+  });
+  const search=document.getElementById('rent-search');
+  const rentCards=[...document.querySelectorAll('[data-rent-card]')];
+  const noMatches=document.getElementById('rent-search-empty');
+  function applySearch(){
+    const q=(search?.value||'').trim().toLocaleLowerCase();
+    let count=0;
+    rentCards.forEach(card=>{const show=(card.dataset.search||'').toLocaleLowerCase().includes(q);card.hidden=!show;if(show)count++;});
+    if(noMatches)noMatches.hidden=count>0||rentCards.length===0;
+  }
+  search?.addEventListener('input',applySearch);
+  {% if form_open %}setFormOpen(true);{% endif %}
+})();
 </script>
 {% endblock %}

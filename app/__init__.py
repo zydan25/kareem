@@ -72,6 +72,8 @@ def create_app(config_class=Config):
             brand_color="#0b6e4f"
         admin_theme=_read_setting("admin_theme","classic")
         if admin_theme not in {"classic","water","water_project"}: admin_theme="classic"
+        rental_ui_theme=_read_setting("rental_ui_theme","mobile")
+        if rental_ui_theme not in {"classic","mobile"}: rental_ui_theme="mobile"
         font_size=_read_setting("font_size","100")
         if font_size not in {"100","110","120","130"}: font_size="100"
         collector_font_size=_read_setting("collector_font_size","120")
@@ -86,6 +88,7 @@ def create_app(config_class=Config):
             "brand_icon_enabled":_read_setting("brand_icon_enabled","1") == "1",
             "brand_version":_read_setting("brand_version","1"),
             "admin_theme":admin_theme,
+            "rental_ui_theme":rental_ui_theme,
             "ui_font_scale":str(float(font_size)/100),
             "collector_font_scale":str(float(collector_font_size)/100),
             "can":can,

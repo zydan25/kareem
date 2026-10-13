@@ -129,7 +129,11 @@ def approve_settlement(settlement, approver_id):
     return entry
 
 def charge_rent(*, lease, rent_month, user_id, discount=0, addition=0, base_amount=None):
+    if not lease:
+        raise ValueError("عقد الإيجار غير موجود")
     rent_month=rent_month.replace(day=1)
+    if not lease.active and rent_month>=date.today().replace(day=1):
+        raise ValueError("العقد موقوف؛ لا يمكن إنشاء استحقاق جديد للشهر الحالي أو الأشهر القادمة.")
     if rent_month<lease.starts_on.replace(day=1): raise ValueError("شهر الإيجار قبل بداية العقد")
     if lease.ends_on and rent_month>lease.ends_on.replace(day=1): raise ValueError("شهر الإيجار بعد نهاية العقد")
     if db.session.query(AgentRent).filter_by(agent_id=lease.agent_id,rent_month=rent_month).first(): raise ValueError("تم إنشاء إيجار هذا الشهر مسبقًا")
