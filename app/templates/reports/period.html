@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}التقرير {{kind}} - {{app_name}}{% endblock %}
 {% block content %}
-<div class="page-head print-hide"><div><span class="eyebrow">التقارير</span><h1>التقرير {{kind}}</h1><p>الفترة من {{start}} إلى {{end}}.</p></div><button class="btn btn-outline-primary" onclick="window.print()">طباعة</button></div>
+<div class="page-head print-hide"><div><span class="eyebrow">التقارير</span><h1>التقرير {{kind}}</h1><p>الفترة من {{start}} إلى {{end}}.</p></div>{% if can("reports.export") %}<button class="btn btn-outline-primary" onclick="window.print()">طباعة</button>{% endif}</div>
 <div class="card-soft print-hide mb-4"><form class="row g-2">
 <div class="col-6 col-lg-4"><input type="date" name="start" value="{{start}}" class="form-control"></div><div class="col-6 col-lg-4"><input type="date" name="end" value="{{end}}" class="form-control"></div>
 <div class="col-12 col-lg-4"><button class="btn btn-primary w-100">تطبيق الفترة</button></div></form></div>
