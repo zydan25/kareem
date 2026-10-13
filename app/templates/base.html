@@ -91,7 +91,7 @@
 
     {% if can("accounting.view") or can("vouchers.view") or can("expenses.view") %}
     <details class="nav-tree" {% if request.path.startswith('/accounting/') or request.path.startswith('/operations/vouchers') or request.path.startswith('/operations/manual-journal') or request.path.startswith('/operations/expenses') %}open{% endif %}>
-      <summary><i class="bi bi-calculator-fill"></i><span>الحسابات</span><b class="nav-count">7</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
+      <summary><i class="bi bi-calculator-fill"></i><span>الحسابات</span><b class="nav-count">8</b><i class="nav-chevron bi bi-chevron-down"></i></summary>
       <div class="nav-children">
         {% if can("accounting.view") %}<a class="{% if request.path.startswith('/accounting/accounts') %}active{% endif %}" href="{{url_for('accounting.accounts')}}"><i class="bi bi-diagram-3"></i><span>شجرة الحسابات</span></a>{% endif %}
         {% if can("accounting.view") %}<a class="{% if request.path == url_for('accounting.journal') %}active{% endif %}" href="{{url_for('accounting.journal')}}"><i class="bi bi-journal-text"></i><span>اليوميات</span></a>{% endif %}
