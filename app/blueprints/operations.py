@@ -205,7 +205,7 @@ def expenses():
     return render_template("operations/expenses.html",rows=rows,expense_accounts=expense_accounts,cash_accounts=cash_accounts,
                            default_expense=default_expense,default_cash=default_cash,
                            expense_account_ids=expense_account_ids,cash_account_ids=cash_account_ids,
-                           account_options=_account_picker())
+                           account_options=_account_picker(),show_add_form=(request.method=="POST"))
 
 @bp.get("/expenses/<int:expense_id>")
 @permission_required("expenses.view")
