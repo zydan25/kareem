@@ -7,7 +7,15 @@
   <div class="col-12 col-md-3"><label class="form-label">اسم المستخدم</label><input name="username" class="form-control" value="{{user.username}}" required></div>
   <div class="col-12 col-md-4"><label class="form-label">الاسم الكامل</label><input name="full_name" class="form-control" value="{{user.full_name}}" required></div>
   <div class="col-12 col-md-2"><label class="form-label">الهاتف</label><input name="phone" class="form-control" value="{{user.phone or ''}}" inputmode="tel"></div>
-  <div class="col-12 col-md-3"><label class="form-label">الدور</label><select name="role" class="form-select">{% for r in roles %}<option value="{{r}}" {% if r==user.role %}selected{% endif %}>{{role_labels.get(r,r)}}</option>{% endfor %}</select></div>
+  <div class="col-12 col-md-3"><label class="form-label">الدور</label>
+    {% if current_user.id==user.id %}
+      <input type="hidden" name="role" value="{{user.role}}">
+      <select class="form-select" disabled aria-label="الدور الحالي غير قابل للتغيير من الحساب نفسه"><option selected>{{role_labels.get(user.role,user.role)}}</option></select>
+      <small class="text-muted d-block mt-1">لا يمكن تغيير دور الحساب الحالي من هذه الصفحة.</small>
+    {% else %}
+      <select name="role" class="form-select" required>{% for r in roles %}<option value="{{r}}" {% if r==user.role %}selected{% endif %}>{{role_labels.get(r,r)}}</option>{% endfor %}</select>
+    {% endif %}
+  </div>
   <div class="col-12 col-md-6"><label class="form-label">الموظف المرتبط</label><select name="employee_id" class="form-select"><option value="">بدون ربط</option>{% for e in employees %}<option value="{{e.id}}" {% if e.id==user.employee_id %}selected{% endif %}>{{e.code}} — {{e.full_name}}</option>{% endfor %}</select></div>
   <div class="col-12 col-md-6"><label class="form-label">كلمة مرور جديدة</label><input name="password" type="password" class="form-control" autocomplete="new-password" placeholder="اتركها فارغة لعدم التغيير"></div>
   <div class="col-12 d-flex gap-2 flex-wrap"><button class="btn btn-primary">حفظ التعديلات</button>{% if can("permissions.manage") %}<a class="btn btn-outline-primary" href="{{url_for('admin.permissions',user_id=user.id)}}"><i class="bi bi-shield-check"></i> إدارة الصلاحيات</a>{% endif %}<a class="btn btn-light" href="{{url_for('admin.users')}}">رجوع</a></div>
