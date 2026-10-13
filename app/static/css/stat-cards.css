@@ -1,0 +1,263 @@
+/* Shared, responsive statistics-card component.
+   Existing dashboard/report/finance templates keep their data and markup;
+   this stylesheet provides one consistent visual system for every .stat-card. */
+
+.stat-grid {
+  align-items: stretch;
+  gap: 12px;
+}
+
+.stat-card,
+body.theme-water-pos .stat-card,
+body.theme-water-project .stat-card {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 98px;
+  padding: 15px 16px 13px;
+  overflow: hidden;
+  border-radius: 17px;
+  box-shadow: 0 4px 13px rgba(24, 42, 68, .045);
+  transition: box-shadow .16s ease, transform .16s ease;
+}
+
+.stat-card:not(.primary),
+body.theme-water-pos .stat-card:not(.primary),
+body.theme-water-project .stat-card:not(.primary) {
+  border: 1px solid #e2e8f0;
+  border-inline-start: 3px solid var(--primary, #1d55d8);
+  background: linear-gradient(180deg, #fff 0%, #fbfcfe 100%);
+}
+
+.stat-card:not(.primary)::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 15px;
+  width: 34px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--primary, #1d55d8);
+  opacity: .68;
+  pointer-events: none;
+}
+
+.stat-card::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-block-start: -34px;
+  inset-inline-end: -27px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(72, 104, 153, .045);
+  pointer-events: none;
+}
+
+.stat-card.primary,
+body.theme-water-pos .stat-card.primary,
+body.theme-water-project .stat-card.primary {
+  border: 0;
+  box-shadow: 0 7px 18px rgba(24, 75, 138, .12);
+}
+
+.stat-card.primary::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 15px;
+  width: 34px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: rgba(255, 255, 255, .72);
+  pointer-events: none;
+}
+
+.stat-card.primary::after {
+  background: rgba(255, 255, 255, .085);
+}
+
+.stat-card span,
+body.theme-water-pos .stat-card span,
+body.theme-water-project .stat-card span {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 100%;
+  color: var(--muted, #718084);
+  font-size: var(--type-small, 12px);
+  font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.stat-card strong,
+body.theme-water-pos .stat-card strong,
+body.theme-water-project .stat-card strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 100%;
+  margin: 6px 0 2px;
+  font-size: calc(var(--type-stat-value, 20px) * 1.08);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -.2px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.stat-card small,
+body.theme-water-pos .stat-card small,
+body.theme-water-project .stat-card small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 100%;
+  color: var(--muted, #718084);
+  font-size: var(--type-label, 11px);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.stat-card.primary span,
+.stat-card.primary small,
+body.theme-water-pos .stat-card.primary span,
+body.theme-water-pos .stat-card.primary small,
+body.theme-water-project .stat-card.primary span,
+body.theme-water-project .stat-card.primary small {
+  color: rgba(255, 255, 255, .86);
+}
+
+body.theme-water-project .stat-card:not(.primary) {
+  border-color: #e2e8f0;
+  background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
+}
+
+body.theme-water-project .stat-card.primary {
+  box-shadow: 0 7px 18px rgba(29, 85, 216, .14);
+}
+
+body.theme-water-pos .stat-card.primary {
+  box-shadow: 0 7px 18px rgba(22, 131, 84, .14);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(24, 42, 68, .09);
+  }
+  .stat-card.primary:hover,
+  body.theme-water-pos .stat-card.primary:hover,
+  body.theme-water-project .stat-card.primary:hover {
+    box-shadow: 0 10px 24px rgba(24, 75, 138, .17);
+  }
+}
+
+@media (max-width: 1100px) {
+  .stat-grid,
+  body.theme-water-pos .stat-grid,
+  body.theme-water-project .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+}
+
+@media (max-width: 600px) {
+  .stat-grid,
+  body.theme-water-pos .stat-grid,
+  body.theme-water-project .stat-grid {
+    gap: 8px;
+  }
+
+  .stat-card,
+  body.theme-water-pos .stat-card,
+  body.theme-water-project .stat-card {
+    min-height: 83px;
+    padding: 10px 11px 9px;
+    border-radius: 14px;
+    box-shadow: 0 3px 10px rgba(24, 42, 68, .04);
+  }
+
+  .stat-card span,
+  body.theme-water-pos .stat-card span,
+  body.theme-water-project .stat-card span {
+    font-size: var(--type-small, 12px);
+    line-height: 1.35;
+  }
+
+  .stat-card strong,
+  body.theme-water-pos .stat-card strong,
+  body.theme-water-project .stat-card strong {
+    margin: 4px 0 1px;
+    font-size: calc(var(--type-stat-value, 20px) * .9);
+    line-height: 1.18;
+  }
+
+  .stat-card small,
+  body.theme-water-pos .stat-card small,
+  body.theme-water-project .stat-card small {
+    font-size: var(--type-help, 10px);
+    line-height: 1.35;
+  }
+
+  .stat-card:not(.primary)::before,
+  .stat-card.primary::before {
+    inset-inline-start: 11px;
+    width: 27px;
+  }
+
+  .stat-card::after {
+    width: 62px;
+    height: 62px;
+    inset-block-start: -29px;
+    inset-inline-end: -23px;
+  }
+}
+
+@media (max-width: 360px) {
+  .stat-grid,
+  body.theme-water-pos .stat-grid,
+  body.theme-water-project .stat-grid {
+    gap: 7px;
+  }
+
+  .stat-card,
+  body.theme-water-pos .stat-card,
+  body.theme-water-project .stat-card {
+    min-height: 78px;
+    padding: 9px 9px 8px;
+    border-radius: 12px;
+  }
+
+  .stat-card strong,
+  body.theme-water-pos .stat-card strong,
+  body.theme-water-project .stat-card strong {
+    font-size: calc(var(--type-stat-value, 20px) * .82);
+  }
+
+  .stat-card small,
+  body.theme-water-pos .stat-card small,
+  body.theme-water-project .stat-card small {
+    font-size: var(--type-help, 10px);
+  }
+}
+
+@media print {
+  .stat-card,
+  body.theme-water-pos .stat-card,
+  body.theme-water-project .stat-card {
+    min-height: 0;
+    border: 1px solid #ddd !important;
+    border-radius: 8px;
+    box-shadow: none !important;
+    transform: none !important;
+    break-inside: avoid;
+  }
+
+  .stat-card::before,
+  .stat-card::after {
+    display: none !important;
+  }
+}
