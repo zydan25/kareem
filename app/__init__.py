@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, render_template, request
 from config import Config
 from .extensions import db, migrate, login_manager
 from .permissions import can
@@ -46,6 +46,10 @@ def create_app(config_class=Config):
     for blueprint in (auth_bp,dashboard_bp,collector_bp,master_data_bp,accounting_bp,operations_bp,
                       admin_bp,reports_bp,settings_bp):
         app.register_blueprint(blueprint)
+
+    @app.errorhandler(403)
+    def handle_forbidden(error):
+        return render_template("errors/403.html", attempted_path=request.path), 403
 
     @app.after_request
     def disable_browser_cache(response):

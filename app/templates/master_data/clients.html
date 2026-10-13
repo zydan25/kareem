@@ -49,7 +49,8 @@
   <div class="party-result-bar"><strong>قائمة العملاء</strong><span>{{clients|length}} نتيجة</span></div>
   <div class="party-card-grid">
     {% for c in clients %}
-    <article class="party-card" data-card-href="{{url_for('master_data.client_detail',client_id=c.id)}}" role="link" tabindex="0" aria-label="فتح ملف العميل {{c.name}}">
+    <article class="party-card">
+      <a class="party-card-main-link" href="{{url_for('master_data.client_detail',client_id=c.id)}}" aria-label="فتح ملف العميل {{c.name}}">
       <div class="party-card-head">
         <div class="party-avatar"><i class="bi bi-person-vcard-fill"></i></div>
         <div class="party-title"><strong>{{c.name}}</strong><small>{{c.code}}</small></div>
@@ -60,6 +61,7 @@
         <div><span><i class="bi bi-truck"></i> المركبات</span><strong>{{c.vehicles|length}}</strong></div>
         <div class="party-fact-wide"><span><i class="bi bi-geo-alt"></i> العنوان</span><strong>{{c.address or 'غير مسجل'}}</strong></div>
       </div>
+      </a>
       <div class="party-card-foot">
         <span class="party-account-label"><i class="bi bi-wallet2"></i>{{c.account.name if c.account else 'الحساب التلقائي'}}</span>
         <div class="party-card-actions">
@@ -93,9 +95,5 @@ builder?.addEventListener('change',e=>{if(e.target.classList.contains('vehicle-s
 builder?.querySelectorAll('.client-vehicle-row').forEach(setVehicleRequirement);
 function initClientVehicleSearchSelects(root=document){root.querySelectorAll?.('select[data-searchable-select]').forEach(x=>window.initSearchableSelect?.(x));}
 initClientVehicleSearchSelects();
-document.querySelectorAll('[data-card-href]').forEach(card=>{
- card.addEventListener('click',e=>{if(e.target.closest('a,button,form,input,select,textarea,details,summary'))return;window.location.href=card.dataset.cardHref;});
- card.addEventListener('keydown',e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();window.location.href=card.dataset.cardHref;}});
-});
 </script>
 {% endblock %}

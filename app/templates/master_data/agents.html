@@ -29,7 +29,8 @@
   <div class="party-result-bar"><strong>قائمة الوكلاء</strong><span>{{agents|length}} نتيجة</span></div>
   <div class="party-card-grid">
     {% for a in agents %}
-    <article class="party-card" data-card-href="{{url_for('master_data.agent_detail',agent_id=a.id)}}" role="link" tabindex="0" aria-label="فتح ملف الوكيل {{a.name}}">
+    <article class="party-card">
+      <a class="party-card-main-link" href="{{url_for('master_data.agent_detail',agent_id=a.id)}}" aria-label="فتح ملف الوكيل {{a.name}}">
       <div class="party-card-head">
         <div class="party-avatar agent-avatar"><i class="bi bi-briefcase-fill"></i></div>
         <div class="party-title"><strong>{{a.name}}</strong><small>{{a.code}}</small></div>
@@ -40,6 +41,7 @@
         <div><span><i class="bi bi-truck"></i> المركبات</span><strong>{{agent_vehicle_counts.get(a.id,0)}}</strong></div>
         <div class="party-fact-wide"><span><i class="bi bi-wallet2"></i> الحساب</span><strong>{{a.account.name if a.account else 'الحساب التلقائي'}}</strong></div>
       </div>
+      </a>
       <div class="party-card-foot">
         <span class="party-account-label"><i class="bi bi-building"></i>العقود والإيجارات</span>
         <div class="party-card-actions">
@@ -57,9 +59,5 @@
 {% endblock %}
 {% block scripts %}
 <script>
-document.querySelectorAll('[data-card-href]').forEach(card=>{
- card.addEventListener('click',e=>{if(e.target.closest('a,button,form,input,select,textarea,details,summary'))return;window.location.href=card.dataset.cardHref;});
- card.addEventListener('keydown',e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();window.location.href=card.dataset.cardHref;}});
-});
 </script>
 {% endblock %}
