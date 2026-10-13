@@ -29,8 +29,7 @@
   <div class="party-result-bar"><strong>قائمة الوكلاء</strong><span>{{agents|length}} نتيجة</span></div>
   <div class="party-card-grid">
     {% for a in agents %}
-    <article class="party-card">
-      <a class="party-card-main-link" href="{{url_for('master_data.agent_detail',agent_id=a.id)}}" aria-label="فتح ملف الوكيل {{a.name}}">
+    <article class="party-card" data-card-href="{{url_for('master_data.agent_detail',agent_id=a.id)}}" role="link" tabindex="0" aria-label="فتح ملف الوكيل {{a.name}}">
       <div class="party-card-head">
         <div class="party-avatar agent-avatar"><i class="bi bi-briefcase-fill"></i></div>
         <div class="party-title"><strong>{{a.name}}</strong><small>{{a.code}}</small></div>
@@ -41,14 +40,13 @@
         <div><span><i class="bi bi-truck"></i> المركبات</span><strong>{{agent_vehicle_counts.get(a.id,0)}}</strong></div>
         <div class="party-fact-wide"><span><i class="bi bi-wallet2"></i> الحساب</span><strong>{{a.account.name if a.account else 'الحساب التلقائي'}}</strong></div>
       </div>
-      </a>
       <div class="party-card-foot">
         <span class="party-account-label"><i class="bi bi-building"></i>العقود والإيجارات</span>
         <div class="party-card-actions">
           {% if can_manage %}<a class="btn btn-light btn-sm" href="{{url_for('master_data.edit_agent',agent_id=a.id)}}" title="تعديل" aria-label="تعديل"><i class="bi bi-pencil"></i></a>{% endif %}
-          {% if a.account and can("reports.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=a.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
-          {% if can("leases.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('operations.leases')}}" title="العقود" aria-label="العقود"><i class="bi bi-building"></i></a>{% endif %}
-          {% if can("reports.view") %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.agent_report',agent_id=a.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>{% endif %}
+          {% if a.account %}<a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.account_statement',account_id=a.account.id)}}" title="كشف الحساب" aria-label="كشف الحساب"><i class="bi bi-journal-text"></i></a>{% endif %}
+          <a class="btn btn-outline-primary btn-sm" href="{{url_for('operations.leases')}}" title="العقود" aria-label="العقود"><i class="bi bi-building"></i></a>
+          <a class="btn btn-outline-primary btn-sm" href="{{url_for('reports.agent_report',agent_id=a.id)}}" title="التقرير" aria-label="التقرير"><i class="bi bi-bar-chart"></i></a>
           {% if can_manage %}<form method="post" action="{{url_for('master_data.delete_agent',agent_id=a.id)}}" onsubmit="return confirm('سيتم إيقاف الوكيل وحفظ تاريخه. متابعة؟')"><button class="btn btn-outline-danger btn-sm" type="submit" title="إيقاف الوكيل" aria-label="إيقاف الوكيل"><i class="bi bi-person-dash"></i></button></form>{% endif %}
         </div>
       </div>
@@ -59,5 +57,9 @@
 {% endblock %}
 {% block scripts %}
 <script>
+document.querySelectorAll('[data-card-href]').forEach(card=>{
+ card.addEventListener('click',e=>{if(e.target.closest('a,button,form,input,select,textarea,details,summary'))return;window.location.href=card.dataset.cardHref;});
+ card.addEventListener('keydown',e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();window.location.href=card.dataset.cardHref;}});
+});
 </script>
 {% endblock %}

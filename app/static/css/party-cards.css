@@ -71,35 +71,3 @@ body.theme-water-project .party-page-head small{font-size:10px;font-weight:500;l
 .party-page-head .eyebrow{font-size:12px;}
 body.theme-water-project .party-page-head h1{font-size:20px;font-weight:850;line-height:1.4;letter-spacing:-.2px;}
 @media(max-width:520px){.party-page-head h1{font-size:22px;}.party-title strong{font-size:15px;}.party-title small{font-size:11px;}.party-status{font-size:10px;}.party-card-facts span{font-size:9.5px;}.party-card-facts strong{font-size:12px;}.party-account-label{font-size:9.5px;}}
-
-/* A real anchor owns the card's informative area; action buttons stay separate. */
-.party-card-main-link{display:block;color:inherit;text-decoration:none!important;cursor:pointer;border-radius:12px;outline-offset:3px}
-.party-card-main-link:hover,.party-card-main-link:focus-visible{color:inherit;text-decoration:none!important}
-.party-card-main-link:focus-visible{outline:2px solid #8fb4f4}
-.party-card{cursor:default}
-.party-detail-page .party-detail-head{align-items:flex-start;margin-bottom:16px}
-.party-detail-page .party-detail-head h1{font-size:22px!important;font-weight:850!important;line-height:1.35!important;letter-spacing:-.2px;margin:2px 0 5px!important}
-.party-detail-page .party-detail-head p{font-size:11px;line-height:1.5;margin:0;color:var(--muted)}
-.party-detail-page .party-detail-head .btn{font-size:11px;padding:7px 10px;min-height:34px}
-.party-detail-page .stat-card{padding:14px;border-radius:18px}
-.party-detail-page .stat-card span,.party-detail-page .stat-card small{font-size:11px}
-.party-detail-page .stat-card strong{font-size:22px;line-height:1.35;margin:6px 0 2px}
-.party-detail-page .section-title h3{font-size:15px;line-height:1.4}
-.party-detail-page .profile-facts span{font-size:10px}
-.party-detail-page .profile-facts strong{font-size:12px;line-height:1.5}
-.party-detail-page .entity-main strong{font-size:13px}
-.party-detail-page .entity-meta{font-size:10px}
-.party-detail-page .table td{font-size:11px}
-body.theme-water-project .party-detail-page .party-detail-head h1{font-size:20px!important;font-weight:850!important}
-@media(max-width:600px){
- .party-detail-page .party-detail-head{gap:9px;margin-bottom:12px}
- .party-detail-page .party-detail-head h1{font-size:20px!important}
- .party-detail-page .party-detail-head>div:last-child{gap:5px!important}
- .party-detail-page .party-detail-head .btn{font-size:10px;padding:6px 8px;min-height:31px}
- .party-detail-page .stat-grid{gap:8px}
- .party-detail-page .stat-card{padding:11px;border-radius:15px}
- .party-detail-page .stat-card span,.party-detail-page .stat-card small{font-size:10px}
- .party-detail-page .stat-card strong{font-size:19px}
- .party-detail-page .detail-grid{gap:9px}
- .party-detail-page .card-soft{padding:12px}
-}
