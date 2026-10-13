@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}السنوات المالية والإقفال - {{app_name}}{% endblock %}
+{% block content %}
+<div class="page-head print-hide"><div><span class="eyebrow">إدارة المحاسبة</span><h1>السنوات المالية والإقفال</h1><p>أنشئ الفترات بالتسلسل، ثم أقفل السنة بعد مراجعة القيود والتقارير المالية.</p></div></div>
+{% if can("accounting.periods.manage") %}<div class="card-soft print-hide mb-4">
+<div class="section-title"><div><h3>إنشاء سنة مالية</h3><small class="text-muted">لا يسمح النظام بتداخل الفترات الزمنية.</small></div></div>
+<form method="post" class="row g-3">
+<div class="col-12 col-md-4"><label class="form-label">اسم السنة المالية</label><input name="name" class="form-control" maxlength="80" required placeholder="مثال: السنة المالية 2026"></div>
+<div class="col-6 col-md-3"><label class="form-label">تاريخ البداية</label><input type="date" name="start_date" class="form-control" required></div>
+<div class="col-6 col-md-3"><label class="form-label">تاريخ النهاية</label><input type="date" name="end_date" class="form-control" required></div>
+<div class="col-12 col-md-2"><label class="form-label">ملاحظات</label><input name="notes" class="form-control" maxlength="500"></div>
+<div class="col-12"><button class="btn btn-primary"><i class="bi bi-plus-circle"></i> إنشاء السنة</button></div>
+</form></div>{% endif %}
+<div class="card-soft table-wrap"><table class="table align-middle"><thead><tr><th>السنة المالية</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>قيد الإقفال</th><th>ملاحظات</th><th>الإجراء</th></tr></thead><tbody>
+{% for year in rows %}<tr><td class="fw-bold">{{year.name}}</td><td>{{year.start_date}}</td><td>{{year.end_date}}</td>
+<td>{% if year.status == 'closed' %}<span class="badge bg-secondary">مقفلة</span><small class="d-block text-muted mt-1">{{year.closed_at.strftime('%Y-%m-%d %H:%M') if year.closed_at else ''}}</small>{% else %}<span class="badge bg-success">مفتوحة</span>{% endif %}</td>
+<td>{% if year.closing_journal_entry %}<a href="{{url_for('accounting.journal_detail',entry_id=year.closing_journal_entry.id)}}">{{year.closing_journal_entry.number}}</a>{% else %}—{% endif %}</td><td>{{year.notes or '—'}}</td>
+<td>{% if year.status == 'open' and can("accounting.periods.manage") %}<form method="post" action="{{url_for('accounting.fiscal_year_close',fiscal_year_id=year.id)}}" onsubmit="return confirm('سيتم إنشاء قيد إقفال نتائج السنة وإغلاقها أمام القيود الجديدة. هل راجعت القوائم المالية؟');"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-lock"></i> إقفال السنة</button></form>{% elif year.status == 'closed' %}<span class="text-muted small">مقفلة</span>{% else %}—{% endif %}</td></tr>
+{% else %}<tr><td colspan="7" class="text-center text-muted py-5">لم تُنشأ سنوات مالية بعد.</td></tr>{% endfor %}
+</tbody></table></div>
+<div class="alert alert-info mt-3"><strong>مهم:</strong> بعد إنشاء أول سنة مالية، تُرفض القيود خارج أي سنة مفتوحة أو داخل سنة مقفلة. ينشئ الإقفال قيدًا محاسبيًا ينقل نتيجة الإيرادات والمصروفات إلى الأرباح المبقاة دون حذف القيود السابقة.</div>
+{% endblock %}
