@@ -17,20 +17,64 @@ def users():
     rows=User.query.order_by(User.active.desc(),User.full_name).all()
     return render_template("admin/users.html",users=rows,role_labels=ROLE_LABELS)
 
+PRIVILEGED_ROLES={"admin","manager"}
+
+def _active_admin_count():
+    return User.query.filter_by(role=Role.ADMIN.value,active=True).count()
+
+def _guard_privileged_user(target):
+    """Only a system admin may edit manager/admin accounts."""
+    if current_user.role != Role.ADMIN.value and target.role in PRIVILEGED_ROLES:
+        raise ValueError("إدارة حسابات المديرين ومدير النظام متاحة لمدير النظام فقط")
+
 @bp.route("/users/<int:user_id>/edit",methods=["GET","POST"])
 @permission_required("users.manage")
 def edit_user(user_id):
     u=db.session.get(User,user_id)
     if not u: return ("غير موجود",404)
+    try:
+        _guard_privileged_user(u)
+    except ValueError as exc:
+        return (str(exc),403)
+
     employees=Employee.query.filter_by(active=True).order_by(Employee.full_name).all()
     if request.method=="POST":
         try:
-            username=request.form["username"].strip()
+            _guard_privileged_user(u)
+            username=request.form.get("username","").strip()
+            full_name=request.form.get("full_name","").strip()
+            requested_role=request.form.get("role","").strip()
+            valid_roles={role.value for role in Role}
+
+            if not username:
+                raise ValueError("اسم المستخدم مطلوب")
+            if not full_name:
+                raise ValueError("الاسم الكامل مطلوب")
+            if requested_role not in valid_roles:
+                raise ValueError("الدور المحدد غير صالح")
+
+            if current_user.role != Role.ADMIN.value and requested_role in PRIVILEGED_ROLES:
+                raise ValueError("لا يمكنك منح صلاحية مدير أو مدير النظام؛ هذه العملية متاحة لمدير النظام فقط")
+            if current_user.id==u.id and requested_role!=u.role:
+                raise ValueError("لا يمكنك تغيير دور حسابك الحالي لتجنب فقدان صلاحية الإدارة")
+
+            if u.role==Role.ADMIN.value and u.active and requested_role!=Role.ADMIN.value and _active_admin_count()<=1:
+                raise ValueError("لا يمكن إزالة دور مدير النظام من آخر مدير نشط")
+
             other=User.query.filter(User.username==username,User.id!=u.id).first()
             if other: raise ValueError("اسم المستخدم مستخدم مسبقًا")
-            u.username=username; u.full_name=request.form["full_name"].strip(); u.phone=request.form.get("phone")
-            u.role=request.form.get("role","collector"); u.employee_id=int(request.form["employee_id"]) if request.form.get("employee_id") else None
-            if request.form.get("password"): u.set_password(request.form["password"])
+
+            old_username=u.username
+            old_role=u.role
+            old_employee_id=u.employee_id
+            u.username=username
+            u.full_name=full_name
+            u.phone=(request.form.get("phone") or "").strip() or None
+            u.role=requested_role
+            u.employee_id=int(request.form["employee_id"]) if request.form.get("employee_id") else None
+            password_changed=bool(request.form.get("password"))
+            if password_changed: u.set_password(request.form["password"])
+
             if u.employee:
                 u.employee.full_name=u.full_name
                 u.employee.phone=u.phone
@@ -47,24 +91,47 @@ def edit_user(user_id):
                     monthly_salary=0,hire_date=date.today(),active=u.active)
                 db.session.add(emp); db.session.flush(); u.employee_id=emp.id
                 ensure_employee_account(emp); ensure_employee_cashbox(emp); ensure_employee_payroll_account(emp)
-            audit("update","user",u.id,u.username); db.session.commit(); flash("تم تحديث المستخدم وملفه المالي","success"); return redirect(url_for("admin.users"))
+
+            details=f"username={old_username}->{u.username}|role={old_role}->{u.role}|employee={old_employee_id}->{u.employee_id}|password_changed={int(password_changed)}"
+            audit("update_user","user",u.id,details)
+            db.session.commit()
+            flash("تم تحديث المستخدم وملفه المالي","success")
+            return redirect(url_for("admin.users"))
         except Exception as exc:
-            db.session.rollback(); flash(str(exc),"danger")
-    return render_template("admin/user_form.html",user=u,employees=employees,roles=[r.value for r in Role],role_labels=ROLE_LABELS)
+            db.session.rollback()
+            flash(str(exc),"danger")
+
+    roles=[r.value for r in Role if current_user.role==Role.ADMIN.value or r.value not in PRIVILEGED_ROLES]
+    if current_user.id==u.id:
+        roles=[u.role]
+    return render_template("admin/user_form.html",user=u,employees=employees,roles=roles,role_labels=ROLE_LABELS)
 
 @bp.post("/users/<int:user_id>/toggle")
 @permission_required("users.manage")
 def toggle_user(user_id):
     u=db.session.get(User,user_id)
     if not u: return ("غير موجود",404)
-    if u.id==current_user.id: flash("لا يمكن إيقاف المستخدم الحالي","warning"); return redirect(url_for("admin.users"))
-    u.active=not u.active; audit("toggle","user",u.id,u.username); db.session.commit(); return redirect(url_for("admin.users"))
+    if u.id==current_user.id:
+        flash("لا يمكن إيقاف المستخدم الحالي","warning")
+        return redirect(url_for("admin.users"))
+    if current_user.role != Role.ADMIN.value and u.role in PRIVILEGED_ROLES:
+        flash("إدارة حسابات المديرين ومدير النظام متاحة لمدير النظام فقط","danger")
+        return redirect(url_for("admin.users"))
+    if u.role==Role.ADMIN.value and u.active and _active_admin_count()<=1:
+        flash("لا يمكن إيقاف آخر مدير نظام نشط","danger")
+        return redirect(url_for("admin.users"))
+    u.active=not u.active
+    audit("toggle_user","user",u.id,f"username={u.username}|active={int(u.active)}|role={u.role}")
+    db.session.commit()
+    return redirect(url_for("admin.users"))
 
 @bp.route("/users/<int:user_id>/permissions",methods=["GET","POST"])
 @permission_required("permissions.manage")
 def permissions(user_id):
     user=db.session.get(User,user_id)
     if not user: return ("غير موجود",404)
+    if current_user.role != Role.ADMIN.value and user.role in PRIVILEGED_ROLES:
+        return ("إدارة صلاحيات المديرين ومدير النظام متاحة لمدير النظام فقط",403)
     perms=Permission.query.filter_by(active=True).order_by(Permission.group_name,Permission.name).all()
     if request.method=="POST":
         try:
