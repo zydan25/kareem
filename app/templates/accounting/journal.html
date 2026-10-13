@@ -61,8 +61,8 @@
         <small>المبلغ</small>
         <strong>{{'{:,.2f}'.format(e.totals()[0])}} {{currency}}</strong>
       </div>
-      <span class="journal-status {% if e.status=='posted' %}posted{% else %}void{% endif %}">
-        {{'مرحّل' if e.status=='posted' else 'ملغى' if e.status=='void' else e.status}}
+      <span class="journal-status {% if e.reversed_entry_id %}void{% elif e.status=='posted' %}posted{% else %}void{% endif %}">
+        {{'معكوس' if e.reversed_entry_id else 'مرحّل' if e.status=='posted' else 'ملغى' if e.status=='void' else e.status}}
       </span>
       <div class="journal-actions">
         <a class="btn btn-sm btn-light" href="{{url_for('accounting.journal_detail',entry_id=e.id)}}"><i class="bi bi-eye"></i> عرض</a>
