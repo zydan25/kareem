@@ -160,6 +160,47 @@ def test_employee_has_separate_account_and_cashbox(app):
         assert employee.account.parent.system_key == "employee_accounts_root"
 
 
+
+def test_collector_dashboard_shows_employee_cashbox_balance(app):
+    from datetime import date
+    from app.services.accounts import ensure_employee_account, ensure_employee_cashbox
+
+    with app.app_context():
+        admin=User.query.filter_by(username="admin").one()
+        employee=Employee(code="EMP-CASHBOX-DASH-01",full_name="اختبار صندوق الموظف",
+                          phone="777000321",job_title="متحصل",active=True)
+        db.session.add(employee)
+        db.session.flush()
+        general_account=ensure_employee_account(employee)
+        cashbox_account=ensure_employee_cashbox(employee)
+        collector=User(username="cashbox_dashboard_test",full_name=employee.full_name,
+                       role="collector",active=True,employee_id=employee.id)
+        collector.set_password("cashbox-test-password")
+        db.session.add(collector)
+        db.session.flush()
+        revenue=db.session.query(Account).filter_by(system_key="entry_revenue").one()
+        create_posted_entry(
+            description="اختبار رصيد صندوق الموظف والحساب العام",
+            entry_date=date.today(),created_by_id=admin.id,
+            lines=[
+                {"account":cashbox_account,"debit":Decimal("321"),"credit":Decimal("0")},
+                {"account":general_account,"debit":Decimal("9000"),"credit":Decimal("0")},
+                {"account":revenue,"debit":Decimal("0"),"credit":Decimal("9321")},
+            ],prefix="CBX")
+        db.session.commit()
+
+    collector_client=app.test_client()
+    logged_in=collector_client.post("/login",data={
+        "identifier":"cashbox_dashboard_test","password":"cashbox-test-password"
+    },follow_redirects=False)
+    assert logged_in.status_code==302
+    response=collector_client.get("/collector")
+    assert response.status_code==200
+    body=response.get_data(as_text=True)
+    assert 'class="collector-mini-stat cashbox"' in body
+    assert "صندوق الموظف</span><strong>321</strong>" in body
+    assert "صندوق الموظف</span><strong>9,000</strong>" not in body
+
 def test_simple_receipt_and_payment_vouchers_use_cashboxes(app):
     with app.app_context():
         from app.models import User
