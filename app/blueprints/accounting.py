@@ -63,6 +63,53 @@ def _next_code(parent):
     width=max([len(code)-len(prefix) for code in existing if code.startswith(prefix) and code[len(prefix):].isdigit()] or [2])
     return f"{prefix}{(max(nums)+1 if nums else 1):0{width}d}"
 
+
+def _account_descendant_ids(account_id):
+    """Return descendants for the parent picker, tolerating existing corrupt loops."""
+    children_by_parent = {}
+    for child_id, parent_id in Account.query.with_entities(Account.id, Account.parent_id).all():
+        children_by_parent.setdefault(parent_id, []).append(child_id)
+
+    descendants = set()
+    pending = list(children_by_parent.get(account_id, []))
+    while pending:
+        child_id = pending.pop()
+        if child_id == account_id or child_id in descendants:
+            continue
+        descendants.add(child_id)
+        pending.extend(children_by_parent.get(child_id, []))
+    return descendants
+
+
+def _would_create_account_cycle(account_id, proposed_parent_id):
+    """Fail closed if the proposed parent is the account or has a cyclic ancestry."""
+    visited = set()
+    current_id = proposed_parent_id
+    while current_id is not None:
+        if current_id == account_id or current_id in visited:
+            return True
+        visited.add(current_id)
+        current = db.session.get(Account, current_id)
+        if current is None:
+            return True
+        current_id = current.parent_id
+    return False
+
+
+def _eligible_account_parents(account):
+    excluded_ids = _account_descendant_ids(account.id) | {account.id}
+    return (
+        Account.query
+        .filter(
+            Account.is_group.is_(True),
+            Account.active.is_(True),
+            Account.id.notin_(excluded_ids),
+        )
+        .order_by(Account.code)
+        .all()
+    )
+
+
 @bp.get("/accounts")
 @permission_required("accounting.view")
 def accounts():
@@ -147,7 +194,12 @@ def account_edit(account_id):
             if account.system_key: raise ValueError("لا يمكن تعديل الحسابات النظامية")
             name=request.form.get("name","").strip()
             parent=db.session.get(Account,request.form.get("parent_id",type=int))
-            if not name or not parent or not parent.is_group: raise ValueError("الاسم والحساب الأب مطلوبان")
+            if not name:
+                raise ValueError("اسم الحساب مطلوب")
+            if not parent or not parent.is_group or not parent.active:
+                raise ValueError("اختر حسابًا أبًا تجميعيًا ونشطًا")
+            if _would_create_account_cycle(account.id, parent.id):
+                raise ValueError("لا يمكن نقل الحساب إلى نفسه أو إلى أحد فروعه؛ سيؤدي ذلك إلى دورة في شجرة الحسابات")
             account.name=name
             account.parent_id=parent.id
             account.active=request.form.get("active")=="1"
@@ -156,7 +208,7 @@ def account_edit(account_id):
             return redirect(url_for("accounting.accounts"))
         except Exception as exc:
             db.session.rollback(); flash(str(exc),"danger")
-    parents=Account.query.filter(Account.is_group.is_(True),Account.active.is_(True),Account.id!=account.id).order_by(Account.code).all()
+    parents=_eligible_account_parents(account)
     return render_template("accounting/account_edit.html",account=account,parents=parents)
 
 @bp.post("/accounts/<int:account_id>/delete")
